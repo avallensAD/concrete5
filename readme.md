@@ -6,7 +6,7 @@ This repository contains Joomla application that can run on Azure app service wi
 
 To use Environment variables with Joomla application to pass in the database information , add the following constructor in configuration.php inside JConfig class. To use this with [MySQL in app feature](https://azure.microsoft.com/en-us/blog/mysql-in-app-preview-app-service/),  use the $_SERVER['MYSQLCONNSTR_localdb]' variable to get the database connection string. 
 
-Add this code to application\config\database.php file in order to use environment variables 
+Add this code to application\config\database.php file in order to use environment variables or support **MySQL in-app**
 
 ```
 <?php
