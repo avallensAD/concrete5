@@ -8,12 +8,16 @@
 	<form method="post" action="<?php echo $view->action('save')?>">
 	<?php echo Loader::helper('validation/token')->output('save_permissions')?>
 	<?php
-	$tp = new TaskPermission();
-	if ($tp->canAccessTaskPermissions()) { ?>	
+    $tp = new TaskPermission();
+    if ($tp->canAccessTaskPermissions()) {
+        ?>	
 		<?php Loader::element('permission/lists/block_type')?>
-	<?php } else { ?>
+	<?php 
+    } else {
+        ?>
 		<p><?php echo t('You cannot access these permissions.')?></p>
-	<?php } ?>
+	<?php 
+    } ?>
     <div class="ccm-dashboard-form-actions-wrapper">
         <div class="ccm-dashboard-form-actions">
             <button type="submit" value="<?php echo t('Save')?>" class="btn btn-primary pull-right"><?php echo t('Save')?> <i class="icon-ok-sign icon-white"></i></button>

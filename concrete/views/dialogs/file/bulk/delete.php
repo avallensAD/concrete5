@@ -2,9 +2,13 @@
 
 <div class="ccm-ui">
     <br/>
-<?php if ($fcnt == 0) { ?>
-<p><?php echo t("You do not have permission to delete any of the selected files."); ?><p>
-        <?php } else { ?>
+<?php if ($fcnt == 0) {
+    ?>
+<p><?php echo t("You do not have permission to delete any of the selected files.");
+    ?><p>
+        <?php
+} else {
+    ?>
 
     <div class="alert alert-warning"><?php echo t('Are you sure you want to delete the following files?')?></div>
 
@@ -15,11 +19,12 @@
 
         <table border="0" cellspacing="0" cellpadding="0" width="100%" class="table table-striped">
 
-            <?php foreach($files as $f) {
-                $fp = new Permissions($f);
-                if ($fp->canDeleteFile()) {
-                    $fv = $f->getApprovedVersion();
-                    if (is_object($fv)) { ?>
+            <?php foreach ($files as $f) {
+    $fp = new Permissions($f);
+    if ($fp->canDeleteFile()) {
+        $fv = $f->getApprovedVersion();
+        if (is_object($fv)) {
+            ?>
 
                         <?php echo $form->hidden('fID[]', $f->getFileID())?>
 
@@ -31,10 +36,11 @@
                             <td><?php echo $fv->getAuthorName()?></td>
                         </tr>
 
-                    <?php }
-                }
-
-            } ?>
+                    <?php
+        }
+    }
+}
+    ?>
         </table>
     </form>
 

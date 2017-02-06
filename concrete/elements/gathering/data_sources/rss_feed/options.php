@@ -1,7 +1,7 @@
 <?php defined('C5_EXECUTE') or die("Access Denied."); ?>
 <?php
-if (is_object($configuration)) { 
-	$rssFeedURL = $configuration->getRSSFeedURL();
+if (is_object($configuration)) {
+    $rssFeedURL = $configuration->getRSSFeedURL();
 }
 ?>
 <div class="control-group">

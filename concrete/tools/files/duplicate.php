@@ -26,13 +26,12 @@ if (Request::request('task') == 'duplicate_multiple_files') {
             }
         }
     }
-    print json_encode($json);
+    echo json_encode($json);
     exit;
 }
 
 if (!is_array($items)) {
-
-    $obj = new stdClass;
+    $obj = new stdClass();
     $obj->message = '';
     $obj->error = 0;
 
@@ -55,34 +54,36 @@ if (!is_array($items)) {
         }
     }
 
-    print $js->encode($obj);
+    echo $js->encode($obj);
     exit;
-
 } else {
+    $files = array();
 
-$files = array();
-
-foreach ($items as $fID) {
-    $files[] = File::getByID($fID);
-}
-
-$fcnt = 0;
-foreach ($files as $f) {
-    $fp = new Permissions($f);
-    if ($fp->canCopyFile()) {
-        $fcnt++;
+    foreach ($items as $fID) {
+        $files[] = File::getByID($fID);
     }
-}
 
-$searchInstance = Loader::helper('text')->entities($_REQUEST['searchInstance']);
+    $fcnt = 0;
+    foreach ($files as $f) {
+        $fp = new Permissions($f);
+        if ($fp->canCopyFile()) {
+            ++$fcnt;
+        }
+    }
 
-?>
+    $searchInstance = Loader::helper('text')->entities($_REQUEST['searchInstance']);
+
+    ?>
 
 <div class="ccm-ui ccm-copy-form">
 
-    <?php if ($fcnt == 0) { ?>
-        <?php echo t("You do not have permission to copy any of the selected files."); ?>
-    <?php } else { ?>
+    <?php if ($fcnt == 0) {
+    ?>
+        <?php echo t("You do not have permission to copy any of the selected files.");
+    ?>
+    <?php 
+} else {
+    ?>
         <?php echo t('Are you sure you want to copy the following files?') ?><br/><br/>
 
         <form id="ccm-<?php echo $searchInstance ?>-duplicate-form" method="post"
@@ -91,11 +92,11 @@ $searchInstance = Loader::helper('text')->entities($_REQUEST['searchInstance']);
             <table border="0" cellspacing="0" cellpadding="0" width="100%" class="table table-bordered">
 
                 <?php foreach ($files as $f) {
-                    $fp = new Permissions($f);
-                    if ($fp->canCopyFile()) {
-                        $fv = $f->getApprovedVersion();
-                        if (is_object($fv)) {
-                            ?>
+    $fp = new Permissions($f);
+    if ($fp->canCopyFile()) {
+        $fv = $f->getApprovedVersion();
+        if (is_object($fv)) {
+            ?>
 
                             <?php echo $form->hidden('item[]', $f->getFileID()) ?>
 
@@ -110,10 +111,11 @@ $searchInstance = Loader::helper('text')->entities($_REQUEST['searchInstance']);
                             </tr>
 
                         <?php
-                        }
-                    }
 
-                } ?>
+        }
+    }
+}
+    ?>
             </table>
             <?php $ih = Loader::helper('concrete/ui') ?>
             <div class="dialog-buttons">
@@ -123,8 +125,8 @@ $searchInstance = Loader::helper('text')->entities($_REQUEST['searchInstance']);
         </form>
     <?php
 
-    }
-    }?>
+}
+}?>
 </div>
 
 <script>

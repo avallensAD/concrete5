@@ -34,8 +34,8 @@ class SolariumAdapter implements AdapterInterface
     /**
      * Constructor.
      *
-     * @param Solarium_Client|Client       $client A Solarium client.
-     * @param Solarium_Query_Select|Query  $query  A Solarium select query.
+     * @param Solarium_Client|Client      $client A Solarium client.
+     * @param Solarium_Query_Select|Query $query  A Solarium select query.
      */
     public function __construct($client, $query)
     {
@@ -103,7 +103,10 @@ class SolariumAdapter implements AdapterInterface
     }
 
     /**
-     * @return Solarium_Result_Select|Solarium\QueryType\Select\Result\Result
+     * @param int $start
+     * @param int $rows
+     *
+     * @return \Solarium_Result_Select|\Solarium\QueryType\Select\Result\Result
      **/
     public function getResultSet($start = null, $rows = null)
     {

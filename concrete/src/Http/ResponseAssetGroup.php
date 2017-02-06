@@ -1,5 +1,4 @@
 <?php
-
 namespace Concrete\Core\Http;
 
 use Concrete\Core\Asset\Asset;
@@ -16,7 +15,7 @@ class ResponseAssetGroup
     public static function get()
     {
         if (null === self::$group) {
-            self::$group = new ResponseAssetGroup();
+            self::$group = new self();
         }
 
         return self::$group;
@@ -26,7 +25,7 @@ class ResponseAssetGroup
     {
         $this->init();
     }
-    
+
     public function init()
     {
         $this->requiredAssetGroup = new AssetGroup();
@@ -40,22 +39,29 @@ class ResponseAssetGroup
      */
     public function addHeaderAsset($item)
     {
-        $this->outputAssets[Asset::ASSET_POSITION_HEADER][] = $item;
+        $this->addOutputAssetAt($item, Asset::ASSET_POSITION_HEADER);
     }
 
     /**
      * Function responsible for adding footer items within the context of a view.
-     *
-     * @access private
      */
     public function addFooterAsset($item)
     {
-        $this->outputAssets[Asset::ASSET_POSITION_FOOTER][] = $item;
+        $this->addOutputAssetAt($item, Asset::ASSET_POSITION_FOOTER);
     }
 
     public function addOutputAsset(Asset $asset)
     {
-        $this->outputAssets[$asset->getAssetPosition()][] = $asset;
+        $this->addOutputAssetAt($asset, $asset->getAssetPosition());
+    }
+
+    protected function addOutputAssetAt($item, $position)
+    {
+        if (!isset($this->outputAssets[$position])) {
+            $this->outputAssets[$position] = [$item];
+        } elseif (!in_array($item, $this->outputAssets[$position])) {
+            $this->outputAssets[$position][] = $item;
+        }
     }
 
     /**
@@ -194,9 +200,9 @@ class ResponseAssetGroup
         $list = AssetList::getInstance();
         if ($assetType instanceof AssetGroup) {
             $this->requiredAssetGroup->addGroup($assetType);
-        } else if ($assetType instanceof Asset) {
+        } elseif ($assetType instanceof Asset) {
             $this->requiredAssetGroup->addAsset($assetType);
-        } else if ($assetType && $assetHandle) {
+        } elseif ($assetType && $assetHandle) {
             $ap = new AssetPointer($assetType, $assetHandle);
             $this->requiredAssetGroup->add($ap);
         } else {

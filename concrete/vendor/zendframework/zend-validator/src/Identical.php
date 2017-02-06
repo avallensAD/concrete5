@@ -3,12 +3,13 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
 namespace Zend\Validator;
 
+use ArrayAccess;
 use Traversable;
 use Zend\Stdlib\ArrayUtils;
 
@@ -25,17 +26,17 @@ class Identical extends AbstractValidator
      * Error messages
      * @var array
      */
-    protected $messageTemplates = array(
+    protected $messageTemplates = [
         self::NOT_SAME      => "The two given tokens do not match",
         self::MISSING_TOKEN => 'No token was provided to match against',
-    );
+    ];
 
     /**
      * @var array
      */
-    protected $messageVariables = array(
+    protected $messageVariables = [
         'token' => 'tokenString'
-    );
+    ];
 
     /**
      * Original token against which to validate
@@ -146,17 +147,25 @@ class Identical extends AbstractValidator
      * matches that token.
      *
      * @param  mixed $value
-     * @param  array $context
+     * @param  array|ArrayAccess $context
+     * @throws Exception\InvalidArgumentException If context is not array or ArrayObject
      * @return bool
-     * @throws Exception\RuntimeException if the token doesn't exist in the context array
      */
-    public function isValid($value, array $context = null)
+    public function isValid($value, $context = null)
     {
         $this->setValue($value);
 
         $token = $this->getToken();
 
         if (!$this->getLiteral() && $context !== null) {
+            if (!is_array($context) && !($context instanceof ArrayAccess)) {
+                throw new Exception\InvalidArgumentException(sprintf(
+                    'Context passed to %s must be array, ArrayObject or null; received "%s"',
+                    __METHOD__,
+                    is_object($context) ? get_class($context) : gettype($context)
+                ));
+            }
+
             if (is_array($token)) {
                 while (is_array($token)) {
                     $key = key($token);

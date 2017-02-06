@@ -9,7 +9,6 @@ use Exception;
 
 class Manage extends Presets
 {
-
     protected $viewPath = '/dialogs/area/layout/presets/manage';
 
     public function viewPresets()
@@ -31,6 +30,4 @@ class Manage extends Presets
             $pr->outputJSON();
         }
     }
-
 }
-

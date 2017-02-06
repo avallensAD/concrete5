@@ -11,10 +11,15 @@
 	<?php echo $al->file('ccm-b-file', 'fID', t('Choose File'), $bf);?>
 </div>
 <div class="form-group">
-	<?php echo $form->label('fileLinkText', t('Text for Linked File'))?>
+	<?php echo $form->label('fileLinkText', t('Link Text'))?>
 	<?php echo $form->text('fileLinkText', $controller->getLinkText())?>
 </div>
+
 <div class="form-group">
-	<?php echo $form->checkbox('forceDownload', '1', $forceDownload); ?>
-	<?php echo $form->label('forceDownload', t('Force file to download')); ?>
+    <div class="checkbox">
+        <label>
+            <?php echo $form->checkbox('forceDownload', '1', $forceDownload); ?>
+            <?php echo t('Force file to download')?>
+        </label>
+    </div>
 </div>

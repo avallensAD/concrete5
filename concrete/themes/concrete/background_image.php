@@ -24,7 +24,7 @@ View::element(
     }
 </style>
 
-<?php print $innerContent ?>
+<?php echo $innerContent ?>
 
 <div class="ccm-page-background-credit" style="display:none">
     <?php echo t('Photo Credit:') ?>
@@ -55,7 +55,8 @@ $(function() {
             .fadeIn();
     }, 0);
 
-     <?php if(Config::get('concrete.white_label.background_image') !== 'none' && !Config::get('concrete.white_label.background_url')) { ?>
+     <?php if (Config::get('concrete.white_label.background_image') !== 'none' && !Config::get('concrete.white_label.background_url')) {
+    ?>
     $(function () {
         var shown = false, info;
         $.getJSON('<?php echo Core::getApplicationURL() . '/' . DISPATCHER_FILENAME . '/tools/required/dashboard/get_image_data' ?>', { image: '<?php echo $image ?>' }, function (data) {
@@ -77,11 +78,14 @@ $(function() {
             fade: 500
         });
     });
-    <?php } elseif (Config::get('concrete.white_label.background_url')) { ?>
+    <?php 
+} elseif (Config::get('concrete.white_label.background_url')) {
+    ?>
         $.backstretch("<?php echo Config::get('concrete.urls.background_url') ?>", {
             fade: 500
         });
-    <?php } ?>
+    <?php 
+} ?>
 });
 </script>
 

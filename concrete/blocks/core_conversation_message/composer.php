@@ -2,7 +2,7 @@
 defined('C5_EXECUTE') or die("Access Denied.");
 $cnvMessageSubject = '';
 if (is_object($message)) {
-	$cnvMessageSubject = $message->getConversationMessageSubject();
+    $cnvMessageSubject = $message->getConversationMessageSubject();
 }
 ?>
 
@@ -19,12 +19,12 @@ if (is_object($message)) {
 	<?php echo $form->label($this->field('cnvMessageBody'), t('Message'))?>
 	<div class="controls">
 	<?php
-	$editor = ConversationEditor::getActive();
-	$editor->setConversationEditorInputName($this->field('cnvMessageBody'));
-	if (is_object($message)) {
-		$editor->setConversationMessageObject($message);
-	}
-	$editor->outputConversationEditorAddMessageForm(); ?>
+    $editor = ConversationEditor::getActive();
+    $editor->setConversationEditorInputName($this->field('cnvMessageBody'));
+    if (is_object($message)) {
+        $editor->setConversationMessageObject($message);
+    }
+    $editor->outputConversationEditorAddMessageForm(); ?>
 	</div>
 </div>
 

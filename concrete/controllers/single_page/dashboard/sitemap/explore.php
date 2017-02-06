@@ -2,12 +2,12 @@
 namespace Concrete\Controller\SinglePage\Dashboard\Sitemap;
 
 use Concrete\Core\Page\Controller\DashboardPageController;
+use Concrete\Core\Page\Controller\DashboardSitePageController;
 use Loader;
 use Page;
 
-class Explore extends DashboardPageController
+class Explore extends DashboardSitePageController
 {
-
     public function view($nodeID = 1, $auxMessage = false)
     {
         $this->requireAsset('core/sitemap');
@@ -38,5 +38,4 @@ class Explore extends DashboardPageController
         }
         $this->set('dh', $dh);
     }
-
 }

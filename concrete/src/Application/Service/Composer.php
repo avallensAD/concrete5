@@ -1,14 +1,15 @@
 <?php
 namespace Concrete\Core\Application\Service;
 
+use Concrete\Core\Page\Page;
 use Concrete\Core\Page\Type\Type;
+use Concrete\Core\Permission\Key\Key;
 use PageType;
-use \Concrete\Core\Page\Type\Composer\Control\Control as PageTypeComposerControl;
+use Concrete\Core\Page\Type\Composer\Control\Control as PageTypeComposerControl;
 use View;
 
 class Composer
 {
-
     /**
      * @param Type $pagetype
      * @param bool|\Page $page
@@ -26,7 +27,7 @@ class Composer
     {
         View::element('page_types/composer/form/output/buttons', array(
             'pagetype' => $pagetype,
-            'page' => $page
+            'page' => $page,
         ));
     }
 
@@ -42,5 +43,38 @@ class Composer
         }
     }
 
+    public function getPublishButtonTitle(Page $c)
+    {
+        if ($c->isPageDraft()) {
+            $publishTitle = t('Publish Page');
+        } else {
+            $publishTitle = t('Publish Changes');
+        }
 
+        $pk = Key::getByHandle('approve_page_versions');
+        $pk->setPermissionObject($c);
+        $pa = $pk->getPermissionAccessObject();
+        $workflows = array();
+        $canApproveWorkflow = true;
+        if (is_object($pa)) {
+            $workflows = $pa->getWorkflows();
+        }
+        foreach ($workflows as $wf) {
+            if (!$wf->canApproveWorkflow()) {
+                $canApproveWorkflow = false;
+            }
+        }
+
+        if (count($workflows) > 0 && !$canApproveWorkflow) {
+            $publishTitle = t('Submit to Workflow');
+        }
+        return $publishTitle;
+    }
+
+    public function displayPublishScheduleSettings(Page $c = null)
+    {
+        View::element('pages/schedule', array(
+            'page' => $c,
+        ));
+    }
 }

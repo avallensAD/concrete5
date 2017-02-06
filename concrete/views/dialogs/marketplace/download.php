@@ -4,7 +4,8 @@ defined('C5_EXECUTE') or die("Access Denied.");
 
 <div class="ccm-ui">
 
-<?php if (!$error->has()) { ?>
+<?php if (!$error->has()) {
+    ?>
     <?php
     $_pkg = Package::getByHandle($mri->getHandle());
     if ($_pkg->hasInstallPostScreen()) {
@@ -17,15 +18,19 @@ defined('C5_EXECUTE') or die("Access Denied.");
         <button class="btn btn-primary pull-right" type="button" onclick="ConcreteEvent.publish('MarketplaceRequestComplete', {'type': 'download'})"><?php echo t('Ok')?></button>
     </div>
 
-<?php } else { ?>
+<?php 
+} else {
+    ?>
 	<p><?php echo t("The package could not be installed:") ?></p>
 
     <div class="alert alert-danger">
-	<?php $error->output(); ?>
+	<?php $error->output();
+    ?>
     </div>
 
     <hr/>
-    <?php if (is_object($mri)) { ?>
+    <?php if (is_object($mri)) {
+    ?>
 	<p><?php echo t("To install the package manually:") ?></p>
 	<ol>
 		<li><?php echo t('Download the package from <a href="%s">here</a>.', $mri->getRemoteURL())?></li>
@@ -33,7 +38,10 @@ defined('C5_EXECUTE') or die("Access Denied.");
 		<li><?php echo t('Go to the <a href="%s">Add Functionality</a> page in your concrete5 Dashboard.', View::url('/dashboard/install'))?></li>
         <li><?php echo t('Click the Install button next to the package name.')?></li>
 	</ol>
-	<?php } ?>
-<?php } ?>
+	<?php 
+}
+    ?>
+<?php 
+} ?>
 
 </div>

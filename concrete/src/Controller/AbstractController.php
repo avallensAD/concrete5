@@ -1,16 +1,16 @@
 <?php
-
 namespace Concrete\Core\Controller;
 
-use Concrete\Core\Application\Application;
 use Concrete\Core\Application\ApplicationAwareInterface;
 use Concrete\Core\Http\ResponseAssetGroup;
 use Core;
 use Request;
 use View;
+use Concrete\Core\Application\ApplicationAwareTrait;
 
 abstract class AbstractController implements ApplicationAwareInterface
 {
+    use ApplicationAwareTrait;
 
     protected $helpers = array();
     protected $sets = array();
@@ -18,12 +18,25 @@ abstract class AbstractController implements ApplicationAwareInterface
     protected $request;
     protected $parameters;
 
-    /** @var Application */
-    protected $app;
-
     public function __construct()
     {
         $this->request = Request::getInstance();
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRequest()
+    {
+        return $this->request;
+    }
+
+    /**
+     * @param mixed $request
+     */
+    public function setRequest($request)
+    {
+        $this->request = $request;
     }
 
     public function requireAsset()
@@ -34,12 +47,10 @@ abstract class AbstractController implements ApplicationAwareInterface
     }
 
     /**
-     * Adds an item to the view's header. This item will then be automatically printed out before the <body> section of the page
+     * Adds an item to the view's header. This item will then be automatically printed out before the <body> section of the page.
      *
      * @param string $item
-     * @return void
      */
-
     public function addHeaderItem($item)
     {
         $v = View::getInstance();
@@ -47,10 +58,9 @@ abstract class AbstractController implements ApplicationAwareInterface
     }
 
     /**
-     * Adds an item to the view's footer. This item will then be automatically printed out before the </body> section of the page
+     * Adds an item to the view's footer. This item will then be automatically printed out before the </body> section of the page.
      *
      * @param string $item
-     * @return void
      */
     public function addFooterItem($item)
     {
@@ -81,6 +91,7 @@ abstract class AbstractController implements ApplicationAwareInterface
             $h = Core::make('helper/' . $handle);
             $helpers[(str_replace('/', '_', $handle))] = $h;
         }
+
         return $helpers;
     }
 
@@ -99,8 +110,8 @@ abstract class AbstractController implements ApplicationAwareInterface
         }
 
         $val = $this->request->get($key, $defaultValue);
-        return $val;
 
+        return $val;
     }
 
     public function getTask()
@@ -167,15 +178,4 @@ abstract class AbstractController implements ApplicationAwareInterface
     {
         return Request::request($key);
     }
-
-    /**
-     * Set the application object
-     *
-     * @param \Concrete\Core\Application\Application $application
-     */
-    public function setApplication(Application $application)
-    {
-        $this->app = $application;
-    }
-
 }

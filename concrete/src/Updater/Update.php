@@ -1,8 +1,9 @@
 <?php
-
 namespace Concrete\Core\Updater;
 
 use Concrete\Core\Cache\Cache;
+use Concrete\Core\Database\DatabaseStructureManager;
+use Concrete\Core\Updater\Migrations\Configuration;
 use Core;
 use Marketplace;
 use Config;
@@ -49,8 +50,10 @@ class Update
                 Marketplace::checkPackageUpdates();
             }
             $update = static::getLatestAvailableUpdate();
-            $versionNum = $update->getVersion();
-
+            $versionNum = null;
+            if (is_object($update)) {
+                $versionNum = $update->getVersion();
+            }
             if ($versionNum) {
                 Config::save('concrete.misc.latest_version', $versionNum);
             } else {
@@ -66,13 +69,7 @@ class Update
      * Retrieves the info about the latest available information.
      * The effective request to the remote server is done just once per request.
      *
-     * @return \stdClass Return an \stdClass instance with these properties:
-     * <ul>
-     * <li>false|string notes</li>
-     * <li>false|string url</li>
-     * <li>false|string date</li>
-     * <li>null|string version</li>
-     * </ul>
+     * @return RemoteApplicationUpdate|null
      */
     public static function getApplicationUpdateInformation()
     {
@@ -90,13 +87,7 @@ class Update
     /**
      * Retrieves the info about the latest available information.
      *
-     * @return \stdClass Return an \stdClass instance with these properties:
-     * <ul>
-     * <li>false|string notes</li>
-     * <li>false|string url</li>
-     * <li>false|string date</li>
-     * <li>null|string version</li>
-     * </ul>
+     * @return RemoteApplicationUpdate|null
      */
     protected static function getLatestAvailableUpdate()
     {
@@ -133,9 +124,9 @@ class Update
             $body = @curl_exec($curl_handle);
 
             $update = RemoteApplicationUpdateFactory::getFromJSON($body);
+
             return $update;
         }
-
     }
 
     /**
@@ -148,7 +139,7 @@ class Update
     public function getLocalAvailableUpdates()
     {
         $fh = Core::make('helper/file');
-        $updates = array();
+        $updates = [];
         $contents = @$fh->getDirectoryContents(DIR_CORE_UPDATES);
         foreach ($contents as $con) {
             if (is_dir(DIR_CORE_UPDATES . '/' . $con)) {
@@ -171,24 +162,44 @@ class Update
     }
 
     /**
+     * Checks migrations to see if the current code DB version is greater than that registered in the database.
+     */
+    public static function isCurrentVersionNewerThanDatabaseVersion()
+    {
+        $db = \Database::get();
+        $database = $db->GetOne('select max(version) from SystemDatabaseMigrations');
+        $code = Config::get('concrete.version_db');
+
+        return $database < $code;
+    }
+
+    /**
      * Upgrade the current core version to the latest locally available by running the applicable migrations.
      */
-    public static function updateToCurrentVersion()
+    public static function updateToCurrentVersion(Configuration $configuration = null)
     {
         $cms = Core::make('app');
         $cms->clearCaches();
 
-        $em = ORM::entityManager('core');
-        $dbm = Core::make('database/structure', array($em));
+        $em = ORM::entityManager();
+        $dbm = new DatabaseStructureManager($em);
         $dbm->destroyProxyClasses('ConcreteCore');
         $dbm->generateProxyClasses();
 
-        $configuration = new \Concrete\Core\Updater\Migrations\Configuration();
+        if (!$configuration) {
+            $configuration = new \Concrete\Core\Updater\Migrations\Configuration();
+        }
+
         $configuration->registerPreviousMigratedVersions();
         $migrations = $configuration->getMigrationsToExecute('up', $configuration->getLatestVersion());
         foreach ($migrations as $migration) {
             $migration->execute('up');
         }
+        try {
+            $cms->make('helper/file')->makeExecutable(DIR_BASE_CORE.'/bin/concrete5', 'all');
+        } catch (\Exception $x) {
+        }
         Config::save('concrete.version_installed', Config::get('concrete.version'));
+        Config::save('concrete.version_db_installed', Config::get('concrete.version_db'));
     }
 }

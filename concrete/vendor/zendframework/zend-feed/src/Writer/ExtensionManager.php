@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -12,7 +12,7 @@ namespace Zend\Feed\Writer;
 /**
  * Default implementation of ExtensionManagerInterface
  *
- * Decorator of ExtensionPluginManager.
+ * Decorator for an ExtensionManagerInstance.
  */
 class ExtensionManager implements ExtensionManagerInterface
 {
@@ -22,14 +22,14 @@ class ExtensionManager implements ExtensionManagerInterface
      * Constructor
      *
      * Seeds the extension manager with a plugin manager; if none provided,
-     * creates an instance.
+     * creates and decorates an instance of StandaloneExtensionManager.
      *
-     * @param  null|ExtensionPluginManager $pluginManager
+     * @param  null|ExtensionManagerInterface $pluginManager
      */
-    public function __construct(ExtensionPluginManager $pluginManager = null)
+    public function __construct(ExtensionManagerInterface $pluginManager = null)
     {
         if (null === $pluginManager) {
-            $pluginManager = new ExtensionPluginManager();
+            $pluginManager = new StandaloneExtensionManager();
         }
         $this->pluginManager = $pluginManager;
     }
@@ -37,7 +37,7 @@ class ExtensionManager implements ExtensionManagerInterface
     /**
      * Method overloading
      *
-     * Proxy to composed ExtensionPluginManager instance.
+     * Proxy to composed ExtensionManagerInterface instance.
      *
      * @param  string $method
      * @param  array $args
@@ -53,14 +53,14 @@ class ExtensionManager implements ExtensionManagerInterface
                 __CLASS__
             ));
         }
-        return call_user_func_array(array($this->pluginManager, $method), $args);
+        return call_user_func_array([$this->pluginManager, $method], $args);
     }
 
     /**
      * Get the named extension
      *
      * @param  string $name
-     * @return Extension\AbstractEntry|Extension\AbstractFeed
+     * @return Extension\AbstractRenderer
      */
     public function get($name)
     {

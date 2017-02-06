@@ -1,15 +1,19 @@
 <?php defined('C5_EXECUTE') or die("Access Denied."); ?>
 
 <fieldset>
-    <legend><?php echo t('Icon')?></legend>
-        <div class="form-group ccm-block-feature-select-icon" style="margin-right: 35px;">
-            <?php echo $form->select('icon', $icons, $icon);?>
-            <i data-preview="icon" <?php if ($icon) { ?>class="fa fa-<?php echo $icon?>"<?php } ?>></i>
+    <legend><?php echo t('Display')?></legend>
+    <div class="form-group ccm-block-feature-select-icon">
+        <label class="control-label" for="icon"><?php echo t('Icon')?></label>
+        <?php echo $form->select('icon', $icons, $icon);?>
+    </div>
+    <div class="form-group">
+        <label class="control-label"><?php echo t('Preview')?></label>
+        <div>
+        <i data-preview="icon" <?php if ($icon) {
+        ?>class="fa fa-<?php echo $icon?>"<?php
+        } ?>></i>
         </div>
-</fieldset>
-
-<fieldset>
-    <legend><?php echo t('Text')?></legend>
+    </div>
 
     <div class="form-group">
         <?php echo $form->label('title', t('Title'))?>

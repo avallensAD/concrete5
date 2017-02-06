@@ -1,12 +1,13 @@
 <?php
 namespace Concrete\Core\Application\UserInterface\Menu\Item;
+
 use Concrete\Core\Package\Package;
-use Core;
 
 class Item implements ItemInterface
 {
-
     protected $controller;
+
+    protected $linkAttributes = array();
 
     public function __construct($handle, $pkgHandle = false)
     {
@@ -90,6 +91,7 @@ class Item implements ItemInterface
                 $this->pkgHandle
             );
             $this->setController(\Core::make($class, array($this)));
+
             return $this->controller;
         }
     }
@@ -99,5 +101,4 @@ class Item implements ItemInterface
         $this->controller = $controller;
         $this->controller->setMenuItem($this);
     }
-
 }

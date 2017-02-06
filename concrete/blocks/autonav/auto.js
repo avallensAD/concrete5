@@ -56,7 +56,6 @@ function reloadPreview(event) {
     displaySubPageLevels = $("select[name=displaySubPageLevels]", container).val();
     displaySubPageLevelsNum = $("input[name=displaySubPageLevelsNum]", container).val();
     displayUnavailablePages = $("input[name=displayUnavailablePages]", container).is(':checked') ? 1 : 0;
-    displaySystemPages = $("input[name=displaySystemPages]", container).is(':checked') ? 1 : 0;
     displayPagesCID = $("input[name=displayPagesCID]", container).val();
     displayPagesIncludeSelf = displayUnavailablePages;
 
@@ -79,7 +78,6 @@ function reloadPreview(event) {
         displaySubPageLevels: displaySubPageLevels,
         displaySubPageLevelsNum: displaySubPageLevelsNum,
         displayUnavailablePages: displayUnavailablePages,
-        displaySystemPages: displaySystemPages,
         displayPagesCID: displayPagesCID,
         displayPagesIncludeSelf: displayPagesIncludeSelf
     }, function (resp) {
@@ -91,7 +89,7 @@ function reloadPreview(event) {
 
 Concrete.event.bind('autonav.edit.open', function() {
     container = $('div.autonav-form');
-    preview_container = container.find('div.preview');
+    preview_container = $('div.autonav-preview');
     preview_loader = container.find('div.loader');
     preview_render = preview_container.children('div.render');
 

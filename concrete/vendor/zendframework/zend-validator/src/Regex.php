@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -22,18 +22,18 @@ class Regex extends AbstractValidator
     /**
      * @var array
      */
-    protected $messageTemplates = array(
+    protected $messageTemplates = [
         self::INVALID   => "Invalid type given. String, integer or float expected",
         self::NOT_MATCH => "The input does not match against pattern '%pattern%'",
         self::ERROROUS  => "There was an internal error while using the pattern '%pattern%'",
-    );
+    ];
 
     /**
      * @var array
      */
-    protected $messageVariables = array(
+    protected $messageVariables = [
         'pattern' => 'pattern'
-    );
+    ];
 
     /**
      * Regular expression pattern
@@ -52,7 +52,7 @@ class Regex extends AbstractValidator
     {
         if (is_string($pattern)) {
             $this->setPattern($pattern);
-            parent::__construct(array());
+            parent::__construct([]);
             return;
         }
 
@@ -98,7 +98,11 @@ class Regex extends AbstractValidator
         $error         = ErrorHandler::stop();
 
         if (false === $status) {
-             throw new Exception\InvalidArgumentException("Internal error parsing the pattern '{$this->pattern}'", 0, $error);
+            throw new Exception\InvalidArgumentException(
+                "Internal error parsing the pattern '{$this->pattern}'",
+                0,
+                $error
+            );
         }
 
         return $this;

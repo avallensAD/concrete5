@@ -6,39 +6,47 @@ defined('C5_EXECUTE') or die("Access Denied.");
 	<header><?php echo t('SEO')?></header>
 	<form method="post" action="<?php echo $controller->action('submit')?>" class="ccm-panel-detail-content-form" data-dialog-form="seo" data-panel-detail-form="seo" data-action-after-save="reload">
 
-	<?php if ($allowEditName) { ?>
+	<?php if ($allowEditName) {
+    ?>
 	<div class="form-group">
 		<label class="control-label" for="cName"><?php echo t('Name')?></label>
 		<div>
 			<input type="text" class="form-control" name="cName" id="cName" value="<?php echo $c->getCollectionName()?>">
     	</div>
 	</div>
-	<?php } ?>
+	<?php 
+} ?>
 
-	<?php if ($allowEditPaths && !$c->isGeneratedCollection()) { ?>
+	<?php if ($allowEditPaths && !$c->isGeneratedCollection()) {
+    ?>
 	<div class="form-group">
 		<label class="control-label launch-tooltip" data-placement="bottom" title="<?php echo t('This page must always be available from at least one URL. This is that URL.')?>" class="launch-tooltip"><?php echo t('URL Slug')?></label>
 		<div>
 			<input type="text" class="form-control" name="cHandle" value="<?php echo $c->getCollectionHandle()?>" id="cHandle"><input type="hidden" name="oldCHandle" id="oldCHandle" value="<?php echo $c->getCollectionHandle()?>">
 		</div>
 	</div>
-	<?php } ?>
+	<?php 
+} ?>
 
-    <hr/>
-
-	<?php foreach ($attributes as $ak) { ?>
-		<?php $av = $c->getAttributeValueObject($ak); ?>
+	<?php foreach ($attributes as $ak) {
+    ?>
+		<?php $av = $c->getAttributeValueObject($ak);
+    ?>
 		<div class="form-group">
 			<label class="control-label"><?php echo $ak->getAttributeKeyDisplayName()?></label>
 			<div>
-			<?php echo $ak->render('form', $av); ?>
+			<?php echo $ak->render(new \Concrete\Core\Attribute\Context\ComposerContext(), $av);
+    ?>
 			</div>
 		</div>
-	<?php } ?>
+	<?php 
+} ?>
 
-        <?php if (isset($sitemap) && $sitemap) { ?>
+        <?php if (isset($sitemap) && $sitemap) {
+    ?>
             <input type="hidden" name="sitemap" value="1" />
-        <?php } ?>
+        <?php 
+} ?>
 
 	</form>
 	<div class="ccm-panel-detail-form-actions dialog-buttons">

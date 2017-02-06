@@ -4,22 +4,29 @@ $valt = Loader::helper('validation/token');
 $th = Loader::helper('text');
 ?>
 
-<?php if ($controller->getTask() == 'inspect') { ?>
+<?php if ($controller->getTask() == 'inspect') {
+    ?>
 
     <div class="ccm-ui">
     <div class="alert alert-info"><?php echo $query?></div>
     <table class="table">
-    <?php foreach($parameters as $params) { ?>
+    <?php foreach ($parameters as $params) {
+    ?>
         <tr>
             <td><?php echo $params?></td>
         </tr>
-    <?php } ?>
+    <?php 
+}
+    ?>
     </table>
     </div>
 
-<?php } else { ?>
+<?php 
+} else {
+    ?>
 
-    <?php if (count($entries)) { ?>
+    <?php if (count($entries)) {
+    ?>
 
         <p class="lead"><?php echo t('Total Logged: %s', $total)?></p>
 
@@ -36,20 +43,24 @@ $th = Loader::helper('text');
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach($entries as $ent) { ?>
+                        <?php foreach ($entries as $ent) {
+    ?>
                         <tr>
                             <td valign="top"><?php echo $ent['queryTotal']?></td>
                             <td valign="top"><?php echo $ent['query']?></td>
                             <td><a href="<?php echo $view->action('inspect', rawurlencode($ent['query']))?>" dialog-width="600" dialog-title="<?php echo t('Query Details')?>" dialog-modal="true" dialog-height="400" class="dialog-launch icon-link"><i class="fa fa-search"></i></a></td>
                         </tr>
-                        <?php } ?>
+                        <?php 
+}
+    ?>
                     </tbody>
                 </table>
             </div>
         </div>
 
         <div class="ccm-search-results-pagination">
-            <?php print $pagination->renderView('dashboard');?>
+            <?php echo $pagination->renderView('dashboard');
+    ?>
         </div>
 
     </div>
@@ -67,11 +78,16 @@ $th = Loader::helper('text');
 
     </div>
 
-    <?php } else { ?>
+    <?php 
+} else {
+    ?>
 
     <p><?php echo t("The database query log is empty.")?></p>
 
-    <?php } ?>
+    <?php 
+}
+    ?>
 
 
-<?php } ?>
+<?php 
+} ?>

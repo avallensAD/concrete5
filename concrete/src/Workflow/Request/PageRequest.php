@@ -1,8 +1,8 @@
 <?php
-
 namespace Concrete\Core\Workflow\Request;
 
 use Concrete\Core\Workflow\Workflow;
+use HtmlObject\Element;
 use Page;
 use PermissionKey;
 use Concrete\Core\Workflow\Progress\Progress as WorkflowProgress;
@@ -13,7 +13,8 @@ abstract class PageRequest extends Request
 {
     public function setRequestedPage($c)
     {
-        $this->cID = $c->getCollectionID();
+        $cID = ($c->getCollectionPointerOriginalID() > 0) ? $c->getCollectionPointerOriginalID() : $c->getCollectionID();
+        $this->cID = $cID;
     }
 
     public function getRequestedPageID()
@@ -62,4 +63,13 @@ abstract class PageRequest extends Request
 
         return $wpr;
     }
+
+    public function getRequestIconElement()
+    {
+        $span = new Element('i');
+        $span->addClass('fa fa-file-text-o');
+        return $span;
+    }
+
+
 }

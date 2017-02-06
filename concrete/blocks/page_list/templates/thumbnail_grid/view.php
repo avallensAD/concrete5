@@ -14,11 +14,11 @@ $c = Page::getCurrentPage();
 
     <?php foreach ($pages as $page):
 
-		$title = $th->entities($page->getCollectionName());
-		$url = $nh->getLinkToCollection($page);
-		$target = ($page->getCollectionPointerExternalLink() != '' && $page->openCollectionPointerExternalLinkInNewWindow()) ? '_blank' : $page->getAttribute('nav_target');
-		$target = empty($target) ? '_self' : $target;
-		$thumbnail = $page->getAttribute('thumbnail');
+        $title = $th->entities($page->getCollectionName());
+        $url = $nh->getLinkToCollection($page);
+        $target = ($page->getCollectionPointerExternalLink() != '' && $page->openCollectionPointerExternalLinkInNewWindow()) ? '_blank' : $page->getAttribute('nav_target');
+        $target = empty($target) ? '_self' : $target;
+        $thumbnail = $page->getAttribute('thumbnail');
         $hoverLinkText = $title;
         $description = $page->getCollectionDescription();
         $description = $controller->truncateSummaries ? $th->wordSafeShortText($description, $controller->truncateChars) : $description;
@@ -37,7 +37,7 @@ $c = Page::getCurrentPage();
                 $img = Core::make('html/image', array($thumbnail));
                 $tag = $img->getTag();
                 $tag->addClass('img-responsive');
-                print $tag;
+                echo $tag;
                 ?>
                     <div class="ccm-block-page-list-page-entry-grid-thumbnail-hover">
                         <div class="ccm-block-page-list-page-entry-grid-thumbnail-title-wrapper">
@@ -49,11 +49,14 @@ $c = Page::getCurrentPage();
                     </div>
                 </a>
 
-                <?php if ($useButtonForLink) { ?>
+                <?php if ($useButtonForLink) {
+    ?>
                 <div class="ccm-block-page-list-title">
-                    <?php echo $title; ?>
+                    <?php echo $title;
+    ?>
                 </div>
-                <?php } ?>
+                <?php
+} ?>
 
                 <?php if ($includeDate): ?>
                     <div class="ccm-block-page-list-date"><?php echo $date?></div>
@@ -82,6 +85,6 @@ $c = Page::getCurrentPage();
     <?php echo $pagination;?>
 <?php endif; ?>
 
-<?php if ( $c->isEditMode() && $controller->isBlockEmpty()): ?>
+<?php if ($c->isEditMode() && $controller->isBlockEmpty()): ?>
     <div class="ccm-edit-mode-disabled-item"><?php echo t('Empty Page List Block.')?></div>
 <?php endif; ?>

@@ -3,10 +3,7 @@ namespace Concrete\Core\Permission\Response;
 
 use Concrete\Core\Page\Type\Type;
 use Loader;
-use Page;
 use User;
-use Group;
-use PermissionKey;
 use Permissions;
 use Area;
 use Block;
@@ -22,7 +19,6 @@ use Concrete\Core\Permission\Assignment\PageTimedAssignment as PageContentPermis
 
 class PageResponse extends Response
 {
-
     // legacy support
     public function canWrite()
     {
@@ -49,11 +45,12 @@ class PageResponse extends Response
         if (Config::get('concrete.permissions.model') != 'simple') {
             $pk = $this->category->getPermissionKeyByHandle('view_page_in_sitemap');
             $pk->setPermissionObject($this->object);
+
             return $pk->validate();
         }
+
         return $this->canViewPage();
     }
-
 
     public function canViewPage()
     {
@@ -94,6 +91,7 @@ class PageResponse extends Response
     {
         $pk = $this->category->getPermissionKeyByHandle('add_subpage');
         $pk->setPermissionObject($this->object);
+
         return $pk->canAddExternalLink();
     }
 
@@ -101,6 +99,7 @@ class PageResponse extends Response
     {
         $pk = $this->category->getPermissionKeyByHandle('add_subpage');
         $pk->setPermissionObject($this->object);
+
         return $pk->validate($ct);
     }
 
@@ -113,6 +112,7 @@ class PageResponse extends Response
                 return true;
             }
         }
+
         return false;
     }
 
@@ -120,6 +120,7 @@ class PageResponse extends Response
     {
         $pk = $this->category->getPermissionKeyByHandle('edit_page_properties');
         $pk->setPermissionObject($this->object);
+
         return $pk->validate($obj);
     }
 
@@ -180,6 +181,7 @@ class PageResponse extends Response
                 return COLLECTION_FORBIDDEN;
             }
         }
+
         return parent::testForErrors();
     }
 
@@ -242,7 +244,7 @@ class PageResponse extends Response
                 array(
                     $row['bID'],
                     $row['cvID'],
-                    $this->object->getCollectionID()
+                    $this->object->getCollectionID(),
                 )
             );
             $b = Block::getByID($row['bID'], $this->object, $arHandle);
@@ -254,7 +256,7 @@ class PageResponse extends Response
             $ppc->setPermissionKeyObject($pk);
             $assignments[] = $ppc;
         }
+
         return $assignments;
     }
-
 }

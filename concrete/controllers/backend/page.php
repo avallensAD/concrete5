@@ -1,14 +1,13 @@
 <?php
 namespace Concrete\Controller\Backend;
 
-use Concrete\Core\Http\Response;
 use Controller;
 use PageType;
 use Permissions;
 use Loader;
 use Redirect;
 use Page as ConcretePage;
-use User;
+use User as ConcreteUser;
 use Concrete\Core\Page\EditResponse as PageEditResponse;
 use Core;
 
@@ -38,6 +37,7 @@ class Page extends Controller
                 if (is_object($parent)) {
                     $d->setPageDraftTargetParentPageID($parent->getCollectionID());
                 }
+
                 return Redirect::url(\Core::getApplicationURL() . '/' . DISPATCHER_FILENAME . '?cID=' . $d->getCollectionID() . '&ctask=check-out-first&' . Loader::helper('validation/token')->getParameter());
             }
         }
@@ -49,9 +49,10 @@ class Page extends Controller
             $c = ConcretePage::getByID($cID);
             $cp = new Permissions($c);
             if ($cp->canViewToolbar()) {
-                $u = new User();
+                $u = new ConcreteUser();
                 $u->unloadCollectionEdit();
             }
+
             return Redirect::page($c);
         }
 

@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -38,12 +38,11 @@ use stdClass;
  */
 abstract class AbstractAccept implements HeaderInterface
 {
-
     /**
      *
-     * @var array
+     * @var stdClass[]
      */
-    protected $fieldValueParts = array();
+    protected $fieldValueParts = [];
 
     protected $regexAddType;
 
@@ -54,20 +53,25 @@ abstract class AbstractAccept implements HeaderInterface
      */
     protected $sorted = false;
 
-
     /**
+     * Parse a full header line or just the field value part.
      *
      * @param string $headerLine
      */
     public function parseHeaderLine($headerLine)
     {
-        $fieldName = $this->getFieldName();
-        $pos = strlen($fieldName) + 2;
-        if (strtolower(substr($headerLine, 0, $pos)) == strtolower($fieldName) . ': ') {
-            $headerLine = substr($headerLine, $pos);
+        if (strpos($headerLine, ':') !== false) {
+            list($name, $value) = GenericHeader::splitHeaderLine($headerLine);
+            if (strtolower($name) !== strtolower($this->getFieldName())) {
+                $value = $headerLine; // This is just for preserve the BC.
+            }
+        } else {
+            $value = $headerLine;
         }
 
-        foreach ($this->getFieldValuePartsFromHeaderLine($headerLine) as $value) {
+        HeaderValue::assertValid($value);
+
+        foreach ($this->getFieldValuePartsFromHeaderLine($value) as $value) {
             $this->addFieldValuePartToQueue($value);
         }
     }
@@ -99,14 +103,13 @@ abstract class AbstractAccept implements HeaderInterface
                 || !isset($values[0])
         ) {
             throw new Exception\InvalidArgumentException(
-                    'Invalid header line for ' . $this->getFieldName() . ' header string'
+                'Invalid header line for ' . $this->getFieldName() . ' header string'
             );
         }
 
-        $out = array();
+        $out = [];
         foreach ($values[0] as $value) {
             $value = trim($value);
-
             $out[] = $this->parseFieldValuePart($value);
         }
 
@@ -135,7 +138,7 @@ abstract class AbstractAccept implements HeaderInterface
         $format = '*';
         $subtype = '*';
 
-        return (object) array(
+        return (object) [
                             'typeString' => trim($fieldValuePart),
                             'type'       => $type,
                             'subtype'    => $subtype,
@@ -144,7 +147,7 @@ abstract class AbstractAccept implements HeaderInterface
                             'priority'   => isset($params['q']) ? $params['q'] : 1,
                             'params'     => $params,
                             'raw'        => trim($raw)
-        );
+        ];
     }
 
     /**
@@ -155,7 +158,7 @@ abstract class AbstractAccept implements HeaderInterface
      */
     protected function getParametersFromFieldValuePart($fieldValuePart)
     {
-        $params = array();
+        $params = [];
         if ((($pos = strpos($fieldValuePart, ';')) !== false)) {
             preg_match_all('/(?:[^;"]|"(?:[^\\\"]|\\\.)*")+/', $fieldValuePart, $paramsStrings);
 
@@ -167,7 +170,12 @@ abstract class AbstractAccept implements HeaderInterface
             foreach ($paramsStrings as $param) {
                 $explode = explode('=', $param, 2);
 
-                $value = trim($explode[1]);
+                if (count($explode) === 2) {
+                    $value = trim($explode[1]);
+                } else {
+                    $value = null;
+                }
+
                 if (isset($value[0]) && $value[0] == '"' && substr($value, -1) == '"') {
                     $value = substr(substr($value, 1), 0, -1);
                 }
@@ -179,7 +187,6 @@ abstract class AbstractAccept implements HeaderInterface
         return $params;
     }
 
-
     /**
      * Get field value
      *
@@ -188,20 +195,19 @@ abstract class AbstractAccept implements HeaderInterface
      */
     public function getFieldValue($values = null)
     {
-        if (!$values) {
+        if ($values === null) {
             return $this->getFieldValue($this->fieldValueParts);
         }
 
-        $strings = array();
+        $strings = [];
         foreach ($values as $value) {
             $params = $value->params;
-            array_walk($params, array($this, 'assembleAcceptParam'));
-            $strings[] = implode(';', array($value->typeString) + $params);
+            array_walk($params, [$this, 'assembleAcceptParam']);
+            $strings[] = implode(';', [$value->typeString] + $params);
         }
 
         return implode(', ', $strings);
     }
-
 
     /**
      * Assemble and escape the field value parameters based on RFC 2616 section 2.1
@@ -213,10 +219,11 @@ abstract class AbstractAccept implements HeaderInterface
      */
     protected function assembleAcceptParam(&$value, $key)
     {
-        $separators = array('(', ')', '<', '>', '@', ',', ';', ':',
-                            '/', '[', ']', '?', '=', '{', '}',  ' ',  "\t");
+        $separators = ['(', ')', '<', '>', '@', ',', ';', ':',
+                            '/', '[', ']', '?', '=', '{', '}',  ' ',  "\t"];
 
-        $escaped = preg_replace_callback('/[[:cntrl:]"\\\\]/', // escape cntrl, ", \
+        $escaped = preg_replace_callback(
+            '/[[:cntrl:]"\\\\]/', // escape cntrl, ", \
             function ($v) {
                 return '\\' . $v[0];
             },
@@ -224,9 +231,9 @@ abstract class AbstractAccept implements HeaderInterface
         );
 
         if ($escaped == $value && !array_intersect(str_split($value), $separators)) {
-            $value = $key . '=' . $value;
+            $value = $key . ($value ? '=' . $value : '');
         } else {
-            $value = $key . '="' . $escaped . '"';
+            $value = $key . ($value ? '="' . $escaped . '"' : '');
         }
 
         return $value;
@@ -241,7 +248,7 @@ abstract class AbstractAccept implements HeaderInterface
      * @throws Exception\InvalidArgumentException
      * @return Accept
      */
-    protected function addType($type, $priority = 1, array $params = array())
+    protected function addType($type, $priority = 1, array $params = [])
     {
         if (!preg_match($this->regexAddType, $type)) {
             throw new Exception\InvalidArgumentException(sprintf(
@@ -262,18 +269,17 @@ abstract class AbstractAccept implements HeaderInterface
         }
 
         if ($priority != 1) {
-            $params = array('q' => sprintf('%01.1f', $priority)) + $params;
+            $params = ['q' => sprintf('%01.1f', $priority)] + $params;
         }
 
         $assembledString = $this->getFieldValue(
-                                array((object) array('typeString' => $type, 'params' => $params))
-                            );
+            [(object) ['typeString' => $type, 'params' => $params]]
+        );
 
         $value = $this->parseFieldValuePart($assembledString);
         $this->addFieldValuePartToQueue($value);
         return $this;
     }
-
 
     /**
      * Does the header have the requested type?
@@ -290,7 +296,7 @@ abstract class AbstractAccept implements HeaderInterface
      * Match a media string against this header
      *
      * @param array|string $matchAgainst
-     * @return Accept\FieldValuePart\AcceptFieldValuePart|bool The matched value or false
+     * @return Accept\FieldValuePArt\AcceptFieldValuePart|bool The matched value or false
      */
     public function match($matchAgainst)
     {
@@ -309,11 +315,9 @@ abstract class AbstractAccept implements HeaderInterface
                 }
 
                 if ($left->type == $right->type) {
-                    if ((($left->subtype == $right->subtype ||
-                            ($right->subtype == '*' || $left->subtype == '*')) &&
-                            ($left->format == $right->format ||
-                                    $right->format == '*' || $left->format == '*')))
-                    {
+                    if (($left->subtype == $right->subtype || ($right->subtype == '*' || $left->subtype == '*')) &&
+                        ($left->format == $right->format || $right->format == '*' || $left->format == '*')
+                    ) {
                         if ($this->matchAcceptParams($left, $right)) {
                             $left->setMatchedAgainst($right);
 
@@ -321,8 +325,6 @@ abstract class AbstractAccept implements HeaderInterface
                         }
                     }
                 }
-
-
             }
         }
 
@@ -371,12 +373,10 @@ abstract class AbstractAccept implements HeaderInterface
                     return false;
                 }
             }
-
         }
 
         return $match1;
     }
-
 
     /**
      * Add a key/value combination to the internal queue
@@ -411,7 +411,7 @@ abstract class AbstractAccept implements HeaderInterface
      */
     protected function sortFieldValueParts()
     {
-        $sort = function ($a, $b) { // If A has higher prio than B, return -1.
+        $sort = function ($a, $b) { // If A has higher precedence than B, return -1.
             if ($a->priority > $b->priority) {
                 return -1;
             } elseif ($a->priority < $b->priority) {
@@ -419,7 +419,7 @@ abstract class AbstractAccept implements HeaderInterface
             }
 
             // Asterisks
-            $values = array('type', 'subtype', 'format');
+            $values = ['type', 'subtype', 'format'];
             foreach ($values as $value) {
                 if ($a->$value == '*' && $b->$value != '*') {
                     return 1;
@@ -436,8 +436,10 @@ abstract class AbstractAccept implements HeaderInterface
 
             //@todo count number of dots in case of type==application in subtype
 
-            // So far they're still the same. Longest stringlength may be more specific
-            if (strlen($a->raw) == strlen($b->raw)) return 0;
+            // So far they're still the same. Longest string length may be more specific
+            if (strlen($a->raw) == strlen($b->raw)) {
+                return 0;
+            }
             return (strlen($a->raw) > strlen($b->raw)) ? -1 : 1;
         };
 

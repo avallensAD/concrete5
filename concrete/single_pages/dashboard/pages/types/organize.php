@@ -4,24 +4,28 @@
 <fieldset>
     <legend><?php echo t('Frequently Used')?></legend>
     <ul class="item-select-list" data-sort="frequently-used">
-    <?php foreach($frequent as $pt) { ?>
+    <?php foreach ($frequent as $pt) {
+    ?>
         <li data-page-type-id="<?php echo $pt->getPageTypeID()?>"><span><?php echo $pt->getPageTypeDisplayName()?> <i class="fa fa-arrow-v ccm-item-select-list-sort"></i></span></li>
-    <?php } ?>
+    <?php 
+} ?>
     </ul>
 </fieldset>
 
 <fieldset>
     <legend><?php echo t('Others')?></legend>
     <ul class="item-select-list" data-sort="other">
-        <?php foreach($infrequent as $pt) { ?>
+        <?php foreach ($infrequent as $pt) {
+    ?>
             <li data-page-type-id="<?php echo $pt->getPageTypeID()?>"><span><?php echo $pt->getPageTypeDisplayName()?> <i class="fa fa-arrow-v ccm-item-select-list-sort"></i></span></li>
-        <?php } ?>
+        <?php 
+} ?>
     </ul>
 </fieldset>
 </div>
 <div class="ccm-dashboard-form-actions-wrapper">
     <div class="ccm-dashboard-form-actions">
-        <a href="<?php echo URL::to('/dashboard/pages/types')?>" class="btn pull-left btn-default"><?php echo t('Back to Page Types')?></a>
+        <a href="<?php echo URL::to('/dashboard/pages/types', $siteTypeID)?>" class="btn pull-left btn-default"><?php echo t('Back to Page Types')?></a>
         <button class="pull-right btn btn-primary" type="button" data-submit="save"><?php echo t('Save Ordering')?></button>
     </div>
 </div>

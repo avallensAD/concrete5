@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -32,7 +32,7 @@ class Feed extends Extension\AbstractFeed
             return $authors[$index];
         }
 
-        return null;
+        return;
     }
 
     /**
@@ -48,7 +48,7 @@ class Feed extends Extension\AbstractFeed
 
         $list = $this->xpath->query('//atom:author');
 
-        $authors = array();
+        $authors = [];
 
         if ($list->length) {
             foreach ($list as $author) {
@@ -276,7 +276,7 @@ class Feed extends Extension\AbstractFeed
         if (!$imageUrl) {
             $image = null;
         } else {
-            $image = array('uri' => $imageUrl);
+            $image = ['uri' => $imageUrl];
         }
 
         $this->data['image'] = $image;
@@ -363,7 +363,7 @@ class Feed extends Extension\AbstractFeed
         if (array_key_exists('hubs', $this->data)) {
             return $this->data['hubs'];
         }
-        $hubs = array();
+        $hubs = [];
 
         $list = $this->xpath->query($this->getXpathPrefix()
             . '//atom:link[@rel="hub"]/@href');
@@ -429,11 +429,11 @@ class Feed extends Extension\AbstractFeed
         if ($list->length) {
             $categoryCollection = new Collection\Category;
             foreach ($list as $category) {
-                $categoryCollection[] = array(
+                $categoryCollection[] = [
                     'term' => $category->getAttribute('term'),
                     'scheme' => $category->getAttribute('scheme'),
                     'label' => $category->getAttribute('label')
-                );
+                ];
             }
         } else {
             return new Collection\Category;
@@ -452,7 +452,7 @@ class Feed extends Extension\AbstractFeed
      */
     protected function getAuthorFromElement(DOMElement $element)
     {
-        $author = array();
+        $author = [];
 
         $emailNode = $element->getElementsByTagName('email');
         $nameNode  = $element->getElementsByTagName('name');
@@ -471,7 +471,7 @@ class Feed extends Extension\AbstractFeed
         }
 
         if (empty($author)) {
-            return null;
+            return;
         }
         return $author;
     }

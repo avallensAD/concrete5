@@ -271,11 +271,15 @@
             my.bindEvent('EditModeBlockDelete', function (event, data) {
                 var block = data.block;
                 block.delete(data.message);
-                ConcreteEvent.fire('EditModeBlockDeleteComplete', {
+            });
+
+            my.bindEvent('EditModeBlockDeleteComplete', function (event, data) {
+                var block = data.block;
+                block.finishDelete();
+                ConcreteEvent.fire('EditModeBlockDeleteAfterComplete', {
                     block: block
                 });
             });
-
 
             var $body = $(window.document.body),
                 scrolling = false,
@@ -415,6 +419,10 @@
                     'title': ccmi18n.editMode
                 });
             }
+
+            ConcreteEvent.fire('EditModeAfterInit', {
+                editMode: my
+            });
         },
 
         bindEvent: function editModeBindEvent(event, handler) {

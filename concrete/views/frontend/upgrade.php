@@ -9,17 +9,22 @@
 <?php echo $status?>
 </p>
 
-<?php if($had_failures) { ?>
+<?php if ($had_failures) {
+    ?>
 <div class="alert-message block-message error">
 	<?php echo t('These errors are most likely related to incompatible add-ons, please upgrade any add-ons and re-run to this script to complete the conversion of your data.')?>
 </div>
-<?php } ?>
+<?php 
+} ?>
 
-<?php if ($completeMessage) { ?>
+<?php if ($completeMessage) {
+    ?>
 	<?php echo $completeMessage?>
-<?php } ?>
+<?php 
+} ?>
 
-<?php if ($do_upgrade) { ?>
+<?php if ($do_upgrade) {
+    ?>
 <p>	<?php echo t('To proceed with the upgrade, click below.')?></p>
 
 
@@ -31,18 +36,24 @@
 
 
 
-<?php } else { ?>
+<?php 
+} else {
+    ?>
 
 	<div class="well" style="text-align: left">
 	    <a href="<?php echo DIR_REL?>/" class="btn btn-default"><?php echo t('Back to Home')?></a>
   	</div>
 	
-	<?php if(!isset($hide_force) || !$hide_force) { ?>
+	<?php if (!isset($hide_force) || !$hide_force) {
+    ?>
         <p>
         <?php echo t('<a href="%s">Click here</a> if you would like to re-run this script.', DIR_REL . '/' . DISPATCHER_FILENAME . '/ccm/system/upgrade?force=1')?>
         </p>
-    <?php } ?>
-<?php } ?>
+    <?php 
+}
+    ?>
+<?php 
+} ?>
 
 </div>
 </div>

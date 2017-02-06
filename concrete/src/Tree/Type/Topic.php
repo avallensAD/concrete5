@@ -1,14 +1,13 @@
 <?php
-
 namespace Concrete\Core\Tree\Type;
 
 use Concrete\Core\Tree\Tree;
-use Concrete\Core\Tree\Node\Type\TopicCategory as TopicCategoryTreeNode;
+use Concrete\Core\Tree\Node\Type\Category as CategoryTreeNode;
 use Database;
 use Group as UserGroup;
 use Concrete\Core\Permission\Access\Entity\GroupEntity as GroupPermissionAccessEntity;
-use Concrete\Core\Permission\Key\TopicCategoryTreeNodeKey as TopicCategoryTreeNodePermissionKey;
-use PermissionAccess;
+use Concrete\Core\Permission\Key\CategoryTreeNodeKey as CategoryTreeNodePermissionKey;
+use Concrete\Core\Permission\Access\Access as PermissionAccess;
 
 class Topic extends Tree
 {
@@ -62,20 +61,21 @@ class Topic extends Tree
     public static function add($name)
     {
         // copy permissions from the other node.
-        $rootNode = TopicCategoryTreeNode::add();
+        $rootNode = CategoryTreeNode::add();
         $treeID = parent::create($rootNode);
         $tree = self::getByID($treeID);
         $tree->setTopicTreeName($name);
 
         // by default, topic trees are viewable by all
         $guestGroupEntity = GroupPermissionAccessEntity::getOrCreate(UserGroup::getByID(GUEST_GROUP_ID));
-        $pk = TopicCategoryTreeNodePermissionKey::getByHandle('view_topic_category_tree_node');
-        $pk->setPermissionObject($rootNode);
-        $pa = PermissionAccess::create($pk);
-        $pa->addListItem($guestGroupEntity);
-        $pt = $pk->getPermissionAssignmentObject();
-        $pt->assignPermissionAccess($pa);
-
+        $pk = CategoryTreeNodePermissionKey::getByHandle('view_category_tree_node');
+        if (is_object($pk)) {
+            $pk->setPermissionObject($rootNode);
+            $pa = PermissionAccess::create($pk);
+            $pa->addListItem($guestGroupEntity);
+            $pt = $pk->getPermissionAssignmentObject();
+            $pt->assignPermissionAccess($pa);
+        }
         return $tree;
     }
 

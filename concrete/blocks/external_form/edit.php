@@ -5,11 +5,11 @@
     <?php echo $form->label('cstFilename', t('File to Include'))?>
     <select name="filename" id="cstFilename" class="form-control">
         <option value="">** <?php echo t('Select a form')?></option>
-    <?php foreach($filenames as $ffilename) {
-        $selected = ($ffilename == $filename) ? " selected" : "";
+    <?php foreach ($filenames as $ffilename) {
+    $selected = ($ffilename == $filename) ? " selected" : "";
 
-        echo('<option value="' . $ffilename . '"' . $selected . '>' . $file->unfilename($ffilename) . '</option>');
-    } ?>
+    echo '<option value="' . $ffilename . '"' . $selected . '>' . $file->unfilename($ffilename) . '</option>';
+} ?>
     </select>
     <div class="help-block">
         <p style="word-break: break-all;"><?php echo t('This is a list of all files found in your external forms directory: %s', DIR_FILES_BLOCK_TYPES_FORMS_EXTERNAL);?></p>

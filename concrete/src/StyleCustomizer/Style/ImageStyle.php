@@ -1,7 +1,7 @@
 <?php
 namespace Concrete\Core\StyleCustomizer\Style;
 
-use \Concrete\Core\StyleCustomizer\Style\Value\ImageValue;
+use Concrete\Core\StyleCustomizer\Style\Value\ImageValue;
 use Less_Environment;
 use File;
 use Loader;
@@ -22,10 +22,10 @@ class ImageStyle extends Style
         }
         $strOptions = json_encode($options);
 
-        print '<span class="ccm-style-customizer-display-swatch-wrapper" data-image-selector="' . $this->getVariable() . '"></span>';
-        print "<script type=\"text/javascript\">";
-        print "$(function() { $('span[data-image-selector=" . $this->getVariable() . "]').concreteStyleCustomizerImageSelector({$strOptions}); });";
-        print "</script>";
+        echo '<span class="ccm-style-customizer-display-swatch-wrapper" data-image-selector="' . $this->getVariable() . '"></span>';
+        echo "<script type=\"text/javascript\">";
+        echo "$(function() { $('span[data-image-selector=" . $this->getVariable() . "]').concreteStyleCustomizerImageSelector({$strOptions}); });";
+        echo "</script>";
     }
 
     public function getValueFromRequest(\Symfony\Component\HttpFoundation\ParameterBag $request)
@@ -43,7 +43,7 @@ class ImageStyle extends Style
                         $iv->setFileID($image);
                         $iv->setUrl($f->getRelativePath());
                     }
-               }
+                }
             } else {
                 $iv->setUrl($image);
             }
@@ -52,9 +52,9 @@ class ImageStyle extends Style
         }
     }
 
-    public function getValuesFromVariables($rules = array())
+    public static function getValuesFromVariables($rules = [])
     {
-        $values = array();
+        $values = [];
         foreach ($rules as $rule) {
             if (preg_match('/@(.+)\-image/i', isset($rule->name) ? $rule->name : '', $matches)) {
                 $entryURI = $rule->value->value[0]->value[0]->currentFileInfo['entryUri'];
@@ -72,5 +72,4 @@ class ImageStyle extends Style
 
         return $values;
     }
-
 }

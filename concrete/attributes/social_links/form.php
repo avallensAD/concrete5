@@ -1,14 +1,23 @@
 <?php defined('C5_EXECUTE') or die("Access Denied.");
-use \Concrete\Core\Sharing\SocialNetwork\Service as Service; ?>
+use \Concrete\Core\Sharing\SocialNetwork\Service as Service;
+
+?>
 
 <div class="ccm-social-link-attribute-wrapper">
-<?php for ($i = 0; $i < count($data['service']); $i++) { ?>
+<?php for ($i = 0; $i < count($data['service']); ++$i) {
+    ?>
 	<div class="ccm-social-link-attribute ">
         <div class="form-group">
             <select name="<?php echo $this->field('service')?>[]" class="ccm-social-link-service-selector form-control">
-                <?php foreach($services as $s) { ?>
-                    <option value="<?php echo $s->getHandle()?>" data-icon="<?php echo $s->getIcon() ?>" <?php if ($s->getHandle() == $data['service'][$i]) { ?> selected="selected" <?php } ?>><?php echo $s->getDisplayName() ?></option>
-                <?php } ?>
+                <?php foreach ($services as $s) {
+    ?>
+                    <option value="<?php echo $s->getHandle()?>" data-icon="<?php echo $s->getIcon() ?>" <?php if ($s->getHandle() == $data['service'][$i]) {
+    ?> selected="selected" <?php
+}
+    ?>><?php echo $s->getDisplayName() ?></option>
+                <?php
+}
+    ?>
             </select>
         </div>
         <div class="form-group">
@@ -16,9 +25,10 @@ use \Concrete\Core\Sharing\SocialNetwork\Service as Service; ?>
                 <span class="ccm-social-link-service-add-on-wrapper">
                     <span class="add-on">
                        <?php
-                       if(is_object(Service::getByHandle($data['service'][$i]))) {
+                       if (is_object(Service::getByHandle($data['service'][$i]))) {
                            echo Service::getByHandle($data['service'][$i])->getServiceIconHTML();
-                       } ?>
+                       }
+    ?>
                     </span>
                     <input name="<?php echo $this->field('serviceInfo')?>[]" type="text" value="<?php echo $data['serviceInfo'][$i]?>" />
                     <button type="button" class="ccm-social-link-attribute-remove-line btn btn-link"><i class="fa fa-trash-o"></i></button>
@@ -26,7 +36,8 @@ use \Concrete\Core\Sharing\SocialNetwork\Service as Service; ?>
             </span>
         </div>
 	</div>
-<?php } ?>
+<?php 
+} ?>
 
 </div>
 

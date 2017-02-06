@@ -8,7 +8,7 @@ $form = Loader::helper('form');
 <form id="site-permissions-form" action="<?php echo $view->action('')?>" method="post" role="form">
 	<?php echo $this->controller->token->output('site_permissions_code')?>
 	
-    <?php if(Config::get('concrete.permissions.model') != 'simple'):?>
+    <?php if (Config::get('concrete.permissions.model') != 'simple'):?>
     <div>
         <p>
             <?php echo t('Your concrete5 site does not use the simple permissions model. You must change your permissions for each specific page and content area.')?>
@@ -45,14 +45,14 @@ $form = Loader::helper('form');
     <fieldset>
     <legend style="margin-bottom: 0px"><?php echo t('Edit Access')?></legend>
         <span class="help-block"><?php echo t('Choose which users and groups may edit your site. Note: These settings can be overridden on specific pages.')?></span>
-        <?php foreach($gArray as $g):?>
+        <?php foreach ($gArray as $g):?>
             <div class="checkbox">
                 <label>
                     <?php echo $form->checkbox('gID[]', $g->getGroupID(), in_array($g->getGroupID(), $editAccess))?>
                     <span><?php echo $g->getGroupDisplayName()?></span>
                 </label>
             </div>
-        <?php endforeach?>
+        <?php endforeach ?>
     </fieldset>
     
     <div class="ccm-dashboard-form-actions-wrapper">
@@ -61,6 +61,6 @@ $form = Loader::helper('form');
         </div>
     </div>
 
-<?php endif?>
+<?php endif ?>
 </form>
 <?php echo $h->getDashboardPaneFooterWrapper(false);?>

@@ -4,27 +4,38 @@ namespace Concrete\Core\Package;
 use AuthenticationType;
 use Concrete\Core\Backup\ContentImporter;
 use Concrete\Core\Config\Renderer;
-use Concrete\Core\File\Image\Thumbnail\Type\Type;
+use Concrete\Core\Database\DatabaseStructureManager;
+use Concrete\Core\Entity\Site\Locale;
+use Concrete\Core\File\Filesystem;
+use Concrete\Core\File\Service\File;
 use Concrete\Core\Mail\Importer\MailImporter;
 use Concrete\Core\Package\Routine\AttachModeInstallRoutine;
 use Concrete\Core\Permission\Access\Entity\ConversationMessageAuthorEntity;
 use Concrete\Core\Permission\Access\Entity\GroupEntity as GroupPermissionAccessEntity;
-use Concrete\Core\Permission\Access\Entity\PageOwnerEntity as PageOwnerPermissionAccessEntity;
+use Concrete\Core\Permission\Access\Entity\UserEntity;
+use Concrete\Core\Tree\Node\Type\Category;
+use Concrete\Core\Tree\Node\Type\ExpressEntryCategory;
+use Concrete\Core\Tree\Type\ExpressEntryResults;
 use Concrete\Core\Updater\Migrations\Configuration;
 use Concrete\Core\User\Point\Action\Action as UserPointAction;
+use Concrete\Block\ExpressForm\Controller as ExpressFormBlockController;
 use Config;
 use Core;
 use Database;
-use FileSet;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Tools\Setup;
 use Group;
 use GroupTree;
 use Hautelook\Phpass\PasswordHash;
 use Package as BasePackage;
 use Page;
-use PermissionAccess;
+use Concrete\Core\Permission\Access\Access as PermissionAccess;
 use PermissionKey;
 use User;
 use UserInfo;
+use Localization;
+use Exception;
+use Throwable;
 
 class StartingPointPackage extends BasePackage
 {
@@ -33,26 +44,28 @@ class StartingPointPackage extends BasePackage
     protected $REL_DIR_PACKAGES_CORE = REL_DIR_STARTING_POINT_PACKAGES_CORE;
     protected $REL_DIR_PACKAGES = REL_DIR_STARTING_POINT_PACKAGES;
 
-    protected $routines = array();
+    protected $routines = [];
 
     public function __construct()
     {
-        $this->routines = array(
+        $this->routines = [
             new StartingPointInstallRoutine(
                 'make_directories',
                 5,
                 t('Starting installation and creating directories.')),
             new StartingPointInstallRoutine('install_database', 10, t('Creating database tables.')),
+            new StartingPointInstallRoutine('install_site', 12, t('Creating site.')),
             new StartingPointInstallRoutine('add_users', 15, t('Adding admin user.')),
             new StartingPointInstallRoutine('install_permissions', 20, t('Installing permissions & workflow.')),
-            new StartingPointInstallRoutine('add_home_page', 23, t('Creating home page.')),
-            new StartingPointInstallRoutine('install_attributes', 25, t('Installing attributes.')),
-            new StartingPointInstallRoutine('install_blocktypes', 30, t('Adding block types.')),
-            new StartingPointInstallRoutine('install_gathering', 33, t('Adding gathering data sources.')),
-            new StartingPointInstallRoutine('install_page_types', 36, t('Page type basic setup.')),
-            new StartingPointInstallRoutine('install_themes', 38, t('Adding themes.')),
-            new StartingPointInstallRoutine('install_jobs', 40, t('Installing automated jobs.')),
-            new StartingPointInstallRoutine('install_dashboard', 45, t('Installing dashboard.')),
+            new StartingPointInstallRoutine('install_data_objects', 23, t('Installing Custom Data Objects.')),
+            new StartingPointInstallRoutine('add_home_page', 26, t('Creating home page.')),
+            new StartingPointInstallRoutine('install_attributes', 30, t('Installing attributes.')),
+            new StartingPointInstallRoutine('install_blocktypes', 35, t('Adding block types.')),
+            new StartingPointInstallRoutine('install_gathering', 39, t('Adding gathering data sources.')),
+            new StartingPointInstallRoutine('install_page_types', 40, t('Page type basic setup.')),
+            new StartingPointInstallRoutine('install_themes', 45, t('Adding themes.')),
+            new StartingPointInstallRoutine('install_jobs', 47, t('Installing automated jobs.')),
+            new StartingPointInstallRoutine('install_dashboard', 50, t('Installing dashboard.')),
             new StartingPointInstallRoutine(
                 'install_required_single_pages',
                 55,
@@ -61,9 +74,10 @@ class StartingPointPackage extends BasePackage
             new StartingPointInstallRoutine('install_config', 60, t('Configuring site.')),
             new StartingPointInstallRoutine('import_files', 65, t('Importing files.')),
             new StartingPointInstallRoutine('install_content', 70, t('Adding pages and content.')),
-            new StartingPointInstallRoutine('set_site_permissions', 90, t('Setting up site permissions.')),
+            new StartingPointInstallRoutine('install_desktops', 85, t('Adding desktops.')),
+            new StartingPointInstallRoutine('install_site_permissions', 90, t('Setting site permissions.')),
             new AttachModeInstallRoutine('finish', 95, t('Finishing.')),
-        );
+        ];
     }
 
     // default routines
@@ -85,14 +99,14 @@ class StartingPointPackage extends BasePackage
     {
         $fh = Core::make('helper/file');
         // first we check the root install directory. If it exists, then we only include stuff from there. Otherwise we get it from the core.
-        $available = array();
+        $available = [];
         if (is_dir(DIR_STARTING_POINT_PACKAGES)) {
             $available = $fh->getDirectoryContents(DIR_STARTING_POINT_PACKAGES);
         }
         if (count($available) == 0) {
             $available = $fh->getDirectoryContents(DIR_STARTING_POINT_PACKAGES_CORE);
         }
-        $availableList = array();
+        $availableList = [];
         foreach ($available as $pkgHandle) {
             $cl = static::getClass($pkgHandle);
             if ($cl !== null) {
@@ -132,78 +146,109 @@ class StartingPointPackage extends BasePackage
         return $this->routines;
     }
 
-    public function add_home_page()
+    /**
+     * @param string $routineName
+     *
+     * @throws Exception
+     * @throws Throwable
+     */
+    public function executeInstallRoutine($routineName)
+    {
+        $localization = Localization::getInstance();
+        $localization->pushActiveContext('system');
+        $error = null;
+        try {
+            $this->$routineName();
+        } catch (Exception $x) {
+            $error = $x;
+        } catch (Throwable $x) {
+            $error = $x;
+        }
+        $localization->popActiveContext();
+        if ($error !== null) {
+            throw $error;
+        }
+    }
+
+    protected function add_home_page()
     {
         Page::addHomePage();
     }
 
-    /*
-    public function precache()
+    protected function install_data_objects()
     {
-        $c = Page::getByPath('/dashboard/home');
-        $blocks = $c->getBlocks();
-        foreach ($blocks as $b) {
-            $bi = $b->getInstance();
-            $bi->setupAndRun('view');
-        }
-        Core::make('helper/concrete/ui')->cacheInterfaceItems();
-    }
-    */
+        \Concrete\Core\Tree\Node\NodeType::add('category');
+        \Concrete\Core\Tree\Node\NodeType::add('express_entry_category');
+        \Concrete\Core\Tree\TreeType::add('express_entry_results');
+        \Concrete\Core\Tree\Node\NodeType::add('express_entry_results');
 
-    public function install_attributes()
+        $tree = ExpressEntryResults::add();
+        $node = $tree->getRootTreeNodeObject();
+
+        // Add forms node beneath it.
+        $forms = ExpressEntryCategory::add(ExpressFormBlockController::FORM_RESULTS_CATEGORY_NAME, $node);
+
+        // Set the forms node to allow guests to post entries, since we're using it from the front-end.
+        $forms->assignPermissions(
+            Group::getByID(GUEST_GROUP_ID),
+            ['add_express_entries']
+        );
+
+        // Set the root node to allow guests to view entries, so that blocks like express
+        // entry list and express entry details work.
+        $node->assignPermissions(
+            Group::getByID(GUEST_GROUP_ID),
+            ['view_express_entries']
+        );
+    }
+
+    protected function install_attributes()
     {
         $ci = new ContentImporter();
         $ci->importContentFile(DIR_BASE_CORE . '/config/install/base/attributes.xml');
 
         $topicType = \Concrete\Core\Tree\TreeType::add('topic');
-        $topicCategoryNodeType = \Concrete\Core\Tree\Node\NodeType::add('topic_category');
         $topicNodeType = \Concrete\Core\Tree\Node\NodeType::add('topic');
-        //$tree = \Concrete\Core\Tree\Type\Topic::add('Topics');
     }
 
-    public function install_dashboard()
+    protected function install_dashboard()
     {
         $ci = new ContentImporter();
-        $ci->importContentFile(DIR_BASE_CORE . '/config/install/base/dashboard.xml');
+        $ci->importContentFile(DIR_BASE_CORE . '/config/install/base/single_pages/dashboard.xml');
     }
 
-    public function install_gathering()
+    protected function install_gathering()
     {
         $ci = new ContentImporter();
         $ci->importContentFile(DIR_BASE_CORE . '/config/install/base/gathering.xml');
     }
 
-    public function install_page_types()
+    protected function install_page_types()
     {
         $ci = new ContentImporter();
         $ci->importContentFile(DIR_BASE_CORE . '/config/install/base/page_types.xml');
     }
 
-    public function install_page_templates()
+    protected function install_required_single_pages()
     {
         $ci = new ContentImporter();
-        $ci->importContentFile(DIR_BASE_CORE . '/config/install/base/page_templates.xml');
+        $ci->importContentFile(DIR_BASE_CORE . '/config/install/base/single_pages/global.xml');
+        $ci->importContentFile(DIR_BASE_CORE . '/config/install/base/single_pages/root.xml');
     }
 
-    public function install_required_single_pages()
-    {
-        $ci = new ContentImporter();
-        $ci->importContentFile(DIR_BASE_CORE . '/config/install/base/login_registration.xml');
-    }
-
-    public function install_image_editor()
+    protected function install_image_editor()
     {
         $ci = new ContentImporter();
         $ci->importContentFile(DIR_BASE_CORE . '/config/install/base/image_editor.xml');
     }
 
-    public function install_blocktypes()
+    protected function install_blocktypes()
     {
         $ci = new ContentImporter();
         $ci->importContentFile(DIR_BASE_CORE . '/config/install/base/blocktypes.xml');
     }
 
-    public function install_themes()
+    protected function install_themes()
     {
         $ci = new ContentImporter();
         $ci->importContentFile(DIR_BASE_CORE . '/config/install/base/themes.xml');
@@ -212,26 +257,30 @@ class StartingPointPackage extends BasePackage
         }
     }
 
-    public function install_jobs()
+    protected function install_jobs()
     {
         $ci = new ContentImporter();
         $ci->importContentFile(DIR_BASE_CORE . '/config/install/base/jobs.xml');
     }
 
-    public function install_config()
+    protected function install_config()
     {
         $ci = new ContentImporter();
         $ci->importContentFile(DIR_BASE_CORE . '/config/install/base/config.xml');
     }
 
-    public function import_files()
+    protected function import_files()
     {
         $type = \Concrete\Core\File\StorageLocation\Type\Type::add('default', t('Default'));
         \Concrete\Core\File\StorageLocation\Type\Type::add('local', t('Local'));
         $configuration = $type->getConfigurationObject();
         $fsl = \Concrete\Core\File\StorageLocation\StorageLocation::add($configuration, t('Default'), true);
 
-        $thumbnailType = new Type();
+        $filesystem = new Filesystem();
+        $tree = $filesystem->create();
+        $filesystem->setDefaultPermissions($tree);
+
+        $thumbnailType = new \Concrete\Core\Entity\File\Image\Thumbnail\Type\Type();
         $thumbnailType->requireType();
         $thumbnailType->setName(tc('ThumbnailTypeName', 'File Manager Thumbnails'));
         $thumbnailType->setHandle(Config::get('concrete.icons.file_manager_listing.handle'));
@@ -239,7 +288,7 @@ class StartingPointPackage extends BasePackage
         $thumbnailType->setHeight(Config::get('concrete.icons.file_manager_listing.height'));
         $thumbnailType->save();
 
-        $thumbnailType = new Type();
+        $thumbnailType = new \Concrete\Core\Entity\File\Image\Thumbnail\Type\Type();
         $thumbnailType->requireType();
         $thumbnailType->setName(tc('ThumbnailTypeName', 'File Manager Detail Thumbnails'));
         $thumbnailType->setHandle(Config::get('concrete.icons.file_manager_detail.handle'));
@@ -256,13 +305,19 @@ class StartingPointPackage extends BasePackage
         }
     }
 
-    public function install_content()
+    protected function install_content()
     {
         $ci = new ContentImporter();
         $ci->importContentFile($this->getPackagePath() . '/content.xml');
     }
 
-    public function install_database()
+    protected function install_desktops()
+    {
+        $desktop = \Page::getByPath('/dashboard/welcome');
+        $desktop->movePageDisplayOrderToTop();
+    }
+
+    protected function install_database()
     {
         $db = Database::get();
         $num = $db->GetCol("show tables");
@@ -275,16 +330,31 @@ class StartingPointPackage extends BasePackage
         }
         $installDirectory = DIR_BASE_CORE . '/config';
         try {
-            $em = \ORM::entityManager('core');
-            $dbm = Core::make('database/structure', array($em));
+            // Retrieving metadata from the entityManager created with \ORM::entityManager()
+            // will result in a empty metadata array. Because all drivers are wrapped in a driverChain
+            // the method getAllMetadata() of Doctrine\Common\Persistence\Mapping\AbstractClassMetadataFactory
+            // is going to return a empty array. To overcome this issue a new EntityManager is create with the
+            // only purpose to be used during the installation.
+            $config = Setup::createConfiguration(true, \Config::get('database.proxy_classes'));
+            \Doctrine\Common\Annotations\AnnotationReader::addGlobalIgnoredName('subpackages');
+            \Doctrine\Common\Annotations\AnnotationReader::addGlobalIgnoredName('package');
+            // Use default AnnotationReader
+            $driverImpl = $config->newDefaultAnnotationDriver(DIR_BASE_CORE . DIRECTORY_SEPARATOR . DIRNAME_CLASSES . DIRECTORY_SEPARATOR . DIRNAME_ENTITIES, false);
+            $config->setMetadataDriverImpl($driverImpl);
+            $em = EntityManager::create(\Database::connection(), $config);
+            $dbm = new DatabaseStructureManager($em);
+            $dbm->destroyProxyClasses();
             $dbm->generateProxyClasses();
 
             Package::installDB($installDirectory . '/db.xml');
+
+            $dbm->installDatabase();
             $this->indexAdditionalDatabaseFields();
 
             $configuration = new Configuration();
             $version = $configuration->getVersion(Config::get('concrete.version_db'));
             $version->markMigrated();
+            $configuration->registerPreviousMigratedVersions();
         } catch (\Exception $e) {
             throw new \Exception(t('Unable to install database: %s', $db->ErrorMsg() ? $db->ErrorMsg() : $e->getMessage()));
         }
@@ -298,12 +368,9 @@ class StartingPointPackage extends BasePackage
         $db->Execute('ALTER TABLE Groups ADD INDEX (`gPath` (255))');
         $db->Execute('ALTER TABLE SignupRequests ADD INDEX (`ipFrom` (32))');
         $db->Execute('ALTER TABLE UserBannedIPs ADD UNIQUE INDEX (ipFrom (32), ipTo(32))');
-        $db->Execute(
-            'ALTER TABLE QueueMessages ADD FOREIGN KEY (`queue_id`) REFERENCES `Queues` (`queue_id`) ON DELETE CASCADE ON UPDATE CASCADE'
-        );
     }
 
-    public function add_users()
+    protected function add_users()
     {
         // Firstly, install the core authentication types
         $cba = AuthenticationType::add('concrete', 'Standard');
@@ -353,16 +420,25 @@ class StartingPointPackage extends BasePackage
         $superuser = UserInfo::addSuperUser($uPasswordEncrypted, $uEmail);
         $u = User::getByUserID(USER_SUPER_ID, true, false);
 
-        MailImporter::add(array('miHandle' => 'private_message'));
+        MailImporter::add(['miHandle' => 'private_message']);
         UserPointAction::add('won_badge', t('Won a Badge'), 5, false, true);
 
         // Install conversation default email
-        \Conversation::setDefaultSubscribedUsers(array($superuser));
+        \Conversation::setDefaultSubscribedUsers([$superuser]);
+        $ci = new ContentImporter();
+        $ci->importContentFile(DIR_BASE_CORE . '/config/install/base/conversation.xml');
     }
 
-    public function make_directories()
+    protected function make_directories()
     {
-        Core::make('cache')->flush();
+        // Delete generated overrides and doctrine
+        $fh = new File();
+        if (is_dir(DIR_CONFIG_SITE . '/generated_overrides')) {
+            $fh->removeAll(DIR_CONFIG_SITE . '/generated_overrides');
+        }
+        if (is_dir(Config::get('database.proxy_classes'))) {
+            $fh->removeAll(Config::get('database.proxy_classes'));
+        }
 
         if (!is_dir(Config::get('concrete.cache.directory'))) {
             mkdir(Config::get('concrete.cache.directory'), Config::get('concrete.filesystem.permissions.directory'));
@@ -379,7 +455,7 @@ class StartingPointPackage extends BasePackage
         }
     }
 
-    public function finish()
+    protected function finish()
     {
         $config = \Core::make('config');
         $site_install = $config->getLoader()->load(null, 'site_install');
@@ -393,11 +469,25 @@ class StartingPointPackage extends BasePackage
         file_put_contents(DIR_CONFIG_SITE . '/database.php', $renderer->render());
         @chmod(DIR_CONFIG_SITE . '/database.php', Config::get('concrete.filesystem.permissions.file'));
 
+        if (isset($site_install['session-handler']) && $site_install['session-handler']) {
+            $config->save('concrete.session.handler', $site_install['session-handler']);
+        }
+
+        unset($site_install['session-handler']);
+
         $renderer = new Renderer($site_install);
 
         if (!file_exists(DIR_CONFIG_SITE . '/app.php')) {
             file_put_contents(DIR_CONFIG_SITE . '/app.php', $renderer->render());
             @chmod(DIR_CONFIG_SITE . '/app.php', Config::get('concrete.filesystem.permissions.file'));
+        }
+
+        $siteConfig = \Site::getDefault()->getConfigRepository();
+        if (isset($site_install['canonical-url']) && $site_install['canonical-url']) {
+            $siteConfig->save('seo.canonical_url', $site_install['canonical-url']);
+        }
+        if (isset($site_install['canonical-ssl-url']) && $site_install['canonical-ssl-url']) {
+            $siteConfig->save('seo.canonical_ssl_url', $site_install['canonical-ssl-url']);
         }
 
         @unlink(DIR_CONFIG_SITE . '/site_install.php');
@@ -407,85 +497,71 @@ class StartingPointPackage extends BasePackage
         Core::make('cache')->flush();
     }
 
-    public function install_permissions()
+    protected function install_permissions()
     {
         $ci = new ContentImporter();
         $ci->importContentFile(DIR_BASE_CORE . '/config/install/base/permissions.xml');
     }
 
-    public function set_site_permissions()
+    protected function install_site()
     {
-        $fs = FileSet::getGlobal();
+        \Core::make('site/type')->installDefault();
+        $site = \Site::installDefault(SITE_INSTALL_LOCALE);
+        $site->getConfigRepository()->save('name', SITE);
+
+        if (defined('APP_INSTALL_LANGUAGE') && APP_INSTALL_LANGUAGE != '' && APP_INSTALL_LANGUAGE != 'en_US') {
+            Config::save('concrete.locale', APP_INSTALL_LANGUAGE);
+        }
+
+        Config::save('concrete.version_installed', APP_VERSION);
+        Config::save('concrete.misc.login_redirect', 'DESKTOP');
+    }
+
+    protected function install_site_permissions()
+    {
         $g1 = Group::getByID(GUEST_GROUP_ID);
         $g2 = Group::getByID(REGISTERED_GROUP_ID);
         $g3 = Group::getByID(ADMIN_GROUP_ID);
 
-        $fs->assignPermissions($g1, array('view_file_set_file'));
-        $fs->assignPermissions(
+        $filesystem = new Filesystem();
+        $folder = $filesystem->getRootFolder();
+        $folder->assignPermissions($g1, ['view_file_folder_file']);
+        $folder->assignPermissions(
             $g3,
-            array(
-                'view_file_set_file',
-                'search_file_set',
-                'edit_file_set_file_properties',
-                'edit_file_set_file_contents',
-                'copy_file_set_files',
-                'edit_file_set_permissions',
-                'delete_file_set_files',
-                'delete_file_set',
+            [
+                'view_file_folder_file',
+                'search_file_folder',
+                'edit_file_folder',
+                'edit_file_folder_file_properties',
+                'edit_file_folder_file_contents',
+                'copy_file_folder_files',
+                'edit_file_folder_permissions',
+                'delete_file_folder_files',
+                'delete_file_folder',
                 'add_file',
-            )
+            ]
         );
-        if (defined('SITE_INSTALL_LOCALE') && SITE_INSTALL_LOCALE != '' && SITE_INSTALL_LOCALE != 'en_US') {
-            Config::save('concrete.locale', SITE_INSTALL_LOCALE);
-        }
-        Config::save('concrete.site', SITE);
-        Config::save('concrete.version_installed', APP_VERSION);
 
         $u = new User();
         $u->saveConfig('NEWSFLOW_LAST_VIEWED', 'FIRSTRUN');
 
-        $home = Page::getByID(1, "RECENT");
-        $home->assignPermissions($g1, array('view_page'));
-        $home->assignPermissions(
-            $g3,
-            array(
-                'view_page_versions',
-                'view_page_in_sitemap',
-                'preview_page_as_user',
-                'edit_page_properties',
-                'edit_page_contents',
-                'edit_page_speed_settings',
-                'edit_page_multilingual_settings',
-                'edit_page_theme',
-                'edit_page_template',
-                'edit_page_page_type',
-                'edit_page_permissions',
-                'delete_page',
-                'delete_page_versions',
-                'approve_page_versions',
-                'add_subpage',
-                'move_or_copy_page',
-                'schedule_page_contents_guest_access',
-            )
-        );
-
         // login
         $login = Page::getByPath('/login', "RECENT");
-        $login->assignPermissions($g1, array('view_page'));
+        $login->assignPermissions($g1, ['view_page']);
 
         // register
         $register = Page::getByPath('/register', "RECENT");
-        $register->assignPermissions($g1, array('view_page'));
+        $register->assignPermissions($g1, ['view_page']);
 
         // dashboard
         $dashboard = Page::getByPath('/dashboard', "RECENT");
-        $dashboard->assignPermissions($g3, array('view_page'));
+        $dashboard->assignPermissions($g3, ['view_page']);
 
         // drafts
         $drafts = Page::getByPath('/!drafts', "RECENT");
         $drafts->assignPermissions(
             $g3,
-            array(
+            [
                 'view_page',
                 'view_page_versions',
                 'view_page_in_sitemap',
@@ -504,7 +580,32 @@ class StartingPointPackage extends BasePackage
                 'add_subpage',
                 'move_or_copy_page',
                 'schedule_page_contents_guest_access',
-            )
+            ]
+        );
+
+        $home = Page::getByID(1, "RECENT");
+        $home->assignPermissions($g1, ['view_page']);
+        $home->assignPermissions(
+            $g3,
+            [
+                'view_page_versions',
+                'view_page_in_sitemap',
+                'preview_page_as_user',
+                'edit_page_properties',
+                'edit_page_contents',
+                'edit_page_speed_settings',
+                'edit_page_multilingual_settings',
+                'edit_page_theme',
+                'edit_page_template',
+                'edit_page_page_type',
+                'edit_page_permissions',
+                'delete_page',
+                'delete_page_versions',
+                'approve_page_versions',
+                'add_subpage',
+                'move_or_copy_page',
+                'schedule_page_contents_guest_access',
+            ]
         );
 
         $config = \Core::make('config/database');
@@ -515,13 +616,13 @@ class StartingPointPackage extends BasePackage
         // group permissions
         $tree = GroupTree::get();
         $node = $tree->getRootTreeNodeObject();
-        $permissions = array(
+        $permissions = [
             'search_users_in_group',
             'edit_group',
             'assign_group',
             'add_sub_group',
             'edit_group_permissions',
-        );
+        ];
         $adminGroupEntity = GroupPermissionAccessEntity::getOrCreate($g3);
         foreach ($permissions as $pkHandle) {
             $pk = PermissionKey::getByHandle($pkHandle);
@@ -570,17 +671,31 @@ class StartingPointPackage extends BasePackage
         $pt = $pk->getPermissionAssignmentObject();
         $pt->assignPermissionAccess($pa);
 
-        $permissions = array(
+        $permissions = [
             'edit_conversation_permissions',
             'flag_conversation_message',
             'approve_conversation_message',
-        );
+        ];
         foreach ($permissions as $pkHandle) {
             $pk = PermissionKey::getByHandle($pkHandle);
             $pa = PermissionAccess::create($pk);
             $pa->addListItem($adminGroupEntity);
             $pt = $pk->getPermissionAssignmentObject();
             $pt->assignPermissionAccess($pa);
+        }
+
+        // notification
+        $adminUserEntity = UserEntity::getOrCreate(\UserInfo::getByID(USER_SUPER_ID));
+        $pk = PermissionKey::getByHandle('notify_in_notification_center');
+        $pa = PermissionAccess::create($pk);
+        $pa->addListItem($adminUserEntity);
+        $pa->addListItem($adminGroupEntity);
+        $pt = $pk->getPermissionAssignmentObject();
+        $pt->assignPermissionAccess($pa);
+
+        try {
+            Core::make('helper/file')->makeExecutable(DIR_BASE_CORE . '/bin/concrete5', 'all');
+        } catch (\Exception $x) {
         }
     }
 }

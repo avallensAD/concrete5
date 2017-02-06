@@ -3,22 +3,21 @@
 
 $helperFile = Loader::helper('concrete/file');
 if ($controller->getTask() == 'add') {
-	$enablePosting = 1;
-	$paginate = 1;
-	$itemsPerPage = 50;
-	$displayMode = 'threaded';
-	$enableOrdering = 1;
-	$enableCommentRating = 1;
-	$displayPostingForm = 'top';
-	$addMessageLabel = t('Add Message');
+    $enablePosting = 1;
+    $paginate = 1;
+    $itemsPerPage = 50;
+    $displayMode = 'threaded';
+    $enableOrdering = 1;
+    $enableCommentRating = 1;
+    $displayPostingForm = 'top';
+    $addMessageLabel = t('Add Message');
     $attachmentOverridesEnabled = 0;
     $attachmentsEnabled = 1;
     $fileAccessFileTypes = Config::get('conversations.files.allowed_types');
     //is nothing's been defined, display the constant value
     if (!$fileAccessFileTypes) {
         $fileAccessFileTypes = $helperFile->unserializeUploadFileExtensions(Config::get('concrete.upload.extensions'));
-    }
-    else {
+    } else {
         $fileAccessFileTypes = $helperFile->unserializeUploadFileExtensions($fileAccessFileTypes);
     }
     $maxFileSizeGuest = Config::get('conversations.files.guest.max_size');
@@ -27,12 +26,12 @@ if ($controller->getTask() == 'add') {
     $maxFilesRegistered = Config::get('conversations.files.registered.max');
     $fileExtensions = implode(',', $fileAccessFileTypes);
     $attachmentsEnabled = intval(Config::get('conversations.attachments_enabled'));
-	$notificationUsers = Conversation::getDefaultSubscribedUsers();
-	$subscriptionEnabled = intval(Config::get('conversations.subscription_enabled'));
+    $notificationUsers = Conversation::getDefaultSubscribedUsers();
+    $subscriptionEnabled = intval(Config::get('conversations.subscription_enabled'));
 }
 
-if(!$dateFormat) {
-	$dateFormat = 'default';
+if (!$dateFormat) {
+    $dateFormat = 'default';
 }
 ?>
 
@@ -56,14 +55,14 @@ if(!$dateFormat) {
 	<div class="form-group">
 		<label class="control-label"><?php echo t('Ordering')?></label>
 		<?php echo $form->select('orderBy', array('date_asc' => t('Earliest First'), 'date_desc' => t('Most Recent First'), 'rating' => t('Highest Rated')), $orderBy)?>
-	</div>
-	<div class="form-group">
+
 		<div class="checkbox">
 			<label>
-			<?php echo $form->checkbox('enableOrdering', 1, $enableOrdering)?>
-			<?php echo t('Display Ordering Option in Page')?>
+				<?php echo $form->checkbox('enableOrdering', 1, $enableOrdering)?>
+				<?php echo t('Display Ordering Option in Page')?>
 			</label>
 		</div>
+
 	</div>
 	<div class="form-group">
 		<label class="control-label"><?php echo t('Rating')?></label>
@@ -133,8 +132,8 @@ if(!$dateFormat) {
 	</div>
 </fieldset>
 <fieldset>
-	<legend><?php echo t('Date Format')?></legend>
 	<div class="form-group">
+		<label class="control-label"><?php echo t('Date Format')?></label>
 		<div class="radio">
 			<label>
 			<?php echo $form->radio('dateFormat', 'default', $dateFormat)?>
@@ -161,19 +160,18 @@ if(!$dateFormat) {
 	<p class="text-muted"><?php echo t('Note: Entering values here will override global conversations file attachment settings for this block if you enable Attachment Overrides for this Conversation.') ?></p>
     <div class="form-group">
         <div class="checkbox">
-            <label class="control-label">
+            <label class="">
             <?php echo $form->checkbox('attachmentOverridesEnabled', 1, $attachmentOverridesEnabled)?><?php echo t('Enable Attachment Overrides')?>
             </label>
         </div>
-    </div>
-    <div class="form-group attachment-overrides">
-
-        <div class="checkbox">
-            <label class="control-label">
-            <?php echo $form->checkbox('attachmentsEnabled', 1, $attachmentsEnabled)?><?php echo t('Enable Attachments')?>
-            </label>
-        </div>
-    </div>
+		<div class="attachment-overrides">
+			<div class="checkbox">
+				<label class="">
+				<?php echo $form->checkbox('attachmentsEnabled', 1, $attachmentsEnabled)?><?php echo t('Enable Attachments')?>
+				</label>
+			</div>
+		</div>
+	</div>
     <div class="form-group attachment-overrides">
 		<label class="control-label"><?php echo t('Max Attachment Size for Guest Users. (MB)')?></label>
 		<div class="controls">
@@ -218,10 +216,8 @@ if(!$dateFormat) {
 		</div>
 	</div>
 	<div class="form-group notification-overrides">
-		<div class="form-group">
-			<label class="control-label"><?php echo t('Users To Receive Conversation Notifications')?></label>
-			<?php echo Core::make("helper/form/user_selector")->selectMultipleUsers('notificationUsers', $notificationUsers)?>
-		</div>
+		<label class="control-label"><?php echo t('Users To Receive Conversation Notifications')?></label>
+		<?php echo Core::make("helper/form/user_selector")->selectMultipleUsers('notificationUsers', $notificationUsers)?>
 	</div>
 	<div class="form-group notification-overrides">
 		<label class="control-label"><?php echo t('Subscribe Option')?></label>

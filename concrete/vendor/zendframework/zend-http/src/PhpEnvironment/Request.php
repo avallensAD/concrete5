@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -59,9 +59,13 @@ class Request extends HttpRequest
     /**
      * Construct
      * Instantiates request.
+     *
+     * @param bool $allowCustomMethods
      */
-    public function __construct()
+    public function __construct($allowCustomMethods = true)
     {
+        $this->setAllowCustomMethods($allowCustomMethods);
+
         $this->setEnv(new Parameters($_ENV));
 
         if ($_GET) {
@@ -213,24 +217,22 @@ class Request extends HttpRequest
         }
 
         // set headers
-        $headers = array();
+        $headers = [];
 
         foreach ($server as $key => $value) {
-            if ($value && strpos($key, 'HTTP_') === 0) {
-                if (strpos($key, 'HTTP_COOKIE') === 0) {
-                    // Cookies are handled using the $_COOKIE superglobal
-                    continue;
-                }
-                $name = strtr(substr($key, 5), '_', ' ');
-                $name = strtr(ucwords(strtolower($name)), ' ', '-');
-            } elseif ($value && strpos($key, 'CONTENT_') === 0) {
-                $name = substr($key, 8); // Content-
-                $name = 'Content-' . (($name == 'MD5') ? $name : ucfirst(strtolower($name)));
-            } else {
-                continue;
-            }
+            if ($value || (!is_array($value) && strlen($value))) {
+                if (strpos($key, 'HTTP_') === 0) {
+                    if (strpos($key, 'HTTP_COOKIE') === 0) {
+                        // Cookies are handled using the $_COOKIE superglobal
+                        continue;
+                    }
 
-            $headers[$name] = $value;
+                    $headers[strtr(ucwords(strtolower(strtr(substr($key, 5), '_', ' '))), ' ', '-')] = $value;
+                } elseif (strpos($key, 'CONTENT_') === 0) {
+                    $name = substr($key, 8); // Remove "Content-"
+                    $headers['Content-' . (($name == 'MD5') ? $name : ucfirst(strtolower($name)))] = $value;
+                }
+            }
         }
 
         $this->getHeaders()->addHeaders($headers);
@@ -251,8 +253,9 @@ class Request extends HttpRequest
         $uri = new HttpUri();
 
         // URI scheme
-        if ((!empty($this->serverParams['HTTPS']) && $this->serverParams['HTTPS'] !== 'off')
-            || (!empty($this->serverParams['HTTP_X_FORWARDED_PROTO']) && $this->serverParams['HTTP_X_FORWARDED_PROTO'] == 'https')
+        if ((!empty($this->serverParams['HTTPS']) && strtolower($this->serverParams['HTTPS']) !== 'off')
+            || (!empty($this->serverParams['HTTP_X_FORWARDED_PROTO'])
+                 && $this->serverParams['HTTP_X_FORWARDED_PROTO'] == 'https')
         ) {
             $scheme = 'https';
         } else {
@@ -275,11 +278,11 @@ class Request extends HttpRequest
             }
 
             // set up a validator that check if the hostname is legal (not spoofed)
-            $hostnameValidator = new HostnameValidator(array(
+            $hostnameValidator = new HostnameValidator([
                 'allow'       => HostnameValidator::ALLOW_ALL,
                 'useIdnCheck' => false,
                 'useTldCheck' => false,
-            ));
+            ]);
             // If invalid. Reset the host & port
             if (!$hostnameValidator->isValid($host)) {
                 $host = null;
@@ -362,7 +365,7 @@ class Request extends HttpRequest
      * Return the parameter container responsible for env parameters or a single parameter value.
      *
      * @param string|null           $name            Parameter name to retrieve, or null to get the whole container.
-     * @param mixed|null            $default         Default value to use when the parameter is missing.     * @return \Zend\Stdlib\ParametersInterface
+     * @param mixed|null            $default         Default value to use when the parameter is missing.
      * @return \Zend\Stdlib\ParametersInterface|mixed
      */
     public function getEnv($name = null, $default = null)
@@ -386,9 +389,9 @@ class Request extends HttpRequest
      */
     protected function mapPhpFiles()
     {
-        $files = array();
+        $files = [];
         foreach ($_FILES as $fileName => $fileParams) {
-            $files[$fileName] = array();
+            $files[$fileName] = [];
             foreach ($fileParams as $param => $data) {
                 if (!is_array($data)) {
                     $files[$fileName][$param] = $data;
@@ -487,7 +490,6 @@ class Request extends HttpRequest
      */
     protected function detectBaseUrl()
     {
-        $baseUrl        = '';
         $filename       = $this->getServer()->get('SCRIPT_FILENAME', '');
         $scriptName     = $this->getServer()->get('SCRIPT_NAME');
         $phpSelf        = $this->getServer()->get('PHP_SELF');
@@ -508,8 +510,14 @@ class Request extends HttpRequest
             $basename = basename($filename);
             if ($basename) {
                 $path     = ($phpSelf ? trim($phpSelf, '/') : '');
-                $baseUrl .= substr($path, 0, strpos($path, $basename)) . $basename;
+                $basePos  = strpos($path, $basename) ?: 0;
+                $baseUrl .= substr($path, 0, $basePos) . $basename;
             }
+        }
+
+        // If the baseUrl is empty, then simply return it.
+        if (empty($baseUrl)) {
+            return '';
         }
 
         // Does the base URL have anything in common with the request URI?
@@ -560,13 +568,14 @@ class Request extends HttpRequest
      */
     protected function detectBasePath()
     {
-        $filename = basename($this->getServer()->get('SCRIPT_FILENAME', ''));
         $baseUrl  = $this->getBaseUrl();
 
         // Empty base url detected
         if ($baseUrl === '') {
             return '';
         }
+
+        $filename = basename($this->getServer()->get('SCRIPT_FILENAME', ''));
 
         // basename() matches the script filename; return the directory
         if (basename($baseUrl) === $filename) {

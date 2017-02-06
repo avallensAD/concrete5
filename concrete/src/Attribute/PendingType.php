@@ -1,13 +1,12 @@
 <?php
-
 namespace Concrete\Core\Attribute;
 
+use Concrete\Core\Entity\Attribute\Type as TypeEntity;
 use Core;
 use Database;
 
-class PendingType extends Type
+class PendingType extends TypeEntity
 {
-
     public static function getList()
     {
         $db = Database::connection();
@@ -38,11 +37,6 @@ class PendingType extends Type
 
             return $at;
         }
-    }
-
-    public function install()
-    {
-        parent::add($this->atHandle, $this->atName);
     }
 
 }

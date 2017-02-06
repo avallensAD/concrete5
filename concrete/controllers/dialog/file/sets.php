@@ -1,13 +1,12 @@
 <?php
 namespace Concrete\Controller\Dialog\File;
 
-use \Concrete\Controller\Backend\UserInterface\File as BackendInterfaceFileController;
+use Concrete\Controller\Backend\UserInterface\File as BackendInterfaceFileController;
 use Concrete\Core\File\EditResponse;
 use Concrete\Core\File\Set\Set;
 
 class Sets extends BackendInterfaceFileController
 {
-
     protected $viewPath = '/dialogs/file/sets';
 
     protected function canAccess()
@@ -17,6 +16,7 @@ class Sets extends BackendInterfaceFileController
 
     public function view()
     {
+
     }
 
     public function submit()
@@ -25,10 +25,10 @@ class Sets extends BackendInterfaceFileController
         if (is_array($this->request->request->get('fsID'))) {
             $requestSets = $this->request->request->get('fsID');
         }
+        $fsp = \FilePermissions::getGlobal();
         if ($this->validateAction()) {
             $sets = Set::getMySets();
-            foreach($sets as $set) {
-                $fsp = new \Permissions($set);
+            foreach ($sets as $set) {
                 if (in_array($set->getFileSetID(), $requestSets) && $fsp->canAddFile($this->file) && !$this->file->inFileSet($set)) {
                     // This was checked and it wasn't in the file set previously
                     $set->addFileToSet($this->file);
@@ -45,7 +45,7 @@ class Sets extends BackendInterfaceFileController
         $fsNewShare = $this->request->request->get('fsNewShare');
 
         if (is_array($fsNew)) {
-            foreach($fsNew as $i => $name) {
+            foreach ($fsNew as $i => $name) {
                 if ($name) {
                     $type = ($fsNewShare[$i] == 1) ? Set::TYPE_PUBLIC : Set::TYPE_PRIVATE;
                     $fs = Set::createAndGetSet($fsNew[$i], $type);
@@ -59,6 +59,4 @@ class Sets extends BackendInterfaceFileController
         $response->setMessage(t('File sets updated successfully.'));
         $response->outputJSON();
     }
-
 }
-

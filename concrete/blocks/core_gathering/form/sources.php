@@ -9,9 +9,11 @@ defined('C5_EXECUTE') or die("Access Denied.");
 	<label class="control-label"><?php echo t('Add Source')?></label>
 	<div class="controls">
 		<select name="addSource" class="span2">
-			<?php foreach($availableSources as $ags) { ?>
+			<?php foreach ($availableSources as $ags) {
+    ?>
 			<option value="<?php echo $ags->getGatheringDataSourceID()?>"><?php echo $ags->getGatheringDataSourceName()?></option>
-			<?php } ?>
+			<?php 
+} ?>
 		</select>
 		<button class="btn" type="button" data-submit="add-source"><?php echo t('Add')?></button>
 	</div>
@@ -20,26 +22,31 @@ defined('C5_EXECUTE') or die("Access Denied.");
 
 <div id="ccm-gathering-data-source-templates" style="display: none">
 
-<?php foreach($availableSources as $ags) { ?>
+<?php foreach ($availableSources as $ags) {
+    ?>
 
 <fieldset data-gathering-data-source-options-form="<?php echo $ags->getGatheringDataSourceID()?>">
 	<div style="margin-bottom: 8px">
 		<input type="hidden" name="gasID[_gas_]" value="<?php echo $ags->getGatheringDataSourceID()?>" />
 	<a href="#" style="float: right" data-delete="gathering-source"><i class="icon-minus-sign"></i></a>
-		<?php $source = $ags; ?>
+		<?php $source = $ags;
+    ?>
 		<?php include($ags->getGatheringDataSourceOptionsForm())?>
 		<hr />
 	</div>
 </fieldset>
 
-<?php } ?>
+<?php 
+} ?>
 
 </div>
 
 <div id="ccm-gathering-data-source-templates-selected">
 
-<?php if (count($activeSources) > 0) { ?>
-<?php foreach($activeSources as $key => $configuration) { ?>
+<?php if (count($activeSources) > 0) {
+    ?>
+<?php foreach ($activeSources as $key => $configuration) {
+    ?>
 
 	<fieldset data-gathering-data-source-selected="<?php echo $configuration->getGatheringDataSourceID()?>">
 		<div style="margin-bottom: 8px">
@@ -47,19 +54,24 @@ defined('C5_EXECUTE') or die("Access Denied.");
 		<a href="#" style="float: right" data-delete="gathering-source"><i class="icon-minus-sign"></i></a>
 
 			<?php
-			$source = $configuration; 
-			$source->setOptionFormKey($key);
-			include($configuration->getGatheringDataSourceOptionsForm());
-			?>
+            $source = $configuration;
+    $source->setOptionFormKey($key);
+    include $configuration->getGatheringDataSourceOptionsForm();
+    ?>
 			<hr/>
 		</div>
 	</fieldset>
 
-<?php } ?>
+<?php 
+}
+    ?>
 
-<?php } else { ?>
+<?php 
+} else {
+    ?>
 	<span data-message="no-sources"><?php echo t('You have not added any data sources.')?></span>
-<?php } ?>
+<?php 
+} ?>
 </div>
 
 <script type="text/javascript">

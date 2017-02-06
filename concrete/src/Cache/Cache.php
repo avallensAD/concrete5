@@ -3,8 +3,10 @@ namespace Concrete\Core\Cache;
 
 use Core;
 use Config;
+use Psr\Cache\CacheItemInterface;
 use Stash\Driver\BlackHole;
 use Stash\Driver\Composite;
+use Stash\Interfaces\ItemInterface;
 use Stash\Pool;
 
 /**
@@ -12,34 +14,36 @@ use Stash\Pool;
  *   - ExpensiveCache
  *   - ObjectCache
  *   - RequestCache
- *   
+ *
  * Cache storage is performed using the Stash Library, see http://www.stashphp.com/
- * 
+ *
  * This class imports the various caching settings from Config class, sets
  * up the Stash pools and provides a basic caching API for all of Concrete5.
  */
 abstract class Cache
 {
     /** @var Pool */
-    protected $pool = null;
+    public $pool = null;
     /** @var bool */
     protected $enabled = false;
     /** @var \Stash\Interfaces\DriverInterface */
     protected $driver = null;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->init();
     }
 
     /**
-     * Initializes the cache by setting up the cache pool and enabling the cache
-     * @return void
+     * Initializes the cache by setting up the cache pool and enabling the cache.
      */
     abstract protected function init();
 
     /**
-     * Loads the composite driver from constants
+     * Loads the composite driver from constants.
+     *
      * @param $level
+     *
      * @return \Stash\Interfaces\DriverInterface
      */
     protected function loadConfig($level)
@@ -58,11 +62,13 @@ abstract class Cache
 
                 // Make sure that the provided class implements the DriverInterface
                 if (isset($implements['Stash\Interfaces\DriverInterface'])) {
-                    /** @type \Stash\Interfaces\DriverInterface $temp_driver */
-                    $temp_driver = new $class();
+                    /** @var \Stash\Interfaces\DriverInterface $temp_driver */
+
 
                     if ($options = array_get($driver_build, 'options', null)) {
-                        $temp_driver->setOptions($options);
+                        $temp_driver = new $class($options);
+                    } else {
+                        $temp_driver = new $class;
                     }
 
                     $drivers[] = $temp_driver;
@@ -72,11 +78,9 @@ abstract class Cache
             }
         }
 
-
         $count = count($drivers);
         if ($count > 1) {
-            $driver = new Composite();
-            $driver->setOptions(array('drivers' => $drivers));
+            $driver = new Composite(['drivers' => $drivers]);
         } elseif ($count === 1) {
             $driver = $drivers[0];
         } else {
@@ -87,8 +91,10 @@ abstract class Cache
     }
 
     /**
-     * Deletes an item from the cache
+     * Deletes an item from the cache.
+     *
      * @param string $key Name of the cache item ID
+     *
      * @return bool True if deleted, false if not
      */
     public function delete($key)
@@ -101,8 +107,10 @@ abstract class Cache
     }
 
     /**
-     * Checks if an item exists in the cache
+     * Checks if an item exists in the cache.
+     *
      * @param string $key Name of the cache item ID
+     *
      * @return bool True if exists, false if not
      */
     public function exists($key)
@@ -115,16 +123,18 @@ abstract class Cache
     }
 
     /**
-     * Removes all values from the cache
+     * Removes all values from the cache.
      */
     public function flush()
     {
-        return $this->pool->flush();
+        return $this->pool->clear();
     }
 
     /**
-     * Gets a value from the cache
+     * Gets a value from the cache.
+     *
      * @param string $key Name of the cache item ID
+     *
      * @return \Stash\Interfaces\ItemInterface
      */
     public function getItem($key)
@@ -132,8 +142,13 @@ abstract class Cache
         return $this->pool->getItem($key);
     }
 
+    public function save(CacheItemInterface $item)
+    {
+        $this->pool->save($item);
+    }
+
     /**
-     * Enables the cache
+     * Enables the cache.
      */
     public function enable()
     {
@@ -144,7 +159,7 @@ abstract class Cache
     }
 
     /**
-     * Disables the cache
+     * Disables the cache.
      */
     public function disable()
     {
@@ -157,7 +172,8 @@ abstract class Cache
     }
 
     /**
-     * Returns true if the cache is enabled, false if not
+     * Returns true if the cache is enabled, false if not.
+     *
      * @return bool
      */
     public function isEnabled()
@@ -166,7 +182,7 @@ abstract class Cache
     }
 
     /**
-     * Disables all cache levels
+     * Disables all cache levels.
      */
     public static function disableAll()
     {
@@ -176,7 +192,7 @@ abstract class Cache
     }
 
     /**
-     * Enables all cache levels
+     * Enables all cache levels.
      */
     public static function enableAll()
     {

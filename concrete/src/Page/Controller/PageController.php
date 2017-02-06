@@ -1,15 +1,15 @@
 <?php
-
 namespace Concrete\Core\Page\Controller;
 
 use Concrete\Core\Block\Block;
 use Concrete\Core\Block\BlockController;
+use Concrete\Core\Controller\Controller;
 use Concrete\Core\Foundation\Environment;
+use Concrete\Core\Html\Service\Html;
+use Concrete\Core\Http\Request;
+use Concrete\Core\Page\Page;
 use Concrete\Core\Routing\Redirect;
-use Page;
-use Request;
-use Controller;
-use Core;
+use Concrete\Core\Support\Facade\Application;
 use Concrete\Core\Page\View\PageView;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -19,18 +19,35 @@ class PageController extends Controller
     protected $action;
     protected $passThruBlocks = array();
     protected $parameters = array();
+    protected $replacement = null;
+    protected $requestValidated;
+
+    /**
+     * array of method names that can't be called through the url
+     * @var array
+     */
+    protected $restrictedMethods = array();
+
+    /**
+     * Custom request path - overrides Request::getPath() (useful when replacing controllers).
+     * @var string|null
+     */
+    protected $customRequestPath = null;
+
+    /** @var \Concrete\Core\Page\Page The current page */
+    public $c;
 
     public function supportsPageCache()
     {
         return $this->supportsPageCache;
     }
 
-    public function __construct(\Concrete\Core\Page\Page $c)
+    public function __construct(Page $c)
     {
         parent::__construct();
         $this->c = $c;
         $this->view = new PageView($this->c);
-        $this->set('html', Core::make('\Concrete\Core\Html\Service\Html'));
+        $this->set('html', Application::getFacadeApplication()->make(HTML::class));
     }
 
     /**
@@ -45,35 +62,67 @@ class PageController extends Controller
      */
     public function replace($var)
     {
-        if (!($var instanceof \Concrete\Core\Page\Page)) {
-            $var = \Page::getByPath($var);
+        if ($var instanceof Page) {
+            $page = $var;
+            $path = $var->getCollectionPath();
+        } else {
+            $path = (string) $var;
+            $page = Page::getByPath($path);
         }
 
-        $request = \Request::getInstance();
-        $request->setCurrentPage($var);
-        $controller = $var->getPageController();
-        $controller->on_start();
-        $controller->runAction('view');
-        $controller->on_before_render();
-        $view = $controller->getViewObject();
-        print $view->render();
-        exit;
+        $request = Request::getInstance();
+        $controller = $page->getPageController();
+        $request->setCurrentPage($page);
+        if (is_callable([$controller, 'setCustomRequestPath'])) {
+            $controller->setCustomRequestPath($path);
+        }
+        $this->replacement = $controller;
+    }
+
+    /**
+     * Set the custom request path (useful when replacing controllers).
+     *
+     * @param string|null $requestPath Set to null to use the default request path
+     */
+    public function setCustomRequestPath($requestPath)
+    {
+        $this->customRequestPath = ($requestPath === null) ? null : (string) $requestPath;
+    }
+
+    /**
+     * Get the custom request path (useful when replacing controllers).
+     *
+     * @return string|null Returns null if no custom request path, a string otherwise
+     */
+    public function getCustomRequestPath()
+    {
+        return $this->customRequestPath;
+    }
+
+    public function isReplaced()
+    {
+        return !!$this->replacement;
+    }
+
+    public function getReplacement()
+    {
+        return $this->replacement;
     }
 
     public function getSets()
     {
         $sets = parent::getSets();
-        $session = Core::make('session');
+        $session = Application::getFacadeApplication()->make('session');
         if ($session->getFlashBag()->has('page_message')) {
             $value = $session->getFlashBag()->get('page_message');
-            foreach($value as $message) {
+            foreach ($value as $message) {
                 $sets[$message[0]] = $message[1];
+                $sets[$message[0].'IsHTML'] = isset($message[2]) && $message[2];
             }
         }
+
         return $sets;
     }
-
-
 
     /**
      * Given a path to a single page, this command uses the CURRENT controller and renders
@@ -93,13 +142,11 @@ class PageController extends Controller
         $b = $path . '.php';
 
         $r = $env->getRecord(DIRNAME_PAGES . '/' . $a);
-        if ($pkgHandle) {
-            $view->setPackageHandle($pkgHandle);
-        }
+
         if ($r->exists()) {
-            $view->renderSinglePageByFilename($a);
+            $view->renderSinglePageByFilename($a, $pkgHandle);
         } else {
-            $view->renderSinglePageByFilename($b);
+            $view->renderSinglePageByFilename($b, $pkgHandle);
         }
     }
 
@@ -108,10 +155,10 @@ class PageController extends Controller
         return $this->c;
     }
 
-    public function flash($key, $value)
+    public function flash($key, $value, $isHTML = false)
     {
-        $session = Core::make('session');
-        $session->getFlashBag()->add('page_message', array($key, $value));
+        $session = Application::getFacadeApplication()->make('session');
+        $session->getFlashBag()->add('page_message', array($key, $value, $isHTML));
     }
 
     public function getTheme()
@@ -154,7 +201,11 @@ class PageController extends Controller
 
     public function setupRequestActionAndParameters(Request $request)
     {
-        $task = substr($request->getPath(), strlen($this->c->getCollectionPath()) + 1);
+        $requestPath = $this->getCustomRequestPath();
+        if ($requestPath === null) {
+            $requestPath = $request->getPath();
+        }
+        $task = substr($requestPath, strlen($this->c->getCollectionPath()) + 1);
         $task = str_replace('-/', '', $task);
         $taskparts = explode('/', $task);
         if (isset($taskparts[0]) && $taskparts[0] !== '') {
@@ -166,11 +217,24 @@ class PageController extends Controller
         }
 
         $foundTask = false;
+        $restrictedControllers = array(
+            'Concrete\Core\Controller\Controller',
+            'Concrete\Core\Controller\AbstractController',
+            'Concrete\Core\Page\Controller\PageController'
+
+        );
         try {
             $r = new \ReflectionMethod(get_class($this), $method);
             $cl = $r->getDeclaringClass();
             if (is_object($cl)) {
-                if ($cl->getName() != 'Concrete\Core\Controller\Controller' && strpos($method, 'on_') !== 0 && strpos($method, '__') !== 0 && $r->isPublic()) {
+                if (
+                    !in_array($cl->getName(), $restrictedControllers)
+                    && strpos($method, 'on_') !== 0
+                    && strpos($method, '__') !== 0
+                    && $r->isPublic()
+                    && !$r->isConstructor()
+                    && (is_array($this->restrictedMethods) && !in_array($method, $this->restrictedMethods))
+                ) {
                     $foundTask = true;
                 }
             }
@@ -211,8 +275,6 @@ class PageController extends Controller
     }
 
     /**
-     * @access private
-     *
      * @param Block $b
      * @param BlockController $controller
      */
@@ -230,6 +292,11 @@ class PageController extends Controller
 
     public function validateRequest()
     {
+
+        if (isset($this->requestValidated)) {
+            return $this->requestValidated;
+        }
+
         $valid = true;
 
         if (!$this->isValidControllerTask($this->action, $this->parameters)) {
@@ -269,6 +336,8 @@ class PageController extends Controller
                 }
             }
         }
+
+        $this->requestValidated = $valid;
 
         return $valid;
     }

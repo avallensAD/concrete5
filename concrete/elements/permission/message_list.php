@@ -2,23 +2,34 @@
 
 <div class="clearfix">
 
-<?php if (isset($_REQUEST['message'])) { ?>
+<?php if (isset($_REQUEST['message'])) {
+    ?>
 
 
 <div class="alert alert-success" id="ccm-permissions-message-list">
 <?php
-if ($_REQUEST['message'] == 'custom_options_saved') { ?>
+if ($_REQUEST['message'] == 'custom_options_saved') {
+    ?>
 	<?php echo t('Custom Options saved.')?>
-<?php } else if ($_REQUEST['message'] == 'workflows_saved') { ?>
+<?php 
+} elseif ($_REQUEST['message'] == 'workflows_saved') {
+    ?>
 	<?php echo t('Workflow Options saved.')?>
-<?php } else if ($_REQUEST['message'] == 'entity_removed') { ?>
+<?php 
+} elseif ($_REQUEST['message'] == 'entity_removed') {
+    ?>
 	<?php echo t('User/Group Removed')?>
-<?php } else if ($_REQUEST['message'] == 'entity_added') { ?>
+<?php 
+} elseif ($_REQUEST['message'] == 'entity_added') {
+    ?>
 	<?php echo t('User/Group Added')?>
-<?php } ?>
+<?php 
+}
+    ?>
 </div>
 
-<?php } ?>
+<?php 
+} ?>
 </div>
 <script type="text/javascript">
 $(function() {

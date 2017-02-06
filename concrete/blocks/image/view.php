@@ -1,50 +1,52 @@
 <?php defined('C5_EXECUTE') or die("Access Denied.");
 
-$c = Page::getCurrentPage();
-if (is_object($f)) {
+if (is_object($f) && $f->getFileID()) {
     if ($maxWidth > 0 || $maxHeight > 0) {
+        $crop = false;
+
         $im = Core::make('helper/image');
-        $thumb = $im->getThumbnail(
-            $f,
-            $maxWidth,
-            $maxHeight
-        ); //<-- set these 2 numbers to max width and height of thumbnails
+        $thumb = $im->getThumbnail($f, $maxWidth, $maxHeight, $crop);
+
         $tag = new \HtmlObject\Image();
         $tag->src($thumb->src)->width($thumb->width)->height($thumb->height);
     } else {
-        $image = Core::make('html/image', array($f));
+        $image = Core::make('html/image', [$f]);
         $tag = $image->getTag();
     }
+
     $tag->addClass('ccm-image-block img-responsive bID-'.$bID);
     if ($altText) {
         $tag->alt(h($altText));
     } else {
         $tag->alt('');
     }
+
     if ($title) {
         $tag->title(h($title));
     }
-    if ($linkURL):
-        print '<a href="' . $linkURL . '">';
-    endif;
 
-    print $tag;
+    if ($linkURL) {
+        echo '<a href="'.$linkURL.'">';
+    }
 
-    if ($linkURL):
-        print '</a>';
-    endif;
-} else if ($c->isEditMode()) { ?>
+    echo $tag;
 
-    <div class="ccm-edit-mode-disabled-item"><?php echo t('Empty Image Block.')?></div>
+    if ($linkURL) {
+        echo '</a>';
+    }
+} elseif ($c->isEditMode()) {
+    ?>
+    <div class="ccm-edit-mode-disabled-item"><?php echo t('Empty Image Block.') ?></div>
+    <?php
+}
 
-<?php } ?>
-
-<?php if(isset($foS) && is_object($foS)) { ?>
+if (is_object($foS)): ?>
 <script>
 $(function() {
-    $('.bID-<?php print $bID;?>')
-        .mouseover(function(e){$(this).attr("src", '<?php print $imgPath["hover"];?>');})
-        .mouseout(function(e){$(this).attr("src", '<?php print $imgPath["default"];?>');});
+    $('.bID-<?php echo $bID; ?>')
+        .mouseover(function(){$(this).attr("src", '<?php echo $imgPaths["hover"]; ?>');})
+        .mouseout(function(){$(this).attr("src", '<?php echo $imgPaths["default"]; ?>');});
 });
 </script>
-<?php } ?>
+<?php
+endif;

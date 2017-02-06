@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -11,6 +11,7 @@ namespace Zend\Validator;
 
 use Traversable;
 use Zend\Stdlib\ArrayUtils;
+use Zend\ServiceManager\ServiceManager;
 
 class Explode extends AbstractValidator implements ValidatorPluginManagerAwareInterface
 {
@@ -21,14 +22,14 @@ class Explode extends AbstractValidator implements ValidatorPluginManagerAwareIn
     /**
      * @var array
      */
-    protected $messageTemplates = array(
+    protected $messageTemplates = [
         self::INVALID => "Invalid type given",
-    );
+    ];
 
     /**
      * @var array
      */
-    protected $messageVariables = array();
+    protected $messageVariables = [];
 
     /**
      * @var string
@@ -85,7 +86,7 @@ class Explode extends AbstractValidator implements ValidatorPluginManagerAwareIn
     public function getValidatorPluginManager()
     {
         if (!$this->pluginManager) {
-            $this->setValidatorPluginManager(new ValidatorPluginManager());
+            $this->setValidatorPluginManager(new ValidatorPluginManager(new ServiceManager));
         }
 
         return $this->pluginManager;
@@ -107,7 +108,7 @@ class Explode extends AbstractValidator implements ValidatorPluginManagerAwareIn
                 );
             }
             $name = $validator['name'];
-            $options = isset($validator['options']) ? $validator['options'] : array();
+            $options = isset($validator['options']) ? $validator['options'] : [];
             $validator = $this->getValidatorPluginManager()->get($name, $options);
         }
 
@@ -159,10 +160,11 @@ class Explode extends AbstractValidator implements ValidatorPluginManagerAwareIn
      * Returns true if all values validate true
      *
      * @param  mixed $value
+     * @param  mixed $context Extra "context" to provide the composed validator
      * @return bool
      * @throws Exception\RuntimeException
      */
-    public function isValid($value)
+    public function isValid($value, $context = null)
     {
         $this->setValue($value);
 
@@ -180,13 +182,11 @@ class Explode extends AbstractValidator implements ValidatorPluginManagerAwareIn
             // single values (ie. MultiCheckbox form behavior)
             $values = (null !== $delimiter)
                       ? explode($this->valueDelimiter, $value)
-                      : array($value);
+                      : [$value];
         } else {
-            $values = array($value);
+            $values = [$value];
         }
 
-        $retval    = true;
-        $messages  = array();
         $validator = $this->getValidator();
 
         if (!$validator) {
@@ -197,18 +197,15 @@ class Explode extends AbstractValidator implements ValidatorPluginManagerAwareIn
         }
 
         foreach ($values as $value) {
-            if (!$validator->isValid($value)) {
-                $messages[] = $validator->getMessages();
-                $retval = false;
+            if (!$validator->isValid($value, $context)) {
+                $this->abstractOptions['messages'][] = $validator->getMessages();
 
                 if ($this->isBreakOnFirstFailure()) {
-                    break;
+                    return false;
                 }
             }
         }
 
-        $this->abstractOptions['messages'] = $messages;
-
-        return $retval;
+        return count($this->abstractOptions['messages']) == 0;
     }
 }

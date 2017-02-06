@@ -8,7 +8,8 @@ $pk = PermissionKey::getByHandle('customize_themes');
     <form data-form="panel-page-design-customize" target="ccm-page-preview-frame" method="post" action="<?php echo $controller->action("preview", $theme->getThemeID())?>">
     <header><a href="" data-panel-navigation="back" class="ccm-panel-back"><span class="fa fa-chevron-left"></span></a> <a href="" data-panel-navigation="back"><?php echo t('Customize Theme')?></a></header>
 
-    <?php if (count($presets) > 1) { ?>
+    <?php if (count($presets) > 1) {
+    ?>
 
     <div class="ccm-panel-content-inner">
 
@@ -16,20 +17,27 @@ $pk = PermissionKey::getByHandle('customize_themes');
         <div class="list-group-item list-group-item-header"><?php echo t('Preset')?></div>
         <?php
         $i = 0;
-        foreach($presets as $preset) {
-            $selected = false;
-            if (is_object($selectedPreset) && $selectedPreset->getPresetHandle() == $preset->getPresetHandle()) {
-                $selected = true;
-            }
-            ?>
-            <label class="list-group-item clearfix"><input type="radio" class="ccm-flat-radio" value="<?php echo $preset->getPresetHandle()?>" name="handle" <?php if ($selected) { ?>checked="checked"<?php } ?> /> <?php echo $preset->getPresetDisplayName()?>
+    foreach ($presets as $preset) {
+        $selected = false;
+        if (is_object($selectedPreset) && $selectedPreset->getPresetHandle() == $preset->getPresetHandle()) {
+            $selected = true;
+        }
+        ?>
+            <label class="list-group-item clearfix"><input type="radio" class="ccm-flat-radio" value="<?php echo $preset->getPresetHandle()?>" name="handle" <?php if ($selected) {
+    ?>checked="checked"<?php 
+}
+        ?> /> <?php echo $preset->getPresetDisplayName()?>
                 <?php echo $preset->getPresetIconHTML()?>
             </label>
-            <?php if ($i == 0) { ?>
+            <?php if ($i == 0) {
+    ?>
                 <div class="list-group-item-collapse-wrapper">
-            <?php } ?>
-        <?php  $i++;
-            } ?>
+            <?php 
+}
+        ?>
+        <?php  ++$i;
+    }
+    ?>
 
             </div>
 
@@ -38,33 +46,41 @@ $pk = PermissionKey::getByHandle('customize_themes');
 
     </div>
 
-    <?php } ?>
+    <?php 
+} ?>
 
     <?php
     // output basic values –these are ones we don't have any
     // kind of special mapping for and that don't appear in our customizer style sets.
-    foreach($valueList->getValues() as $value) {
-        if ($value instanceof \Concrete\Core\StyleCustomizer\Style\Value\BasicValue) { ?>
+    foreach ($valueList->getValues() as $value) {
+        if ($value instanceof \Concrete\Core\StyleCustomizer\Style\Value\BasicValue) {
+            ?>
            <input type="hidden" name="<?php echo $value->getVariable()?>" value="<?php echo $value->getValue()?>" />
-        <?php }
+        <?php 
+        }
     }
     ?>
     <div id="ccm-panel-page-design-customize-list">
-    <?php foreach($styleSets as $set) { ?>
+    <?php foreach ($styleSets as $set) {
+    ?>
         <div class="ccm-panel-page-design-customize-style-set">
             <h5 class="ccm-panel-page-design-customize-style-set-collapse"><?php echo $set->getDisplayName()?></h5>
             <ul class="list-unstyled">
-            <?php foreach($set->getStyles() as $style) { ?>
+            <?php foreach ($set->getStyles() as $style) {
+    ?>
                 <li><?php echo $style->getDisplayName()?>
                 <?php
                 $value = $style->getValueFromList($valueList);
-                ?>
+    ?>
                 <?php echo $style->render($value)?>
                 </li>
-            <?php } ?>
+            <?php 
+}
+    ?>
             </ul>
         </div>
-    <?php } ?>
+    <?php 
+} ?>
     <div class="ccm-panel-page-design-customize-style-set">
         <h5 class="ccm-panel-page-design-customize-style-set-collapse"><?php echo t('Advanced')?></h5>
         <ul class="list-unstyled">
@@ -141,14 +157,18 @@ $pk = PermissionKey::getByHandle('customize_themes');
     $(function() {
         panel = ConcretePanelManager.getByIdentifier('page');
         $('button[data-panel-detail-action=customize-design-submit]').on('click', function() {
-            <?php if ($pk->can()) { ?>
+            <?php if ($pk->can()) {
+    ?>
                 panel.showPanelConfirmationMessage('page-design-customize-apply', "<?php echo t('Apply this design to just this page, or your entire site?')?>", [
                     {'class': 'btn btn-primary pull-right', 'onclick': 'ConcretePageDesignPanel.applyDesignToSite()', 'style': 'margin-left: 10px', 'text': '<?php echo t("Entire Site")?>'},
                     {'class': 'btn btn-default pull-right', 'onclick': 'ConcretePageDesignPanel.applyDesignToPage()', 'text': '<?php echo t("This Page")?>'}
                 ]);
-            <?php } else { ?>
+            <?php 
+} else {
+    ?>
                 ConcretePageDesignPanel.applyDesignToPage();
-            <?php } ?>
+            <?php 
+} ?>
             return false;
         });
         $('div[data-panel-menu-id=page-design-presets]').on('change', $('input[type=radio]'), function() {
@@ -218,14 +238,18 @@ $pk = PermissionKey::getByHandle('customize_themes');
 
         })
         $('button[data-panel-detail-action=reset]').unbind().on('click', function() {
-            <?php if ($pk->can()) { ?>
+            <?php if ($pk->can()) {
+    ?>
                 panel.showPanelConfirmationMessage('page-design-customize-apply', "<?php echo t('Reset the theme customizations for just this page, or your entire site?')?>", [
-                    {'class': 'btn btn-primary pull-right', 'onclick': 'ConcretePageDesignPanel.resetSiteDesign()', 'style': 'margin-left: 10px', 'text': '<?php echo t("Entire Site")?>'},
-                    {'class': 'btn btn-default pull-right', 'onclick': 'ConcretePageDesignPanel.resetPageDesign()', 'text': '<?php echo t("This Page")?>'}
+                    {'class': 'btn btn-sm btn-primary pull-right', 'onclick': 'ConcretePageDesignPanel.resetSiteDesign()', 'style': 'margin-left: 10px', 'text': '<?php echo t("Entire Site")?>'},
+                    {'class': 'btn btn-sm btn-default pull-right', 'onclick': 'ConcretePageDesignPanel.resetPageDesign()', 'text': '<?php echo t("This Page")?>'}
                 ]);
-            <?php } else { ?>
+            <?php 
+} else {
+    ?>
                 ConcretePageDesignPanel.resetPageDesign();
-            <?php } ?>
+            <?php 
+} ?>
             return false;
         });
 

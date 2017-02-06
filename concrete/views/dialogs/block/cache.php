@@ -6,7 +6,8 @@ $bp = new Permissions($b);
 <div class="ccm-ui">
     <form method="post" data-dialog-form="block-cache" action="<?php echo $controller->action('submit')?>">
 
-    <?php if ($bp->canEditBlockName()) { ?>
+    <?php if ($bp->canEditBlockName()) {
+    ?>
     <fieldset>
         <legend><?php echo t('Name')?></legend>
         <div class="form-group">
@@ -17,14 +18,19 @@ $bp = new Permissions($b);
             <input type="text" class="form-control" name="bName" id="bName" value="<?php echo $bName?>">
         </div>
     </fieldset>
-    <?php } ?>
+    <?php 
+} ?>
 
-    <?php if ($bp->canEditBlockCacheSettings()) { ?>
+    <?php if ($bp->canEditBlockCacheSettings()) {
+    ?>
     <fieldset>
         <legend><?php echo t('Caching')?></legend>
-        <?php if (!Config::get('concrete.cache.blocks')) { ?>
+        <?php if (!Config::get('concrete.cache.blocks')) {
+    ?>
             <div class="alert alert-warning"><?php echo t('Block caching is currently disabled globally. These settings won\'t take affect until block caching is turned on. You can turn these settings on from the <a href="%s">Cache and Speed Settings</a> page in the Dashboard.', URL::to('/dashboard/system/optimization/cache'))?></div>
-        <?php } ?>
+        <?php 
+}
+    ?>
 
         <div class="form-group">
             <label class="control-label"><?php echo t('Override Block Type')?></label>
@@ -63,7 +69,8 @@ $bp = new Permissions($b);
             <input type="text" class="form-control" name="btCacheBlockOutputLifetime" id="btCacheBlockOutputLifetime" value="<?php echo $btCacheBlockOutputLifetime?>">
         </div>
     </fieldset>
-    <?php } ?>
+    <?php 
+} ?>
 
     <div class="dialog-buttons">
         <button class="btn btn-default pull-left" data-dialog-action="cancel"><?php echo t('Cancel')?></button>

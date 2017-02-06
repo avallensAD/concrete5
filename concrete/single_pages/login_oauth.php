@@ -14,45 +14,46 @@ $form = Loader::helper('form');
 <div class='row'>
 	<div class='span10 offset1'>
 		<div class="page-header">
-			<h1><?php echo t('Sign in to %s', tc('SiteName', Config::get('concrete.site')))?></h1>
+			<h1><?php echo t('Sign in to %s', tc('SiteName', \Core::make('site')->getSite()->getSiteName()))?></h1>
 		</div>
 		<?php
-		if (count($activeAuths) > 1) {
-			?>
+        if (count($activeAuths) > 1) {
+            ?>
 			<ul class="nav nav-tabs">
 				<?php
-				$first = true;
-				foreach ($activeAuths as $auth) {
-					?>
-					<li<?php echo $first?" class='active'":''?>>
+                $first = true;
+            foreach ($activeAuths as $auth) {
+                ?>
+					<li<?php echo $first ? " class='active'" : ''?>>
 						<a data-authType='<?php echo $auth->getAuthenticationTypeHandle()?>' href='#<?php echo $auth->getAuthenticationTypeHandle()?>'><?php echo $auth->getAuthenticationTypeName()?></a>
 					</li>
 					<?php
-					$first = false;
-				}
-				?>
+                    $first = false;
+            }
+            ?>
 			</ul>
 			<?php
-		}
-		?>
+
+        }
+        ?>
 		<div class='authTypes row'>
 			<?php
-			$first = true;
-			foreach ($activeAuths as $auth) {
-				?>
-				<div data-authType='<?php echo $auth->getAuthenticationTypeHandle()?>' style='<?php echo $first?"display:block":"display:none"?>'>
+            $first = true;
+            foreach ($activeAuths as $auth) {
+                ?>
+				<div data-authType='<?php echo $auth->getAuthenticationTypeHandle()?>' style='<?php echo $first ? "display:block" : "display:none"?>'>
 					<fieldset>
 						<form method='post' class='form-horizontal' action='<?php echo $view->action('authenticate', $auth->getAuthenticationTypeHandle())?>'>
 							<div class='authForm'>
-								<?php $auth->renderForm()?>
+								<?php $auth->renderForm() ?>
 							</div>
 						</form>
 					</fieldset>
 				</div>
 				<?php
-				$first = false;
-			}
-			?>
+                $first = false;
+            }
+            ?>
 		</div>
 		<div class='forgotPassword'>
 			<h2><?php echo t('Forgot Your Password?')?></h2>
@@ -67,7 +68,7 @@ $form = Loader::helper('form');
 					</div>
 				</div>
 				<div class='actions'>
-					<?php echo $form->button('resetPassword','Reset and Email Password')?>
+					<?php echo $form->button('resetPassword', 'Reset and Email Password')?>
 				</div>
 			</form>
 		</div>

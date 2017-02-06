@@ -1,7 +1,6 @@
 <?php defined('C5_EXECUTE') or die("Access Denied.");
 
 use \Concrete\Core\Page\Type\Composer\FormLayoutSetControl as PageTypeComposerFormLayoutSetControl;
-use \Concrete\Core\Page\Type\Composer\FormLayoutSet as PageTypeComposerFormLayoutSet;
 
 ?>
 
@@ -36,24 +35,25 @@ use \Concrete\Core\Page\Type\Composer\FormLayoutSet as PageTypeComposerFormLayou
 
 <?php if (count($sets) > 0) {
 
-	/* @var $set Concrete\Core\Page\Type\Composer\FormLayoutSet */
-	foreach($sets as $set) { ?>
+    /* @var $set Concrete\Core\Page\Type\Composer\FormLayoutSet */
+    foreach ($sets as $set) {
+        ?>
 
-		<div class="ccm-page-type-composer-form-layout-control-set panel panel-default" data-page-type-composer-form-layout-control-set-id="<?php echo $set->getPageTypeComposerFormLayoutSetID()?>">
+		<div class="ccm-item-set panel panel-default" data-page-type-composer-form-layout-control-set-id="<?php echo $set->getPageTypeComposerFormLayoutSetID()?>">
 			<div class="panel-heading">
-				<ul class="ccm-page-type-composer-item-controls">
+				<ul class="ccm-item-set-controls">
 					<li><a href="<?php echo REL_DIR_FILES_TOOLS_REQUIRED?>/page_types/composer/form/add_control?ptComposerFormLayoutSetID=<?php echo $set->getPageTypeComposerFormLayoutSetID()?>" dialog-title="<?php echo t('Add Form Control')?>" dialog-width="640" dialog-height="400" data-command="add-form-set-control"><i class="fa fa-plus"></i></a></li>
 					<li><a href="#" data-command="move_set" style="cursor: move"><i class="fa fa-arrows"></i></a></li>
 					<li><a href="#" data-edit-set="<?php echo $set->getPageTypeComposerFormLayoutSetID()?>"><i class="fa fa-pencil"></i></a></li>
 					<li><a href="#" data-delete-set="<?php echo $set->getPageTypeComposerFormLayoutSetID()?>"><i class="fa fa-trash-o"></i></a></li>
 				</ul>
-				<div class="ccm-page-type-composer-form-layout-control-set-name" ><?php
-					if ($set->getPageTypeComposerFormLayoutSetDisplayName()) {
-						echo $set->getPageTypeComposerFormLayoutSetDisplayName();
-					} else {
-						echo t('(No Name)');
-					}
-				?></div>
+				<div class="ccm-item-set-name" ><?php
+                    if ($set->getPageTypeComposerFormLayoutSetDisplayName()) {
+                        echo $set->getPageTypeComposerFormLayoutSetDisplayName();
+                    } else {
+                        echo t('(No Name)');
+                    }
+        ?></div>
 			</div>
 
 			<div style="display: none">
@@ -90,19 +90,25 @@ use \Concrete\Core\Page\Type\Composer\FormLayoutSet as PageTypeComposerFormLayou
 			</div>
 
 			<table class="table table-hover" style="width: 100%;">
-				<tbody class="ccm-page-type-composer-form-layout-control-set-inner">
+				<tbody class="ccm-item-set-inner">
 					<?php $controls = PageTypeComposerFormLayoutSetControl::getList($set);
-					foreach($controls as $cnt) {
-						echo Loader::element('page_types/composer/form/layout_set/control', array('control' => $cnt));
-					} ?>
+        foreach ($controls as $cnt) {
+            echo Loader::element('page_types/composer/form/layout_set/control', array('control' => $cnt));
+        }
+        ?>
 				</tbody>
 			</table>
 		</div>
 
-	<?php } ?>
-<?php } else { ?>
+	<?php
+    }
+    ?>
+<?php
+} else {
+    ?>
 	<p><?php echo t('You have not added any composer form layout control sets.')?></p>
-<?php } ?>
+<?php
+} ?>
 
 </div>
 
@@ -167,7 +173,7 @@ $(function() {
 	});
 	$('div.ccm-pane-body').sortable({
 		handle: 'a[data-command=move_set]',
-		items: '.ccm-page-type-composer-form-layout-control-set',
+		items: '.ccm-item-set',
 		cursor: 'move',
 		axis: 'y',
 		stop: function() {
@@ -178,7 +184,7 @@ $(function() {
 				'name': 'ptID',
 				'value': <?php echo $pagetype->getPageTypeID()?>
 			}];
-			$('.ccm-page-type-composer-form-layout-control-set').each(function() {
+			$('.ccm-item-set').each(function() {
 				formData.push({'name': 'ptComposerFormLayoutSetID[]', 'value': $(this).attr('data-page-type-composer-form-layout-control-set-id')});
 			});
 			$.ajax({
@@ -194,9 +200,9 @@ $(function() {
 	$('a[data-command=add-form-set-control]').dialog();
 	$('a[data-command=edit-form-set-control]').dialog();
 
-	$('.ccm-page-type-composer-form-layout-control-set-inner').sortable({
+	$('.ccm-item-set-inner').sortable({
 		handle: 'a[data-command=move-set-control]',
-		items: '.ccm-page-type-composer-form-layout-control-set-control',
+		items: '.ccm-item-set-control',
 		cursor: 'move',
 		axis: 'y',
 		helper: function(e, ui) { // prevent table columns from collapsing
@@ -217,7 +223,7 @@ $(function() {
 				'value': $(this).parent().parent().attr('data-page-type-composer-form-layout-control-set-id')
 			}];
 
-			$(this).find('.ccm-page-type-composer-form-layout-control-set-control').each(function() {
+			$(this).find('.ccm-item-set-control').each(function() {
 				formData.push({'name': 'ptComposerFormLayoutSetControlID[]', 'value': $(this).attr('data-page-type-composer-form-layout-control-set-control-id')});
 			});
 
@@ -231,7 +237,7 @@ $(function() {
 		}
 	});
 
-	$('.ccm-page-type-composer-form-layout-control-set-inner').on('click', 'a[data-delete-set-control]', function() {
+	$('.ccm-item-set-inner').on('click', 'a[data-delete-set-control]', function() {
 		var ptComposerFormLayoutSetControlID = $(this).attr('data-delete-set-control');
         jQuery.fn.dialog.open({
             element: 'div[data-delete-set-control-dialog=' + ptComposerFormLayoutSetControlID + ']',
@@ -245,52 +251,3 @@ $(function() {
 
 });
 </script>
-
-<style type="text/css">
-
-div.ccm-page-type-composer-form-layout-control-set {
-	margin-top: 20px;
-}
-
-div.ccm-page-type-composer-form-layout-control-set:last-child {
-	margin-bottom: 20px;
-}
-
-.panel-heading .ccm-page-type-composer-item-controls {
-	float: right;
-}
-
-ul.ccm-page-type-composer-item-controls a {
-	color: #333;
-}
-
-ul.ccm-page-type-composer-item-controls a i {
-	position: relative;
-}
-
-ul.ccm-page-type-composer-item-controls a:hover {
-	text-decoration: none;
-}
-
-ul.ccm-page-type-composer-item-controls {
-	padding: 0;
-	margin: 0;
-	width: 60px;
-}
-
-.panel-heading:hover > .ccm-page-type-composer-item-controls li,
-.ccm-page-type-composer-form-layout-control-set-control:hover .ccm-page-type-composer-item-controls li {
-	display: inline-block;
-}
-
-.ccm-page-type-composer-item-controls li {
-	display: none;
-	list-style-type: none;
-}
-
-th, td {
-	padding-left: 15px !important;
-	padding-right: 15px !important;
-}
-
-</style>

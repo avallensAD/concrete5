@@ -1,30 +1,33 @@
 <?php defined('C5_EXECUTE') or die("Access Denied."); ?>
 
 <p>
-<?php 
+<?php
 
 $enablePermissions = false;
-if (!$f->overrideFileSetPermissions()) { ?>
+if (!$f->overrideFileFolderPermissions()) {
+    ?>
 
 	<div class="alert alert-notice">
 	<p>
-	<?php echo t("Permissions for this file are currently dependent on file sets and global file permissions.")?>
+	<?php echo t("Permissions for this file are currently dependent on its folder and global file permissions.")?>
 	</p>
 	<br/>
 	<a href="javascript:void(0)" class="btn btn-default btn-sm" onclick="ccm_setFilePermissionsToOverride()"><?php echo t('Override Permissions')?></a>
 	</div>
 	
-<?php } else { 
-	$enablePermissions = true;
-	?>
+<?php 
+} else {
+    $enablePermissions = true;
+    ?>
 
 	<div class="alert alert-notice">
 	<p><?php echo t("Permissions for this file currently override its sets and the global file permissions.")?></p>
 	<br/>
-	<a href="javascript:void(0)" class="btn btn-default btn-sm" onclick="ccm_revertToGlobalFilePermissions()"><?php echo t('Revert to File Set and Global Permissions')?></a>
+	<a href="javascript:void(0)" class="btn btn-default btn-sm" onclick="ccm_revertToGlobalFilePermissions()"><?php echo t('Revert to Folder and Global Permissions')?></a>
 	</div>
 
-<?php } ?>
+<?php 
+} ?>
 
 </p>
 
@@ -37,32 +40,46 @@ if (!$f->overrideFileSetPermissions()) { ?>
 <table class="ccm-permission-grid table table-striped">
 <?php
 $permissions = PermissionKey::getList('file');
-foreach($permissions as $pk) { 
-	$pk->setPermissionObject($f);
-	?>
+foreach ($permissions as $pk) {
+    $pk->setPermissionObject($f);
+    ?>
 	<tr>
-	<td class="ccm-permission-grid-name" id="ccm-permission-grid-name-<?php echo $pk->getPermissionKeyID()?>"><strong><?php if ($enablePermissions) { ?><a dialog-title="<?php echo $pk->getPermissionKeyDisplayName()?>" data-pkID="<?php echo $pk->getPermissionKeyID()?>" data-paID="<?php echo $pk->getPermissionAccessID()?>" onclick="ccm_permissionLaunchDialog(this)" href="javascript:void(0)"><?php } ?><?php echo $pk->getPermissionKeyDisplayName()?><?php if ($enablePermissions) { ?></a><?php } ?></strong></td>
-	<td id="ccm-permission-grid-cell-<?php echo $pk->getPermissionKeyID()?>" <?php if ($enablePermissions) { ?>class="ccm-permission-grid-cell"<?php } ?>><?php echo Loader::element('permission/labels', array('pk' => $pk))?></td>
+	<td class="ccm-permission-grid-name" id="ccm-permission-grid-name-<?php echo $pk->getPermissionKeyID()?>"><strong><?php if ($enablePermissions) {
+    ?><a dialog-title="<?php echo $pk->getPermissionKeyDisplayName()?>" data-pkID="<?php echo $pk->getPermissionKeyID()?>" data-paID="<?php echo $pk->getPermissionAccessID()?>" onclick="ccm_permissionLaunchDialog(this)" href="javascript:void(0)"><?php 
+}
+    ?><?php echo $pk->getPermissionKeyDisplayName()?><?php if ($enablePermissions) {
+    ?></a><?php 
+}
+    ?></strong></td>
+	<td id="ccm-permission-grid-cell-<?php echo $pk->getPermissionKeyID()?>" <?php if ($enablePermissions) {
+    ?>class="ccm-permission-grid-cell"<?php 
+}
+    ?>><?php echo Loader::element('permission/labels', array('pk' => $pk))?></td>
 </tr>
-<?php } ?>
-<?php if ($enablePermissions) { ?>
+<?php 
+} ?>
+<?php if ($enablePermissions) {
+    ?>
 <tr>
 	<td class="ccm-permission-grid-name" ></td>
 	<td>
 	<?php echo Loader::element('permission/clipboard', array('pkCategory' => $cat))?>
 	</td>
 </tr>
-<?php } ?>
+<?php 
+} ?>
 
 </table>
 </form>
 
-<?php if ($enablePermissions) { ?>
+<?php if ($enablePermissions) {
+    ?>
 <div id="ccm-file-permissions-advanced-buttons" style="display: none">
 	<button onclick="jQuery.fn.dialog.closeTop()" class="btn btn-default pull-left"><?php echo t('Cancel')?></button>
 	<button onclick="$('#ccm-permission-list-form').submit()" class="btn btn-primary pull-right"><?php echo t('Save')?></i></button>
 </div>
-<?php } ?>
+<?php 
+} ?>
 
 <script type="text/javascript">
 
@@ -74,7 +91,7 @@ ccm_permissionLaunchDialog = function(link) {
 	jQuery.fn.dialog.open({
 		title: $(link).attr('dialog-title'),
 		href: '<?php echo REL_DIR_FILES_TOOLS_REQUIRED?>/permissions/dialogs/file?duplicate=' + dupe + '&fID=<?php echo $f->getFileID()?>&pkID=' + $(link).attr('data-pkID') + '&paID=' + $(link).attr('data-paID'),
-		modal: false,
+		modal: true,
 		width: 500,
 		height: 380
 	});		

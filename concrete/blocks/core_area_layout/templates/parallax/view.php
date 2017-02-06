@@ -23,7 +23,7 @@ if (is_object($style)) {
         $container->appendChild($html);
     }
 
-    print $container;
+    echo $container;
     ?>
 </div>
 

@@ -3,13 +3,11 @@ namespace Concrete\Core\Application\Service;
 
 use View;
 use Core;
-use Loader;
-use \Concrete\Core\File\Type\Type as FileType;
+use Concrete\Core\File\Type\Type as FileType;
 use File;
 
 class FileManager
 {
-
     /**
      * Sets up a file field for use with a block.
      *
@@ -17,15 +15,16 @@ class FileManager
      * @param string $postname The name of your database column into which you'd like to save the file ID
      * @param string $chooseText
      * @param \File $bf
+     *
      * @return string $html
      */
-    public function file($id, $postname, $chooseText, $bf = null, $filterArgs = array())
+    public function file($id, $postname, $chooseText, $bf = null, $filterArgs = [])
     {
         $fileID = 0;
         $v = View::getInstance();
         $v->requireAsset('core/file-manager');
 
-        /**
+        /*
          * If $_POST[$postname] is a valid File ID
          * use that file
          * If not try to use the $bf parameter passed in
@@ -43,7 +42,7 @@ class FileManager
         }
 
         $filters = '[]';
-        if ($filterArgs['filters']) {
+        if (isset($filterArgs['filters']) && $filterArgs['filters']) {
             $filters = json_encode($filterArgs['filters']);
         }
 
@@ -56,7 +55,6 @@ class FileManager
         } else {
             $args = "{'inputName': '{$postname}', 'filters': $filters, $chooseText }";
         }
-
 
         $html = <<<EOL
 		<div class="ccm-file-selector" data-file-selector="{$id}"></div>
@@ -81,13 +79,15 @@ EOL;
      * @param string $chooseText
      * @param \File $fileInstanceBlock
      * @param array $additionalArgs
+     *
      * @return string $html
      */
-    public function image($id, $postname, $chooseText, $fileInstanceBlock = null, $additionalArgs = array())
+    public function image($id, $postname, $chooseText, $fileInstanceBlock = null, $additionalArgs = [])
     {
-        $args = array();
-        $args['filters'] = array( array( 'field' => 'type', 'type' => FileType::T_IMAGE ) );
+        $args = [];
+        $args['filters'] = [['field' => 'type', 'type' => FileType::T_IMAGE]];
         $args = array_merge($args, $additionalArgs);
+
         return $this->file($id, $postname, $chooseText, $fileInstanceBlock, $args);
     }
 
@@ -99,13 +99,15 @@ EOL;
      * @param string $chooseText
      * @param \File $fileInstanceBlock
      * @param array $additionalArgs
+     *
      * @return string $html
      */
-    public function video($id, $postname, $chooseText, $fileInstanceBlock = null, $additionalArgs = array())
+    public function video($id, $postname, $chooseText, $fileInstanceBlock = null, $additionalArgs = [])
     {
-        $args = array();
-        $args['filters'] = array( array( 'field' => 'type', 'type' => FileType::T_VIDEO) );
+        $args = [];
+        $args['filters'] = [['field' => 'type', 'type' => FileType::T_VIDEO]];
         $args = array_merge($args, $additionalArgs);
+
         return $this->file($id, $postname, $chooseText, $fileInstanceBlock, $args);
     }
 
@@ -117,13 +119,15 @@ EOL;
      * @param string $chooseText
      * @param \File $fileInstanceBlock
      * @param array $additionalArgs
+     *
      * @return string $html
      */
-    public function text($id, $postname, $chooseText, $fileInstanceBlock = null, $additionalArgs = array())
+    public function text($id, $postname, $chooseText, $fileInstanceBlock = null, $additionalArgs = [])
     {
-        $args = array();
-        $args['filters'] = array( array( 'field' => 'type', 'type' => FileType::T_TEXT) );
+        $args = [];
+        $args['filters'] = [['field' => 'type', 'type' => FileType::T_TEXT]];
         $args = array_merge($args, $additionalArgs);
+
         return $this->file($id, $postname, $chooseText, $fileInstanceBlock, $args);
     }
 
@@ -135,13 +139,15 @@ EOL;
      * @param string $chooseText
      * @param \File $fileInstanceBlock
      * @param array $additionalArgs
+     *
      * @return string $html
      */
-    public function audio($id, $postname, $chooseText, $fileInstanceBlock = null, $additionalArgs = array())
+    public function audio($id, $postname, $chooseText, $fileInstanceBlock = null, $additionalArgs = [])
     {
-        $args = array();
-        $args['filters'] = array( array( 'field' => 'type', 'type' => FileType::T_AUDIO) );
+        $args = [];
+        $args['filters'] = [['field' => 'type', 'type' => FileType::T_AUDIO]];
         $args = array_merge($args, $additionalArgs);
+
         return $this->file($id, $postname, $chooseText, $fileInstanceBlock, $args);
     }
 
@@ -153,13 +159,15 @@ EOL;
      * @param string $chooseText
      * @param \File $fileInstanceBlock
      * @param array $additionalArgs
+     *
      * @return string $html
      */
-    public function doc($id, $postname, $chooseText, $fileInstanceBlock = null, $additionalArgs = array())
+    public function doc($id, $postname, $chooseText, $fileInstanceBlock = null, $additionalArgs = [])
     {
-        $args = array();
-        $args['filters'] = array( array( 'field' => 'type', 'type' => FileType::T_DOCUMENT) );
+        $args = [];
+        $args['filters'] = [['field' => 'type', 'type' => FileType::T_DOCUMENT]];
         $args = array_merge($args, $additionalArgs);
+
         return $this->file($id, $postname, $chooseText, $fileInstanceBlock, $args);
     }
 
@@ -171,13 +179,15 @@ EOL;
      * @param string $chooseText
      * @param \File $fileInstanceBlock
      * @param array $additionalArgs
+     *
      * @return string $html
      */
-    public function app($id, $postname, $chooseText, $fileInstanceBlock = null, $additionalArgs = array())
+    public function app($id, $postname, $chooseText, $fileInstanceBlock = null, $additionalArgs = [])
     {
-        $args = array();
-        $args['filters'] = array( array( 'field' => 'type', 'type' => FileType::T_APPLICATION) );
+        $args = [];
+        $args['filters'] = [['field' => 'type', 'type' => FileType::T_APPLICATION]];
         $args = array_merge($args, $additionalArgs);
+
         return $this->file($id, $postname, $chooseText, $fileInstanceBlock, $args);
     }
 }

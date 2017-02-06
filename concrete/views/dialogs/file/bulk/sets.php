@@ -1,9 +1,11 @@
 <?php defined('C5_EXECUTE') or die("Access Denied."); ?>
 
 <form method="post" data-dialog-form="save-file-set" action="<?php echo $controller->action('submit')?>">
-    <?php foreach($files as $f) { ?>
+    <?php foreach ($files as $f) {
+    ?>
         <input type="hidden" name="fID[]" value="<?php echo $f->getFileID()?>" />
-    <?php } ?>
+    <?php 
+} ?>
 
     <div class="ccm-ui">
         <?php Loader::element('files/bulk/add_to_sets', array('files' => $files))?>

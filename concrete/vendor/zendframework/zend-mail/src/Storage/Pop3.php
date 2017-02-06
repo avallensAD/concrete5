@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2016 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -20,7 +20,6 @@ class Pop3 extends AbstractStorage
      * @var null|\Zend\Mail\Protocol\Pop3
      */
     protected $protocol;
-
 
     /**
      * Count messages all messages in current box
@@ -62,8 +61,8 @@ class Pop3 extends AbstractStorage
         $bodyLines = 0;
         $message = $this->protocol->top($id, $bodyLines, true);
 
-        return new $this->messageClass(array('handler' => $this, 'id' => $id, 'headers' => $message,
-                                              'noToplines' => $bodyLines < 1));
+        return new $this->messageClass(['handler' => $this, 'id' => $id, 'headers' => $message,
+                                              'noToplines' => $bodyLines < 1]);
     }
 
     /*
@@ -201,7 +200,7 @@ class Pop3 extends AbstractStorage
             }
             $count = $this->countMessages();
             if ($count < 1) {
-                return array();
+                return [];
             }
             $range = range(1, $count);
             return array_combine($range, $range);
@@ -271,7 +270,7 @@ class Pop3 extends AbstractStorage
             } catch (MailException\ExceptionInterface $e) {
                 // ignoring error
             }
-            $this->has['uniqueid'] = $id ? true : false;
+            $this->has['uniqueid'] = (bool) $id;
             return $this->has['uniqueid'];
         }
 

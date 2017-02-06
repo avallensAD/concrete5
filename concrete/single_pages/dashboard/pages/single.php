@@ -31,38 +31,46 @@ echo Loader::helper('concrete/dashboard')->getDashboardPaneHeaderWrapper(t('Sing
 					<th class="subheader"></th>
 				</tr>
 			</thead>
-			<?php if (count($generated) == 0) { ?>
+			<?php if (count($generated) == 0) {
+    ?>
 				<tr>
 					<td colspan="4">
 						<?php echo t('No pages found.')?>
 					</td>
 				</tr>
-			<?php } else { ?>
+			<?php
+} else {
+    ?>
 
 				<?php foreach ($generated as $p) {
-					$cp = new Permissions($p);
-					if ($p->getPackageID() > 0) {
-						$package = Package::getByID($p->getPackageID());
-						if(is_object($package)) {
-							$packageHandle = $package->getPackageHandle();
-							$packageName = $package->getPackageName();
-						}
-					} else {
-						$packageName = t('None');
-					} ?>
+    $cp = new Permissions($p);
+    if ($p->getPackageID() > 0) {
+        $package = Package::getByID($p->getPackageID());
+        if (is_object($package)) {
+            $packageHandle = $package->getPackageHandle();
+            $packageName = $package->getPackageName();
+        }
+    } else {
+        $packageName = t('None');
+    }
+    ?>
 					<tr>
 						<td style="width: 30%"><a href="<?php echo URL::to($p)?>"><?php echo $p->getCollectionName()?></a></td>
 						<td style="width: 40%"><?php echo $p->getCollectionPath()?></td>
-						<td style="width: 30%"><?php print $packageName; ?></td>
+						<td style="width: 30%"><?php echo $packageName;
+    ?></td>
 						<td style="width: 1">
-							<?php if($cp->canAdmin()) { ?>
+							<?php if ($cp->canAdmin()) {
+    ?>
                                 <a href="<?php echo $view->action('refresh', $p->getCollectionID(), $this->controller->token->generate('refresh'))?>" title="<?php echo t('Refreshes the page, rebuilding its permissions and its name.')?>" class="icon-link launch-tooltip"><i class="fa fa-refresh"></i></a>
-                            <?php } ?>
+                            <?php
+}
+    ?>
 						</td>
 					</tr>
-				<?php }
-
-			} ?>
+				<?php
+}
+} ?>
 		</table>
 
 	</div>

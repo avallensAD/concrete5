@@ -15,7 +15,7 @@
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the LGPL. For more information, see
  * <http://www.doctrine-project.org>.
-*/
+ */
 
 namespace Doctrine\DBAL\Migrations;
 
@@ -34,7 +34,7 @@ class OutputWriter
     public function __construct(\Closure $closure = null)
     {
         if ($closure === null) {
-            $closure = function ($message) {};
+            $closure = function($message) {};
         }
         $this->closure = $closure;
     }

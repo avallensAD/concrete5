@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2016 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -12,7 +12,8 @@ namespace Zend\Mail\Protocol;
 use Zend\Validator;
 
 /**
- * Provides low-level methods for concrete adapters to communicate with a remote mail server and track requests and responses.
+ * Provides low-level methods for concrete adapters to communicate with a
+ * remote mail server and track requests and responses.
  *
  * @todo Implement proxy settings
  */
@@ -22,7 +23,6 @@ abstract class AbstractProtocol
      * Mail default EOL string
      */
     const EOL = "\r\n";
-
 
     /**
      * Default timeout in seconds for initiating session
@@ -35,13 +35,11 @@ abstract class AbstractProtocol
      */
     protected $maximumLog = 64;
 
-
     /**
      * Hostname or IP address of remote server
      * @var string
      */
     protected $host;
-
 
     /**
      * Port number of connection
@@ -49,13 +47,11 @@ abstract class AbstractProtocol
      */
     protected $port;
 
-
     /**
      * Instance of Zend\Validator\ValidatorChain to check hostnames
      * @var \Zend\Validator\ValidatorChain
      */
     protected $validHost;
-
 
     /**
      * Socket connection resource
@@ -63,13 +59,11 @@ abstract class AbstractProtocol
      */
     protected $socket;
 
-
     /**
      * Last request sent to server
      * @var string
      */
     protected $request;
-
 
     /**
      * Array of server responses to last request
@@ -77,13 +71,11 @@ abstract class AbstractProtocol
      */
     protected $response;
 
-
     /**
      * Log of mail requests and server responses for a session
      * @var array
      */
-    private $log = array();
-
+    private $log = [];
 
     /**
      * Constructor.
@@ -105,7 +97,6 @@ abstract class AbstractProtocol
         $this->port = $port;
     }
 
-
     /**
      * Class destructor to cleanup open resources
      *
@@ -125,7 +116,6 @@ abstract class AbstractProtocol
         $this->maximumLog = (int) $maximumLog;
     }
 
-
     /**
      * Get the maximum log size
      *
@@ -136,14 +126,13 @@ abstract class AbstractProtocol
         return $this->maximumLog;
     }
 
-
     /**
      * Create a connection to the remote host
      *
-     * Concrete adapters for this class will implement their own unique connect scripts, using the _connect() method to create the socket resource.
+     * Concrete adapters for this class will implement their own unique connect
+     * scripts, using the _connect() method to create the socket resource.
      */
     abstract public function connect();
-
 
     /**
      * Retrieve the last client request
@@ -155,7 +144,6 @@ abstract class AbstractProtocol
         return $this->request;
     }
 
-
     /**
      * Retrieve the last server response
      *
@@ -165,7 +153,6 @@ abstract class AbstractProtocol
     {
         return $this->response;
     }
-
 
     /**
      * Retrieve the transaction log
@@ -177,16 +164,16 @@ abstract class AbstractProtocol
         return implode('', $this->log);
     }
 
-
     /**
      * Reset the transaction log
      *
      */
     public function resetLog()
     {
-        $this->log = array();
+        $this->log = [];
     }
 
+    // @codingStandardsIgnoreStart
     /**
      * Add the transaction log
      *
@@ -194,6 +181,7 @@ abstract class AbstractProtocol
      */
     protected function _addLog($value)
     {
+        // @codingStandardsIgnoreEnd
         if ($this->maximumLog >= 0 && count($this->log) >= $this->maximumLog) {
             array_shift($this->log);
         }
@@ -201,6 +189,7 @@ abstract class AbstractProtocol
         $this->log[] = $value;
     }
 
+    // @codingStandardsIgnoreStart
     /**
      * Connect to the server using the supplied transport and target
      *
@@ -212,6 +201,7 @@ abstract class AbstractProtocol
      */
     protected function _connect($remote)
     {
+        // @codingStandardsIgnoreEnd
         $errorNum = 0;
         $errorStr = '';
 
@@ -232,19 +222,20 @@ abstract class AbstractProtocol
         return $result;
     }
 
-
+    // @codingStandardsIgnoreStart
     /**
      * Disconnect from remote host and free resource
      *
      */
     protected function _disconnect()
     {
+        // @codingStandardsIgnoreEnd
         if (is_resource($this->socket)) {
             fclose($this->socket);
         }
     }
 
-
+    // @codingStandardsIgnoreStart
     /**
      * Send the given request followed by a LINEEND to the server.
      *
@@ -254,6 +245,7 @@ abstract class AbstractProtocol
      */
     protected function _send($request)
     {
+        // @codingStandardsIgnoreEnd
         if (!is_resource($this->socket)) {
             throw new Exception\RuntimeException('No connection has been established to ' . $this->host);
         }
@@ -272,7 +264,7 @@ abstract class AbstractProtocol
         return $result;
     }
 
-
+    // @codingStandardsIgnoreStart
     /**
      * Get a line from the stream.
      *
@@ -282,13 +274,14 @@ abstract class AbstractProtocol
      */
     protected function _receive($timeout = null)
     {
+        // @codingStandardsIgnoreEnd
         if (!is_resource($this->socket)) {
             throw new Exception\RuntimeException('No connection has been established to ' . $this->host);
         }
 
         // Adapters may wish to supply per-commend timeouts according to appropriate RFC
         if ($timeout !== null) {
-           stream_set_timeout($this->socket, $timeout);
+            stream_set_timeout($this->socket, $timeout);
         }
 
         // Retrieve response
@@ -311,7 +304,7 @@ abstract class AbstractProtocol
         return $response;
     }
 
-
+    // @codingStandardsIgnoreStart
     /**
      * Parse server response for successful codes
      *
@@ -325,14 +318,12 @@ abstract class AbstractProtocol
      */
     protected function _expect($code, $timeout = null)
     {
-        $this->response = array();
-        $cmd  = '';
-        $more = '';
-        $msg  = '';
+        // @codingStandardsIgnoreEnd
+        $this->response = [];
         $errMsg = '';
 
         if (!is_array($code)) {
-            $code = array($code);
+            $code = [$code];
         }
 
         do {
@@ -345,7 +336,8 @@ abstract class AbstractProtocol
                 $errMsg =  $msg;
             }
 
-        } while (strpos($more, '-') === 0); // The '-' message prefix indicates an information string instead of a response string.
+        // The '-' message prefix indicates an information string instead of a response string.
+        } while (strpos($more, '-') === 0);
 
         if ($errMsg !== '') {
             throw new Exception\RuntimeException($errMsg);

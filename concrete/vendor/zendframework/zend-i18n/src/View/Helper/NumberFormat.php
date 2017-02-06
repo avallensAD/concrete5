@@ -1,9 +1,10 @@
 <?php
+
 /**
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -45,7 +46,14 @@ class NumberFormat extends AbstractHelper
      *
      * @var array
      */
-    protected $formatters = array();
+    protected $formatters = [];
+
+    /**
+     * Text attributes.
+     *
+     * @var array
+     */
+    protected $textAttributes = [];
 
     /**
      * Locale to use instead of the default
@@ -75,14 +83,16 @@ class NumberFormat extends AbstractHelper
      * @param  int       $formatType
      * @param  string    $locale
      * @param  int       $decimals
+     * @param  array|null $textAttributes
      * @return string
      */
     public function __invoke(
         $number,
         $formatStyle = null,
-        $formatType  = null,
-        $locale      = null,
-        $decimals    = null
+        $formatType = null,
+        $locale = null,
+        $decimals = null,
+        array $textAttributes = null
     ) {
         if (null === $locale) {
             $locale = $this->getLocale();
@@ -96,22 +106,33 @@ class NumberFormat extends AbstractHelper
         if (!is_int($decimals) || $decimals < 0) {
             $decimals = $this->getDecimals();
         }
-
-        $formatterId = md5($formatStyle . "\0" . $locale . "\0" . $decimals);
-
-        if (!isset($this->formatters[$formatterId])) {
-            $this->formatters[$formatterId] = new NumberFormatter(
-                $locale,
-                $formatStyle
-            );
-
-            if ($decimals !== null) {
-                $this->formatters[$formatterId]->setAttribute(NumberFormatter::MIN_FRACTION_DIGITS, $decimals);
-                $this->formatters[$formatterId]->setAttribute(NumberFormatter::MAX_FRACTION_DIGITS, $decimals);
-            }
+        if (!is_array($textAttributes)) {
+            $textAttributes = $this->getTextAttributes();
         }
 
-        return $this->formatters[$formatterId]->format($number, $formatType);
+        $formatterId = md5(
+            $formatStyle . "\0" . $locale . "\0" . $decimals . "\0"
+            . md5(serialize($textAttributes))
+        );
+
+        if (isset($this->formatters[$formatterId])) {
+            $formatter = $this->formatters[$formatterId];
+        } else {
+            $formatter = new NumberFormatter($locale, $formatStyle);
+
+            if ($decimals !== null) {
+                $formatter->setAttribute(NumberFormatter::MIN_FRACTION_DIGITS, $decimals);
+                $formatter->setAttribute(NumberFormatter::MAX_FRACTION_DIGITS, $decimals);
+            }
+
+            foreach ($textAttributes as $textAttribute => $value) {
+                $formatter->setTextAttribute($textAttribute, $value);
+            }
+
+            $this->formatters[$formatterId] = $formatter;
+        }
+
+        return $formatter->format($number, $formatType);
     }
 
     /**
@@ -211,5 +232,23 @@ class NumberFormat extends AbstractHelper
         }
 
         return $this->locale;
+    }
+
+    /**
+     * @return array
+     */
+    public function getTextAttributes()
+    {
+        return $this->textAttributes;
+    }
+
+    /**
+     * @param array $textAttributes
+     * @return NumberFormat
+     */
+    public function setTextAttributes(array $textAttributes)
+    {
+        $this->textAttributes = $textAttributes;
+        return $this;
     }
 }

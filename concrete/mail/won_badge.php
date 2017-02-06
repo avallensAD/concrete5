@@ -11,5 +11,3 @@ View your profile here:
 %s
 
 ", $uDisplayName, $badgeName, $uProfileURL);
-
-?>

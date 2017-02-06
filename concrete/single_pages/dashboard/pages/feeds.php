@@ -5,9 +5,8 @@
     || $controller->getTask() == 'edit'
     || $controller->getTask() == 'edit_feed'
     || $controller->getTask() == 'delete_feed') {
-
     $action = $view->action('add_feed');
-    $token = 'add_feed';
+    $tokenString = 'add_feed';
     $pfTitle = '';
     $pfDescription = '';
     $pfHandle = '';
@@ -41,7 +40,7 @@
             $imageFile = File::getByID($iconFID);
         }
         $action = $view->action('edit_feed', $feed->getID());
-        $token = 'edit_feed';
+        $tokenString = 'edit_feed';
         $button = t('Update');
     }
     ?>
@@ -50,7 +49,8 @@
         <button data-dialog="delete-feed" class="btn btn-danger"><?php echo t("Delete Feed")?></button>
     </div>
 
-    <?php if (is_object($feed)) { ?>
+    <?php if (is_object($feed)) {
+    ?>
 
         <div style="display: none">
             <div id="ccm-dialog-delete-feed" class="ccm-ui">
@@ -66,7 +66,9 @@
             </div>
         </div>
 
-    <?php } ?>
+    <?php 
+}
+    ?>
 
     <script type="text/javascript">
         $(function() {
@@ -83,7 +85,7 @@
     </script>
 
     <form method="post" class="form-stacked" action="<?php echo $action?>">
-        <?php echo $this->controller->token->output($token)?>
+        <?php echo $this->controller->token->output($tokenString)?>
         <div class="form-group">
             <?php echo $form->label('pfTitle', t('Title'))?>
             <?php echo $form->text('pfTitle', $pfTitle)?>
@@ -98,13 +100,14 @@
         </div>
         <div class="form-group">
             <?php echo $form->label('iconFID', t('Image'))?>
-            <?php echo Core::make('helper/concrete/asset_library')->image('iconFID', 'iconFID', t('Choose Image'), $imageFile);?>
+            <?php echo Core::make('helper/concrete/asset_library')->image('iconFID', 'iconFID', t('Choose Image'), $imageFile);
+    ?>
         </div>
         <div class="form-group">
             <label class="control-label"><?php echo t('Filter by Parent Page')?></label>
             <?php
-            print Loader::helper('form/page_selector')->selectPage('cParentID', $cParentID);
-            ?>
+            echo Loader::helper('form/page_selector')->selectPage('cParentID', $cParentID);
+    ?>
         </div>
         <div class="form-group">
             <?php echo $form->label('ptID', t('Filter By Page Type'))?>
@@ -114,11 +117,16 @@
             <?php echo $form->label('customTopicAttributeKeyHandle', t('Filter By Topic'))?>
             <select class="form-control" name="customTopicAttributeKeyHandle" id="customTopicAttributeKeyHandle">
                 <option value=""><?php echo t('** No Filtering')?></option>
-                <?php foreach($topicAttributes as $attributeKey) {
-                    $attributeController = $attributeKey->getController();
-                    ?>
-                    <option data-topic-tree-id="<?php echo $attributeController->getTopicTreeID()?>" value="<?php echo $attributeKey->getAttributeKeyHandle()?>" <?php if ($attributeKey->getAttributeKeyHandle() == $customTopicAttributeKeyHandle) { ?>selected<?php } ?>><?php echo $attributeKey->getAttributeKeyDisplayName()?></option>
-                <?php } ?>
+                <?php foreach ($topicAttributes as $attributeKey) {
+    $attributeController = $attributeKey->getController();
+    ?>
+                    <option data-topic-tree-id="<?php echo $attributeController->getTopicTreeID()?>" value="<?php echo $attributeKey->getAttributeKeyHandle()?>" <?php if ($attributeKey->getAttributeKeyHandle() == $customTopicAttributeKeyHandle) {
+    ?>selected<?php 
+}
+    ?>><?php echo $attributeKey->getAttributeKeyDisplayName()?></option>
+                <?php 
+}
+    ?>
             </select>
             <div class="tree-view-container" style="margin-top: 20px">
                 <div class="tree-view-template">
@@ -204,20 +212,21 @@
             var treeViewTemplate = $('.tree-view-template');
 
             $('select[name=customTopicAttributeKeyHandle]').on('change', function() {
-                var toolsURL = '<?php echo Loader::helper('concrete/urls')->getToolsURL('tree/load'); ?>';
+                var toolsURL = '<?php echo Loader::helper('concrete/urls')->getToolsURL('tree/load');
+    ?>';
                 var chosenTree = $(this).find('option:selected').attr('data-topic-tree-id');
                 $('.tree-view-template').remove();
                 if (!chosenTree) {
                     return;
                 }
                 $('.tree-view-container').append(treeViewTemplate);
-                $('.tree-view-template').ccmtopicstree({
+                $('.tree-view-template').concreteTree({
                     'treeID': chosenTree,
                     'chooseNodeInForm': true,
                     'selectNodesByKey': [<?php echo intval($customTopicTreeNodeID)?>],
-                    'onSelect' : function(select, node) {
-                        if (select) {
-                            $('input[name=customTopicTreeNodeID]').val(node.data.key);
+                    'onSelect' : function(nodes) {
+                        if (nodes.length) {
+                            $('input[name=customTopicTreeNodeID]').val(nodes[0]);
                         } else {
                             $('input[name=customTopicTreeNodeID]').val('');
                         }
@@ -237,7 +246,9 @@
 
     </script>
 
-<?php } else { ?>
+<?php 
+} else {
+    ?>
 
 
     <div class="ccm-dashboard-header-buttons">
@@ -245,14 +256,23 @@
     </div>
 
 
-    <?php if (count($feeds) > 0) { ?>
+    <?php if (count($feeds) > 0) {
+    ?>
         <ul class="item-select-list">
-            <?php foreach($feeds as $feed) { ?>
+            <?php foreach ($feeds as $feed) {
+    ?>
                 <li><a href="<?php echo $view->action('edit', $feed->getID())?>"><i class="fa fa-rss"></i> <?php echo $feed->getTitle()?></a></li>
-            <?php } ?>
+            <?php 
+}
+    ?>
         </ul>
-    <?php } else { ?>
+    <?php 
+} else {
+    ?>
         <p><?php echo t("You have not added any feeds.")?></p>
-    <?php } ?>
+    <?php 
+}
+    ?>
 
-<?php } ?>
+<?php 
+} ?>

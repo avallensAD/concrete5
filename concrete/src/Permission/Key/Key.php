@@ -1,5 +1,4 @@
 <?php
-
 namespace Concrete\Core\Permission\Key;
 
 use Concrete\Core\Foundation\Object;
@@ -390,7 +389,6 @@ abstract class Key extends Object
 
     /**
      * Legacy support.
-     * @access private
      */
     public function can()
     {
@@ -426,7 +424,7 @@ abstract class Key extends Object
             $valid = false;
         }
 
-        $item->set($valid);
+        $cache->save($item->set($valid));
 
         return $valid;
     }
@@ -452,6 +450,9 @@ abstract class Key extends Object
         }
     }
 
+    /**
+     * @return PermissionAssignment
+     */
     public function getPermissionAssignmentObject()
     {
         if (is_object($this->permissionObject)) {

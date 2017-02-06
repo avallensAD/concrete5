@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -13,6 +13,7 @@ use Traversable;
 use Zend\Stdlib\ArrayUtils;
 use Zend\Validator\AbstractValidator;
 use Zend\Validator\Exception;
+
 /**
  * Validator for the file extension of a file
  */
@@ -27,27 +28,27 @@ class Extension extends AbstractValidator
     /**
      * @var array Error message templates
      */
-    protected $messageTemplates = array(
+    protected $messageTemplates = [
         self::FALSE_EXTENSION => "File has an incorrect extension",
         self::NOT_FOUND       => "File is not readable or does not exist",
-    );
+    ];
 
     /**
      * Options for this validator
      *
      * @var array
      */
-    protected $options = array(
+    protected $options = [
         'case'      => false,   // Validate case sensitive
         'extension' => '',      // List of extensions
-    );
+    ];
 
     /**
      * @var array Error message template variables
      */
-    protected $messageVariables = array(
-        'extension' => array('options' => 'extension'),
-    );
+    protected $messageVariables = [
+        'extension' => ['options' => 'extension'],
+    ];
 
     /**
      * Sets validator options
@@ -72,10 +73,10 @@ class Extension extends AbstractValidator
             }
 
             if (!array_key_exists('extension', $options)) {
-                $options = array('extension' => $options);
+                $options = ['extension' => $options];
             }
         } else {
-            $options = array('extension' => $options);
+            $options = ['extension' => $options];
         }
 
         if ($case !== null) {

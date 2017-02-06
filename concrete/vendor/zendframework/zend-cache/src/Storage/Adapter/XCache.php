@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2016 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -28,13 +28,12 @@ class XCache extends AbstractAdapter implements
     IterableInterface,
     TotalSpaceCapableInterface
 {
-
     /**
      * Backup HTTP authentication properties of $_SERVER array
      *
      * @var array
      */
-    protected $backupAuth = array();
+    protected $backupAuth = [];
 
     /**
      * Total space in bytes
@@ -46,7 +45,7 @@ class XCache extends AbstractAdapter implements
     /**
      * Constructor
      *
-     * @param  null|array|Traversable|ApcOptions $options
+     * @param  null|array|Traversable|XCacheOptions $options
      * @throws Exception\ExceptionInterface
      */
     public function __construct($options = null)
@@ -55,9 +54,9 @@ class XCache extends AbstractAdapter implements
             throw new Exception\ExtensionNotLoadedException('Missing ext/xcache');
         }
 
-        if (PHP_SAPI == 'cli') {
+        if (PHP_SAPI == 'cli' && version_compare(phpversion('xcache'), '3.1.0') < 0) {
             throw new Exception\ExtensionNotLoadedException(
-                "ext/xcache isn't available on SAPI 'cli'"
+                "ext/xcache isn't available on SAPI 'cli' for versions less than 3.1.0"
             );
         }
 
@@ -75,7 +74,7 @@ class XCache extends AbstractAdapter implements
     /**
      * Set options.
      *
-     * @param  array|Traversable|ApcOptions $options
+     * @param  array|Traversable|XCacheOptions $options
      * @return XCache
      * @see    getOptions()
      */
@@ -147,7 +146,6 @@ class XCache extends AbstractAdapter implements
 
         return $availableSpace;
     }
-
 
     /* ClearByNamespaceInterface */
 
@@ -222,10 +220,9 @@ class XCache extends AbstractAdapter implements
      */
     public function getIterator()
     {
-
         $options   = $this->getOptions();
         $namespace = $options->getNamespace();
-        $keys      = array();
+        $keys      = [];
 
         $this->initAdminAuth();
 
@@ -238,7 +235,6 @@ class XCache extends AbstractAdapter implements
                 }
             }
         } else {
-
             $prefix  = $namespace . $options->getNamespaceSeparator();
             $prefixL = strlen($prefix);
 
@@ -314,7 +310,6 @@ class XCache extends AbstractAdapter implements
         $internalKey = $prefix . $normalizedKey;
 
         if (xcache_isset($internalKey)) {
-
             $this->initAdminAuth();
             $cnt = xcache_count(XC_TYPE_VAR);
             for ($i=0; $i < $cnt; $i++) {
@@ -346,9 +341,16 @@ class XCache extends AbstractAdapter implements
     {
         $options     = $this->getOptions();
         $namespace   = $options->getNamespace();
-        $prefix      = ($options === '') ? '' : $namespace . $options->getNamespaceSeparator();
+        $prefix      = ($namespace === '') ? '' : $namespace . $options->getNamespaceSeparator();
         $internalKey = $prefix . $normalizedKey;
         $ttl         = $options->getTtl();
+
+        if (is_object($value) || is_resource($value)) {
+            throw new Exception\InvalidArgumentException(sprintf(
+                "Cannot store data of type %s",
+                gettype($value)
+            ));
+        }
 
         if (!xcache_set($internalKey, $value, $ttl)) {
             $type = is_object($value) ? get_class($value) : gettype($value);
@@ -431,22 +433,22 @@ class XCache extends AbstractAdapter implements
             $capabilities = new Capabilities(
                 $this,
                 $marker,
-                array(
-                    'supportedDatatypes' => array(
+                [
+                    'supportedDatatypes' => [
                         'NULL'     => false,
                         'boolean'  => true,
                         'integer'  => true,
                         'double'   => true,
                         'string'   => true,
                         'array'    => true,
-                        'object'   => 'object',
+                        'object'   => false,
                         'resource' => false,
-                    ),
-                    'supportedMetadata' => array(
+                    ],
+                    'supportedMetadata' => [
                         'internal_key',
                         'size', 'refcount', 'hits',
                         'ctime', 'atime', 'hvalue',
-                    ),
+                    ],
                     'minTtl'             => 1,
                     'maxTtl'             => (int)ini_get('xcache.var_maxttl'),
                     'staticTtl'          => true,
@@ -456,7 +458,7 @@ class XCache extends AbstractAdapter implements
                     'maxKeyLength'       => 5182,
                     'namespaceIsPrefix'  => true,
                     'namespaceSeparator' => $this->getOptions()->getNamespaceSeparator(),
-                )
+                ]
             );
 
             // update namespace separator on change option
@@ -513,7 +515,7 @@ class XCache extends AbstractAdapter implements
     {
         unset($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']);
         $_SERVER = $this->backupAuth + $_SERVER;
-        $this->backupAuth = array();
+        $this->backupAuth = [];
     }
 
     /**

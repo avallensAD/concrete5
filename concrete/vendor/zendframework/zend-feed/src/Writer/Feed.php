@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -16,13 +16,12 @@ use Iterator;
 */
 class Feed extends AbstractFeed implements Iterator, Countable
 {
-
     /**
      * Contains all entry objects
      *
      * @var array
      */
-    protected $entries = array();
+    protected $entries = [];
 
     /**
      * A pointer for the iterator to keep track of the entries array
@@ -138,7 +137,7 @@ class Feed extends AbstractFeed implements Iterator, Countable
          * Could do with some improvement for performance perhaps
          */
         $timestamp = time();
-        $entries = array();
+        $entries = [];
         foreach ($this->entries as $entry) {
             if ($entry->getDateModified()) {
                 $timestamp = (int) $entry->getDateModified()->getTimestamp();

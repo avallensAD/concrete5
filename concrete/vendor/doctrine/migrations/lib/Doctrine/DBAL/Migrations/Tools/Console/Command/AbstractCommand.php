@@ -19,14 +19,19 @@
 
 namespace Doctrine\DBAL\Migrations\Tools\Console\Command;
 
+use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Migrations\Configuration\Configuration;
-use Doctrine\DBAL\Migrations\Configuration\YamlConfiguration;
-use Doctrine\DBAL\Migrations\Configuration\XmlConfiguration;
+use Doctrine\DBAL\Migrations\Configuration\Connection\Loader\ArrayConnectionConfigurationLoader;
+use Doctrine\DBAL\Migrations\Configuration\Connection\Loader\ConnectionConfigurationLoader;
+use Doctrine\DBAL\Migrations\Configuration\Connection\Loader\ConnectionHelperLoader;
+use Doctrine\DBAL\Migrations\Configuration\Connection\Loader\ConnectionConfigurationChainLoader;
 use Doctrine\DBAL\Migrations\OutputWriter;
+use Doctrine\DBAL\Migrations\Tools\Console\Helper\ConfigurationHelper;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 /**
  * CLI Command for adding and deleting migration versions from the version table.
@@ -100,29 +105,34 @@ abstract class AbstractCommand extends Command
     protected function getMigrationConfiguration(InputInterface $input, OutputInterface $output)
     {
         if (!$this->migrationConfiguration) {
-            if ($input->getOption('configuration')) {
-                $info = pathinfo($input->getOption('configuration'));
-                $class = $info['extension'] === 'xml' ? 'Doctrine\DBAL\Migrations\Configuration\XmlConfiguration' : 'Doctrine\DBAL\Migrations\Configuration\YamlConfiguration';
-                $configuration = new $class($this->getConnection($input), $this->getOutputWriter($output));
-                $configuration->load($input->getOption('configuration'));
-            } elseif (file_exists('migrations.xml')) {
-                $configuration = new XmlConfiguration($this->getConnection($input), $this->getOutputWriter($output));
-                $configuration->load('migrations.xml');
-            } elseif (file_exists('migrations.yml')) {
-                $configuration = new YamlConfiguration($this->getConnection($input), $this->getOutputWriter($output));
-                $configuration->load('migrations.yml');
-            } elseif (file_exists('migrations.yaml')) {
-                $configuration = new YamlConfiguration($this->getConnection($input), $this->getOutputWriter($output));
-                $configuration->load('migrations.yaml');
-            } elseif ($this->configuration) {
-                $configuration = $this->configuration;
+            if ($this->getHelperSet()->has('configuration')
+                && $this->getHelperSet()->get('configuration') instanceof ConfigurationHelper) {
+                $configHelper = $this->getHelperSet()->get('configuration');
             } else {
-                $configuration = new Configuration($this->getConnection($input), $this->getOutputWriter($output));
+                $configHelper = new ConfigurationHelper($this->getConnection($input), $this->configuration);
             }
-            $this->migrationConfiguration = $configuration;
+            $this->migrationConfiguration = $configHelper->getMigrationConfig($input, $this->getOutputWriter($output));
         }
 
         return $this->migrationConfiguration;
+    }
+
+    /**
+     * This method ensure that we stay compatible with symfony console 2.3 by using the deprecated dialog helper
+     * but use the ConfirmationQuestion when available.
+     *
+     * @param $question
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return mixed
+     */
+    protected function askConfirmation($question, InputInterface $input, OutputInterface $output)
+    {
+        if (!$this->getHelperSet()->has('question')) {
+            return $this->getHelper('dialog')->askConfirmation($output, '<question>' . $question . '</question>', false);
+        }
+
+        return $this->getHelper('question')->ask($input, $output, new ConfirmationQuestion($question));
     }
 
     /**
@@ -133,7 +143,7 @@ abstract class AbstractCommand extends Command
     private function getOutputWriter(OutputInterface $output)
     {
         if (!$this->outputWriter) {
-            $this->outputWriter = new OutputWriter(function ($message) use ($output) {
+            $this->outputWriter = new OutputWriter(function($message) use ($output) {
                 return $output->writeln($message);
             });
         }
@@ -149,30 +159,25 @@ abstract class AbstractCommand extends Command
      */
     private function getConnection(InputInterface $input)
     {
-        if (!$this->connection) {
-            if ($input->getOption('db-configuration')) {
-                if (!file_exists($input->getOption('db-configuration'))) {
-                    throw new \InvalidArgumentException("The specified connection file is not a valid file.");
-                }
-
-                $params = include $input->getOption('db-configuration');
-                if (!is_array($params)) {
-                    throw new \InvalidArgumentException('The connection file has to return an array with database configuration parameters.');
-                }
-                $this->connection = \Doctrine\DBAL\DriverManager::getConnection($params);
-            } elseif (file_exists('migrations-db.php')) {
-                $params = include 'migrations-db.php';
-                if (!is_array($params)) {
-                    throw new \InvalidArgumentException('The connection file has to return an array with database configuration parameters.');
-                }
-                $this->connection = \Doctrine\DBAL\DriverManager::getConnection($params);
-            } elseif ($this->getHelperSet()->has('connection')) {
-                $this->connection = $this->getHelper('connection')->getConnection();
-            } else {
-                throw new \InvalidArgumentException('You have to specify a --db-configuration file or pass a Database Connection as a dependency to the Migrations.');
-            }
+        if ($this->connection) {
+            return $this->connection;
         }
 
-        return $this->connection;
+        $chainLoader = new ConnectionConfigurationChainLoader(
+            [
+                new ArrayConnectionConfigurationLoader($input->getOption('db-configuration')),
+                new ArrayConnectionConfigurationLoader('migrations-db.php'),
+                new ConnectionHelperLoader($this->getHelperSet(), 'connection'),
+                new ConnectionConfigurationLoader($this->configuration),
+            ]
+        );
+        $connection = $chainLoader->chosen();
+
+        if ($connection) {
+            return $this->connection = $connection;
+        }
+
+        throw new \InvalidArgumentException('You have to specify a --db-configuration file or pass a Database Connection as a dependency to the Migrations.');
     }
+
 }

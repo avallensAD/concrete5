@@ -2,11 +2,9 @@
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://azuredeploy.net/)
 
 
-This repository contains Joomla application that can run on Azure app service with both ClearDB and MySQL inapp. If you wish to use MySQL inapp , it is recommended to use Environment variables. 
+This repository contains a version of Concrete5 that can run on the Azure app service with both ClearDB and MySQL in-app. If you wish to use [MySQL in-app](https://azure.microsoft.com/en-us/blog/mysql-in-app-preview-app-service/), it is recommended to use Environment variables. 
 
-To use Environment variables with Joomla application to pass in the database information , add the following constructor in configuration.php inside JConfig class. To use this with [MySQL in app feature](https://azure.microsoft.com/en-us/blog/mysql-in-app-preview-app-service/),  use the $_SERVER['MYSQLCONNSTR_localdb]' variable to get the database connection string. 
-
-Add this code to application\config\database.php file in order to use environment variables or support **MySQL in-app**
+Add this code to application\config\database.php file in order to use environment variables and support **MySQL in-app**:
 
 ```
 <?php
@@ -29,17 +27,17 @@ foreach ($_SERVER as $key => $value) {
 }
 
 
-return array(
+return [
     'default-connection' => 'concrete',
-    'connections' => array(
-        'concrete' => array(
+    'connections' => [
+        'concrete' => [
             'driver' => 'c5_pdo_mysql',
             'server' => $connectstr_dbhost,
             'database' => $connectstr_dbname,
             'username' => $connectstr_dbusername,
             'password' => $connectstr_dbpassword,
             'charset' => 'utf8',
-        ),
-    ),
-); 
+        ],
+    ],
+];
 ```

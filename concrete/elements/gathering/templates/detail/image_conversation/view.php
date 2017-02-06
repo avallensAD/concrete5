@@ -1,7 +1,7 @@
 <?php defined('C5_EXECUTE') or die("Access Denied.");
 $nh = Loader::helper('navigation');
 if (is_array($image)) {
-$image = $image[0];
+    $image = $image[0];
 }?>
 
 <div class="ccm-gathering-overlay image-sharing-link" id="image-sharing-link-<?php echo $this->gaiID; ?>">
@@ -31,7 +31,7 @@ $image = $image[0];
 			<div class="ccm-conversation-attachment-container" style="display: none;">
 				<form action="/index.php/tools/required/conversations/add_file" class="dropzone clickable" id="file-upload" data-dropzone-applied="true">
 					<div class="ccm-conversation-errors alert alert-danger"></div>
-					<input type="hidden" name="ccm_token" value="1390605625:07adc131bb627d0810ca52b3d87a8453">					<input type="hidden" name="blockAreaHandle" id="blockAreaHandle" value="Column One">					<input type="hidden" name="cID" id="cID" value="1">					<input type="hidden" name="bID" id="bID" value="19">				<div class="default message"><span>Drop files here to upload</span></div></form>
+					<input type="hidden" name="ccm_token" value="1390605625:07adc131bb627d0810ca52b3d87a8453">					<input type="hidden" name="blockAreaHandle" id="blockAreaHandle" value="Column One">					<input type="hidden" name="cID" id="cID" value="1">					<input type="hidden" name="bID" id="bID" value="19">				<div class="default message"><span>Drop files here or click to upload.</span></div></form>
 			</div>
 		</div>
 			<div class="ccm-conversation-messages">
@@ -64,7 +64,7 @@ $image = $image[0];
 		<li class="dropdown">
 		<a class="dropdown-toggle" id="drop4" role="button" data-toggle="dropdown" href="#">Share</a>
 			<ul id="menu1" class="dropdown-menu" role="menu" aria-labelledby="drop4">
-			<li><a class="shareTweet" target="_blank" href="http://twitter.com/intent/tweet?url=http://fivesevenmagic:8888#cnvMessage1">Twitter</a></li>
+			<li><a class="shareTweet" target="_blank" href="https://twitter.com/intent/tweet?url=http://fivesevenmagic:8888#cnvMessage1">Twitter</a></li>
 			<li><a class="shareFacebook" target="_blank" href="http://www.facebook.com/sharer.php?u=http://fivesevenmagic:8888#cnvMessage1">Facebook</a></li>
 			<li><a data-message-id="1" rel="http://fivesevenmagic:8888#cnvMessage1" data-dialog-title="Link" class="share-permalink" href="#">Link</a></li>
 			</ul>
@@ -101,7 +101,7 @@ $image = $image[0];
 		<li class="dropdown">
 		<a class="dropdown-toggle" id="drop4" role="button" data-toggle="dropdown" href="#">Share</a>
 			<ul id="menu1" class="dropdown-menu" role="menu" aria-labelledby="drop4">
-			<li><a class="shareTweet" target="_blank" href="http://twitter.com/intent/tweet?url=http://fivesevenmagic:8888#cnvMessage2">Twitter</a></li>
+			<li><a class="shareTweet" target="_blank" href="https://twitter.com/intent/tweet?url=http://fivesevenmagic:8888#cnvMessage2">Twitter</a></li>
 			<li><a class="shareFacebook" target="_blank" href="http://www.facebook.com/sharer.php?u=http://fivesevenmagic:8888#cnvMessage2">Facebook</a></li>
 			<li><a data-message-id="2" rel="http://fivesevenmagic:8888#cnvMessage2" data-dialog-title="Link" class="share-permalink" href="#">Link</a></li>
 			</ul>
@@ -138,7 +138,7 @@ $image = $image[0];
 		<li class="dropdown">
 		<a class="dropdown-toggle" id="drop4" role="button" data-toggle="dropdown" href="#">Share</a>
 			<ul id="menu1" class="dropdown-menu" role="menu" aria-labelledby="drop4">
-			<li><a class="shareTweet" target="_blank" href="http://twitter.com/intent/tweet?url=http://fivesevenmagic:8888#cnvMessage3">Twitter</a></li>
+			<li><a class="shareTweet" target="_blank" href="https://twitter.com/intent/tweet?url=http://fivesevenmagic:8888#cnvMessage3">Twitter</a></li>
 			<li><a class="shareFacebook" target="_blank" href="http://www.facebook.com/sharer.php?u=http://fivesevenmagic:8888#cnvMessage3">Facebook</a></li>
 			<li><a data-message-id="3" rel="http://fivesevenmagic:8888#cnvMessage3" data-dialog-title="Link" class="share-permalink" href="#">Link</a></li>
 			</ul>

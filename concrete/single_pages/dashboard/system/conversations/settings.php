@@ -12,9 +12,7 @@ echo Core::make('helper/concrete/dashboard')->getDashboardPaneHeaderWrapper(t('C
 
     <fieldset>
         <legend><?php echo t('Attachment Settings'); ?></legend>
-        <p style="margin-bottom: 25px; color: #aaa; display: block;"
-           class="small"><?php echo t('Note: These settings can be overridden in the block edit form for individual conversations.') ?></p>
-
+        <p style="margin-bottom: 25px; color: #aaa; display: block;"><?php echo t('Note: These settings can be overridden in the block edit form for individual conversations.'); ?></p>
         <div class="form-group">
             <label class="control-label"><?php echo t('Enable Attachments') ?></label>
             <?php echo $form->checkbox('attachmentsEnabled', 1, $attachmentsEnabled) ?>

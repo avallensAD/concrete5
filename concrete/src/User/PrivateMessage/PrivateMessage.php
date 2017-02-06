@@ -1,162 +1,214 @@
 <?php
 namespace Concrete\Core\User\PrivateMessage;
-use \Concrete\Core\Foundation\Object;
+
+use Concrete\Core\Foundation\Object;
+use Concrete\Core\Notification\Subject\SubjectInterface;
 use Concrete\Core\User\PrivateMessage\Mailbox as UserPrivateMessageMailbox;
 use Loader;
 use UserInfo;
 use Events;
-class PrivateMessage extends Object {
 
-	protected $authorName = false;
-	protected $mailbox;
+class PrivateMessage extends Object implements SubjectInterface
+{
+    protected $authorName = false;
+    protected $mailbox;
 
-	public function getMessageDelimiter() {
-		return t('-------------------- Original Message --------------------');
-	}
+    public function getNotificationDate()
+    {
+        return \Core::make('date')->toDateTime($this->getMessageDateAdded());
+    }
 
-	public static function getByID($msgID, $mailbox = false) {
-		$db = Loader::db();
-		$row = $db->GetRow('select uAuthorID, msgDateCreated, msgID, msgSubject, msgBody, uToID from UserPrivateMessages where msgID = ?', array($msgID));
-		if (!isset($row['msgID'])) {
-			return false;
-		}
+    public function getUsersToExcludeFromNotification()
+    {
+        return array();
+    }
 
-		$upm = new static();
-		$upm->setPropertiesFromArray($row);
+    public function getMessageDelimiter()
+    {
+        return t('-------------------- Original Message --------------------');
+    }
 
-		if ($mailbox) {
-			// we add in some mailbox-specific attributes
-			$row = $db->GetRow('select msgID, msgIsNew, msgIsUnread, msgMailboxID, msgIsReplied, uID from UserPrivateMessagesTo where msgID = ? and uID = ?', array($msgID, $mailbox->getMailboxUserID()));
-			if (isset($row['msgID'])) {
-				$upm->setPropertiesFromArray($row);
-			}
-			$upm->mailbox = $mailbox;
-		}
+    public static function getByID($msgID, $mailbox = false)
+    {
+        $db = Loader::db();
+        $row = $db->GetRow('select uAuthorID, msgDateCreated, msgID, msgSubject, msgBody, uToID from UserPrivateMessages where msgID = ?', array($msgID));
+        if (!isset($row['msgID'])) {
+            return false;
+        }
 
-		return $upm;
-	}
+        $upm = new static();
+        $upm->setPropertiesFromArray($row);
 
-	public function getMessageStatus() {
-		if (is_object($this->mailbox)) {
-			if (!$this->msgIsUnread) {
-				return t('Read');
-			}
-			if ($this->mailbox->getMailboxID() == UserPrivateMessageMailbox::MBTYPE_SENT) {
-				return t("Sent");
-			}
-		}
+        if ($mailbox) {
+            // we add in some mailbox-specific attributes
+            $row = $db->GetRow('select msgID, msgIsNew, msgIsUnread, msgMailboxID, msgIsReplied, uID from UserPrivateMessagesTo where msgID = ? and uID = ?', array($msgID, $mailbox->getMailboxUserID()));
+            if (isset($row['msgID'])) {
+                $upm->setPropertiesFromArray($row);
+            }
+            $upm->mailbox = $mailbox;
+        }
 
-		if ($this->msgIsNew) {
-			return t('New');
-		}
-		if ($this->msgIsUnread) {
-			return t('Unread');
-		}
-		if ($this->msgIsReplied) {
-			return t('Replied');
-		}
+        return $upm;
+    }
 
-		return t("Read");
-	}
+    public function getMessageStatus()
+    {
+        if (is_object($this->mailbox)) {
+            if (!$this->msgIsUnread) {
+                return t('Read');
+            }
+            if ($this->mailbox->getMailboxID() == UserPrivateMessageMailbox::MBTYPE_SENT) {
+                return t("Sent");
+            }
+        }
 
-	public function markAsRead() {
-		if (!$this->uID) {
-			return false;
-		}
+        if ($this->msgIsNew) {
+            return t('New');
+        }
+        if ($this->msgIsUnread) {
+            return t('Unread');
+        }
+        if ($this->msgIsReplied) {
+            return t('Replied');
+        }
 
-		$db = Loader::db();
-		if ($this->uID != $this->uAuthorID) {
-			$ue = new Event($this);
-			Events::dispatch('on_private_message_marked_as_read', $ue);
+        return t("Read");
+    }
 
-			$db->Execute('update UserPrivateMessagesTo set msgIsUnread = 0 where msgID = ? and msgMailboxID = ? and uID = ?', array($this->msgID, $this->msgMailboxID, $this->uID));
-		}
-	}
+    public function markAsRead()
+    {
+        if (!$this->uID) {
+            return false;
+        }
 
-	public function getMessageAuthorID() {return $this->uAuthorID;}
-	public function getMessageID() {return $this->msgID;}
-	public function getMessageUserID() {return $this->uID;}
-	public function getMessageAuthorObject() {return UserInfo::getByID($this->uAuthorID);}
-	public function getMessageUserToID() {return $this->uToID;}
-	public function getMessageRelevantUserID() {
-		if (is_object($this->mailbox)) {
-			if ($this->mailbox->getMailboxID() == UserPrivateMessageMailbox::MBTYPE_SENT) {
-				return $this->uToID;
-			}
-		}
+        $db = Loader::db();
+        if ($this->uID != $this->uAuthorID) {
+            $ue = new Event($this);
+            Events::dispatch('on_private_message_marked_as_read', $ue);
 
-		return $this->uAuthorID;
-	}
+            $db->Execute('update UserPrivateMessagesTo set msgIsUnread = 0 where msgID = ? and msgMailboxID = ? and uID = ?', array($this->msgID, $this->msgMailboxID, $this->uID));
+        }
+    }
 
-	/**
-	 * Responsible for converting line breaks to br tags, perhaps running bbcode, as well as making the older replied-to messages gray
-	 */
-	public function getFormattedMessageBody() {
-		$msgBody = $this->getMessageBody();
-		$txt = Loader::helper('text');
+    public function getMessageAuthorID()
+    {
+        return $this->uAuthorID;
+    }
+    public function getMessageID()
+    {
+        return $this->msgID;
+    }
+    public function getMessageUserID()
+    {
+        return $this->uID;
+    }
+    public function getMessageAuthorObject()
+    {
+        return UserInfo::getByID($this->uAuthorID);
+    }
+    public function getMessageUserToID()
+    {
+        return $this->uToID;
+    }
+    public function getMessageUserToObject()
+    {
+        return UserInfo::getByID($this->uToID);
+    }
 
-		$repliedPos = strpos($msgBody, $this->getMessageDelimiter());
-		if ($repliedPos > -1) {
-			$repliedText = substr($msgBody, $repliedPos);
-			$messageText = substr($msgBody, 0, $repliedPos);
-			$msgBody = $messageText . '<div class="ccm-profile-message-replied">' . nl2br($txt->entities($repliedText)) . '</div>';
-			$msgBody = str_replace($this->getMessageDelimiter(), '<hr />', $msgBody);
-		} else {
-		    $msgBody = nl2br($txt->entities($msgBody));
-		}
+    public function getMessageRelevantUserID()
+    {
+        if (is_object($this->mailbox)) {
+            if ($this->mailbox->getMailboxID() == UserPrivateMessageMailbox::MBTYPE_SENT) {
+                return $this->uToID;
+            }
+        }
 
-		return $msgBody;
-	}
+        return $this->uAuthorID;
+    }
 
+    /**
+     * Responsible for converting line breaks to br tags, perhaps running bbcode, as well as making the older replied-to messages gray.
+     */
+    public function getFormattedMessageBody()
+    {
+        $msgBody = $this->getMessageBody();
+        $txt = Loader::helper('text');
 
-	public function delete() {
-		$db = Loader::db();
-		if (!$this->uID) {
-			return false;
-		}
+        $repliedPos = strpos($msgBody, $this->getMessageDelimiter());
+        if ($repliedPos > -1) {
+            $repliedText = substr($msgBody, $repliedPos);
+            $messageText = substr($msgBody, 0, $repliedPos);
+            $msgBody = $messageText . '<div class="ccm-profile-message-replied">' . nl2br($txt->entities($repliedText)) . '</div>';
+            $msgBody = str_replace($this->getMessageDelimiter(), '<hr />', $msgBody);
+        } else {
+            $msgBody = nl2br($txt->entities($msgBody));
+        }
 
-		$ue = new Event($this);
-		$ue = Events::dispatch('on_private_message_delete', $ue);
-		if (!$ue) {
-			return;
-		}
+        return $msgBody;
+    }
 
-		$db->Execute('delete from UserPrivateMessagesTo where uID = ? and msgID = ?', array($this->uID, $this->msgID));
-	}
+    public function delete()
+    {
+        $db = Loader::db();
+        if (!$this->uID) {
+            return false;
+        }
 
-	public function getMessageRelevantUserObject() {
-		$ui = UserInfo::getByID($this->getMessageRelevantUserID());
-		return $ui;
-	}
+        $ue = new Event($this);
+        $ue = Events::dispatch('on_private_message_delete', $ue);
+        if (!$ue) {
+            return;
+        }
 
-	public function getMessageRelevantUserName() {
-		$ui = UserInfo::getByID($this->getMessageRelevantUserID());
-		if (is_object($ui)) {
-			return $ui->getUserName();
-		}
-	}
+        $db->Execute('delete from UserPrivateMessagesTo where uID = ? and msgID = ?', array($this->uID, $this->msgID));
+    }
 
-	public function getMessageAuthorName() {
-		if ($this->authorName == false) {
-			$author = $this->getMessageAuthorObject();
-			if (is_object($author)) {
-				$this->authorName = $author->getUserName();
-			} else {
-				$this->authorName = t('Unknown User');
-			}
-		}
+    public function getMessageRelevantUserObject()
+    {
+        $ui = UserInfo::getByID($this->getMessageRelevantUserID());
 
-		return $this->authorName;
-	}
+        return $ui;
+    }
 
-	public function getMessageDateAdded() {
-		return $this->msgDateCreated;
-	}
+    public function getMessageRelevantUserName()
+    {
+        $ui = UserInfo::getByID($this->getMessageRelevantUserID());
+        if (is_object($ui)) {
+            return $ui->getUserName();
+        }
+    }
 
-	public function getMessageSubject() {return $this->msgSubject;}
-	public function getFormattedMessageSubject() {
-		$txt = Loader::helper('text');
-		return $txt->entities($this->msgSubject);
-	}
-	public function getMessageBody() {return $this->msgBody;}
+    public function getMessageAuthorName()
+    {
+        if ($this->authorName == false) {
+            $author = $this->getMessageAuthorObject();
+            if (is_object($author)) {
+                $this->authorName = $author->getUserName();
+            } else {
+                $this->authorName = t('Unknown User');
+            }
+        }
+
+        return $this->authorName;
+    }
+
+    public function getMessageDateAdded()
+    {
+        return $this->msgDateCreated;
+    }
+
+    public function getMessageSubject()
+    {
+        return $this->msgSubject;
+    }
+    public function getFormattedMessageSubject()
+    {
+        $txt = Loader::helper('text');
+
+        return $txt->entities($this->msgSubject);
+    }
+    public function getMessageBody()
+    {
+        return $this->msgBody;
+    }
 }

@@ -5,7 +5,7 @@ defined('C5_EXECUTE') or die("Access Denied.");
 <?php
 $pk = PermissionKey::getByID($_REQUEST['pkID']);
 $pk->setPermissionObject($fileset);
-	
+
 ?>
 
 <?php Loader::element("permission/detail", array('permissionKey' => $pk)); ?>

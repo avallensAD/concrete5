@@ -1,5 +1,4 @@
 <?php
-
 namespace Concrete\Block\ShareThisPage;
 
 use Concrete\Core\Block\BlockController;
@@ -15,9 +14,9 @@ class Controller extends BlockController
     public $helpers = array('form');
 
     protected $btInterfaceWidth = 400;
-    protected $btCacheBlockOutput = true;
-    protected $btCacheBlockOutputOnPost = true;
-    protected $btCacheBlockOutputForRegisteredUsers = true;
+    protected $btCacheBlockOutput = false;
+    protected $btCacheBlockOutputOnPost = false;
+    protected $btCacheBlockOutputForRegisteredUsers = false;
     protected $btInterfaceHeight = 400;
     protected $btTable = 'btShareThisPage';
 
@@ -60,7 +59,7 @@ class Controller extends BlockController
 
     protected function getSelectedServices()
     {
-        $links = array();
+        $this->services = array();
         $db = Database::get();
         $services = $db->GetCol('select service from btShareThisPage where bID = ? order by displayOrder asc',
             array($this->bID)

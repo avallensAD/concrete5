@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -19,7 +19,7 @@ class HeaderLoader extends PluginClassLoader
     /**
      * @var array Pre-aliased Header plugins
      */
-    protected $plugins = array(
+    protected $plugins = [
         'accept'             => 'Zend\Http\Header\Accept',
         'acceptcharset'      => 'Zend\Http\Header\AcceptCharset',
         'acceptencoding'     => 'Zend\Http\Header\AcceptEncoding',
@@ -56,6 +56,7 @@ class HeaderLoader extends PluginClassLoader
         'lastmodified'       => 'Zend\Http\Header\LastModified',
         'location'           => 'Zend\Http\Header\Location',
         'maxforwards'        => 'Zend\Http\Header\MaxForwards',
+        'origin'             => 'Zend\Http\Header\Origin',
         'pragma'             => 'Zend\Http\Header\Pragma',
         'proxyauthenticate'  => 'Zend\Http\Header\ProxyAuthenticate',
         'proxyauthorization' => 'Zend\Http\Header\ProxyAuthorization',
@@ -74,5 +75,5 @@ class HeaderLoader extends PluginClassLoader
         'via'                => 'Zend\Http\Header\Via',
         'warning'            => 'Zend\Http\Header\Warning',
         'wwwauthenticate'    => 'Zend\Http\Header\WWWAuthenticate'
-    );
+    ];
 }

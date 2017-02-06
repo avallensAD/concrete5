@@ -16,45 +16,59 @@
 </div>
 </div>
 
-<?php if ($total == 0) { ?>
+<?php if ($total == 0) {
+    ?>
 
 		<div><?php echo t('No users found.')?></div>
 
-	<?php } else { ?>
+	<?php 
+} else {
+    ?>
 
 		<table class="table table-striped" id="ccm-members-directory">
 
 
 		<?php
-		$av = Loader::helper('concrete/avatar');
-		$u = new User();
+        $av = Loader::helper('concrete/avatar');
+    $u = new User();
 
-		foreach($users as $user) { 	?>
+    foreach ($users as $user) {
+        ?>
 
 		<tr>
 			<td class="ccm-members-directory-avatar"><a href="<?php echo $user->getUserPublicProfileURL()?>"><?php echo $user->getUserAvatar()->output()?></a></td>
 			<td class="ccm-members-directory-name"><a href="<?php echo $user->getUserPublicProfileURL()?>"><?php echo ucfirst($user->getUserName())?></a></td>
 			<?php
-			foreach($attribs as $ak) { ?>
+            foreach ($attribs as $ak) {
+                ?>
 				<td>
-					<?php echo $user->getAttribute($ak, 'displaySanitized', 'display'); ?>
+					<?php echo $user->getAttribute($ak, 'displaySanitized', 'display');
+                ?>
 				</td>
-			<?php } ?>
+			<?php 
+            }
+        ?>
 		</tr>
 
-		<?php } ?>
+		<?php 
+    }
+    ?>
 
 		</table>
 
-        <?php if ($pagination->haveToPaginate()) { ?>
+        <?php if ($pagination->haveToPaginate()) {
+    ?>
 
-            <?php echo $pagination->renderDefaultView();?>
+            <?php echo $pagination->renderView('dashboard');
+    ?>
 
-        <?php } ?>
+        <?php 
+}
+    ?>
 
 	<?php
 
-	} ?>
+} ?>
 
 
 </div>

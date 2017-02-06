@@ -2,16 +2,18 @@
 <fieldset>
     <legend><?php echo t('Filtering')?></legend>
     <div class='form-group'>
-        <label for='title' style="margin-bottom: 0px;"><?php echo t('By Parent Page')?>:</label>
+        <label for='title' class="control-label"><?php echo t('By Parent Page')?>:</label>
         <div class="checkbox">
             <label>
-                <input <?php if (intval($cParentID) > 0) { ?>checked<?php } ?> name="filterByParent" type="checkbox" value="1" />
+                <input <?php if (intval($cParentID) > 0) {
+    ?>checked<?php 
+} ?> name="filterByParent" type="checkbox" value="1" />
                 <?php echo t('Filter by Parent Page')?>
             </label>
         </div>
         <div id="ccm-block-related-pages-parent-page">
             <?php
-            print Loader::helper('form/page_selector')->selectPage('cParentID', $cParentID);
+            echo Loader::helper('form/page_selector')->selectPage('cParentID', $cParentID);
             ?>
         </div>
     </div>
@@ -25,10 +27,14 @@
                 foreach ($pagetypes as $ct) {
                     ?>
                     <option
-                        value="<?php echo $ct->getPageTypeID() ?>" <?php if ($ptID == $ct->getPageTypeID()) { ?> selected <?php } ?>>
+                        value="<?php echo $ct->getPageTypeID() ?>" <?php if ($ptID == $ct->getPageTypeID()) {
+    ?> selected <?php 
+}
+                    ?>>
                         <?php echo $ct->getPageTypeDisplayName() ?>
                     </option>
                 <?php
+
                 }
                 ?>
             </select>
@@ -40,13 +46,15 @@
     <div class="form-group">
         <div class="checkbox">
             <label>
-                <input <?php if (intval($cTargetID) > 0) { ?>checked<?php } ?> name="redirectToResults" type="checkbox" value="1" />
+                <input <?php if (intval($cTargetID) > 0) {
+    ?>checked<?php 
+} ?> name="redirectToResults" type="checkbox" value="1" />
                 <?php echo t('Redirect to Different Page on Click')?>
             </label>
         </div>
         <div id="ccm-block-related-pages-search-page">
             <?php
-            print Loader::helper('form/page_selector')->selectPage('cTargetID', $cTargetID);
+            echo Loader::helper('form/page_selector')->selectPage('cTargetID', $cTargetID);
             ?>
         </div>
     </div>

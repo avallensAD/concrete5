@@ -1,12 +1,15 @@
 <?php
+
 namespace Concrete\Core\Page\Type\Composer\Control\CorePageProperty;
+
+use Concrete\Core\Attribute\FontAwesomeIconFormatter;
 
 class PublishTargetCorePageProperty extends CorePageProperty
 {
     public function __construct()
     {
         $this->setCorePagePropertyHandle('publish_target');
-        $this->setPageTypeComposerControlIconSRC(ASSETS_URL . '/attributes/image_file/icon.png');
+        $this->setPageTypeComposerControlIconFormatter(new FontAwesomeIconFormatter('download'));
     }
 
     public function getPageTypeComposerControlName()
@@ -27,17 +30,17 @@ class PublishTargetCorePageProperty extends CorePageProperty
             } else {
                 return $this->page->getCollectionParentID();
             }
-        } else if ($this->getTargetParentPageID()) {
+        } elseif ($this->getTargetParentPageID()) {
             return $this->getTargetParentPageID();
         }
     }
 
-    public function render($label, $customTemplate, $description) {
+    public function render($label, $customTemplate, $description)
+    {
         {
             if (!is_object($this->page) || $this->page->isPageDraft()) {
                 parent::render($label, $customTemplate, $description);
             }
         }
     }
-
 }

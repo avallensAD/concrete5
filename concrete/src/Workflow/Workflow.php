@@ -6,18 +6,17 @@ use Concrete\Core\Package\Package;
 use \Concrete\Core\Workflow\Progress\Progress as WorkflowProgress;
 use Loader;
 use Core;
-use \Concrete\Core\Workflow\Request\Request as WorkflowRequest;
+use Concrete\Core\Workflow\Request\Request as WorkflowRequest;
 
 /**
- * @package Workflow
+ * \@package Workflow
+ *
  * @author Andrew Embler <andrew@concrete5.org>
  * @copyright  Copyright (c) 2003-2012 concrete5. (http://www.concrete5.org)
  * @license    http://www.concrete5.org/license/     MIT License
- *
  */
 abstract class Workflow extends Object implements \Concrete\Core\Permission\ObjectInterface
 {
-
     protected $wfID = 0;
     protected $allowedTasks = array('cancel', 'approve');
     protected $restrictedToPermissionKeyHandles = array();
@@ -38,10 +37,12 @@ abstract class Workflow extends Object implements \Concrete\Core\Permission\Obje
     }
 
     /**
-     * Returns the display name for this workflow (localized and escaped accordingly to $format)
+     * Returns the display name for this workflow (localized and escaped accordingly to $format).
+     *
      * @param string $format = 'html'
      *    Escape the result in html format (if $format is 'html').
      *    If $format is 'text' or any other value, the display name won't be escaped.
+     *
      * @return string
      */
     public function getWorkflowDisplayName($format = 'html')
@@ -103,7 +104,6 @@ abstract class Workflow extends Object implements \Concrete\Core\Permission\Obje
                 $wfp->delete();
             }
         }
-
     }
 
     // by default the basic workflow just passes the status num from the request
@@ -116,7 +116,6 @@ abstract class Workflow extends Object implements \Concrete\Core\Permission\Obje
         }
     }
 
-
     public static function getList()
     {
         $workflows = array();
@@ -128,17 +127,40 @@ abstract class Workflow extends Object implements \Concrete\Core\Permission\Obje
                 $workflows[] = $wf;
             }
         }
+
         return $workflows;
     }
 
-    public static function add(Type $wt, $name)
+    public static function getListByPackage(\Concrete\Core\Entity\Package $pkg)
+    {
+        $workflows = array();
+        $db = Loader::db();
+        $r = $db->Execute("select wfID from Workflows where pkgID = ? order by wfName asc", [$pkg->getPackageID()]);
+        while ($row = $r->FetchRow()) {
+            $wf = static::getByID($row['wfID']);
+            if (is_object($wf)) {
+                $workflows[] = $wf;
+            }
+        }
+
+        return $workflows;
+    }
+
+
+    public static function add(Type $wt, $name, \Concrete\Core\Entity\Package $pkg = null)
     {
         $db = Loader::db();
         $wfID = $db->getOne('SELECT wfID FROM Workflows WHERE wfName=?', array($name));
         if (!$wfID) {
-            $db->Execute('insert into Workflows (wftID, wfName) values (?, ?)', array($wt->getWorkflowTypeID(), $name));
+            $pkgID = 0;
+            if (is_object($pkg)) {
+                $pkgID = $pkg->getPackageID();
+            }
+
+            $db->Execute('insert into Workflows (wftID, wfName, pkgID) values (?, ?, ?)', array($wt->getWorkflowTypeID(), $name, $pkgID));
             $wfID = $db->Insert_ID();
         }
+
         return self::getByID($wfID);
     }
 
@@ -166,8 +188,18 @@ abstract class Workflow extends Object implements \Concrete\Core\Permission\Obje
             $obj->load($wfID);
             if ($obj->getWorkflowID() > 0) {
                 $obj->loadDetails();
+
                 return $obj;
             }
+        }
+    }
+
+    public static function getByName($wfName)
+    {
+        $db = Loader::db();
+        $wfID = $db->GetOne('select wfID from Workflows where wfName = ?', array($wfName));
+        if ($wfID) {
+            return static::getByID($wfID);
         }
     }
 
@@ -177,6 +209,7 @@ abstract class Workflow extends Object implements \Concrete\Core\Permission\Obje
         $uh = Loader::helper('concrete/urls');
         $url = $uh->getToolsURL('workflow/types/' . $type->getWorkflowTypeHandle(), $type->getPackageHandle());
         $url .= '?wfID=' . $this->getWorkflowID() . '&task=' . $task . '&' . Loader::helper('validation/token')->getParameter($task);
+
         return $url;
     }
 
@@ -189,6 +222,8 @@ abstract class Workflow extends Object implements \Concrete\Core\Permission\Obje
     abstract public function start(WorkflowProgress $wp);
 
     abstract public function canApproveWorkflow();
+
+    abstract public function getWorkflowProgressApprovalUsers(WorkflowProgress $wp);
 
     abstract public function getWorkflowProgressActions(WorkflowProgress $wp);
 

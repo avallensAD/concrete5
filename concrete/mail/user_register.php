@@ -3,7 +3,7 @@ defined('C5_EXECUTE') or die("Access Denied.");
 
 $subject = $siteName.' '.t("Registration - A New User Has Registered");
 
-/**
+/*
  * HTML BODY START
  */
 ob_start();
@@ -15,9 +15,9 @@ ob_start();
 <?php echo t('User Name') ?>: <b><?php echo $uName ?></b><br />
 <?php echo t('Email Address') ?>: <b><?php echo $uEmail ?></b><br />
 <br />
-<?php if($attribs): ?>
+<?php if ($attribs): ?>
 	<ul>
-	<?php foreach($attribs as $item): ?>
+	<?php foreach ($attribs as $item): ?>
 		<li><?php echo $item ?></li>
 	<?php endforeach ?>
 	</ul>
@@ -28,7 +28,7 @@ ob_start();
 <?php
 
 $bodyHTML = ob_get_clean();
-/**
+/*
  * HTML BODY END
  *
  * ======================
@@ -46,8 +46,8 @@ ob_start();
 
 <?php echo t('Email Address') ?>: <?php echo $uEmail ?>
 
-<?php if($attribs): ?>
-	<?php foreach($attribs as $item): ?>
+<?php if ($attribs): ?>
+	<?php foreach ($attribs as $item): ?>
 		<?php echo $item ?>
 
 	<?php endforeach ?>
@@ -60,6 +60,6 @@ ob_start();
 
 $body = ob_get_clean();
 ob_end_clean();
-/**
+/*
  * PLAIN TEXT BODY END
  */

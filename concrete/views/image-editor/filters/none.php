@@ -1,1 +1,1 @@
-<?php echo t('Remove all filters'); ?>
+<?php echo t('Remove all filters');

@@ -2,8 +2,8 @@
 <div style="text-align: left">
 <?php
 $fh = Loader::helper('file');
-print '<pre style="font-size: 11px; font-family: Courier">';
-print Loader::helper('text')->entities($fv->getFileContents());
-print '</pre>';?>
+echo '<pre style="font-size: 11px; font-family: Courier">';
+echo Loader::helper('text')->entities($fv->getFileContents());
+echo '</pre>';?>
 
 </div>

@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -13,17 +13,19 @@ use Locale;
 use Traversable;
 use Zend\Cache;
 use Zend\Cache\Storage\StorageInterface as CacheStorage;
+use Zend\EventManager\Event;
 use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerInterface;
 use Zend\I18n\Exception;
 use Zend\I18n\Translator\Loader\FileLoaderInterface;
 use Zend\I18n\Translator\Loader\RemoteLoaderInterface;
 use Zend\Stdlib\ArrayUtils;
+use Zend\ServiceManager\ServiceManager;
 
 /**
  * Translator.
  */
-class Translator
+class Translator implements TranslatorInterface
 {
     /**
      * Event fired when the translation for a message is missing.
@@ -40,28 +42,28 @@ class Translator
      *
      * @var array
      */
-    protected $messages = array();
+    protected $messages = [];
 
     /**
      * Files used for loading messages.
      *
      * @var array
      */
-    protected $files = array();
+    protected $files = [];
 
     /**
      * Patterns used for loading messages.
      *
      * @var array
      */
-    protected $patterns = array();
+    protected $patterns = [];
 
     /**
      * Remote locations for loading messages.
      *
      * @var array
      */
-    protected $remote = array();
+    protected $remote = [];
 
     /**
      * Default locale.
@@ -143,7 +145,7 @@ class Translator
                 );
             }
 
-            $requiredKeys = array('type', 'base_dir', 'pattern');
+            $requiredKeys = ['type', 'base_dir', 'pattern'];
             foreach ($options['translation_file_patterns'] as $pattern) {
                 foreach ($requiredKeys as $key) {
                     if (!isset($pattern[$key])) {
@@ -170,7 +172,7 @@ class Translator
                 );
             }
 
-            $requiredKeys = array('type', 'filename');
+            $requiredKeys = ['type', 'filename'];
             foreach ($options['translation_files'] as $file) {
                 foreach ($requiredKeys as $key) {
                     if (!isset($file[$key])) {
@@ -197,7 +199,7 @@ class Translator
                 );
             }
 
-            $requiredKeys = array('type');
+            $requiredKeys = ['type'];
             foreach ($options['remote_translation'] as $remote) {
                 foreach ($requiredKeys as $key) {
                     if (!isset($remote[$key])) {
@@ -334,7 +336,7 @@ class Translator
     public function getPluginManager()
     {
         if (!$this->pluginManager instanceof LoaderPluginManager) {
-            $this->setPluginManager(new LoaderPluginManager());
+            $this->setPluginManager(new LoaderPluginManager(new ServiceManager));
         }
 
         return $this->pluginManager;
@@ -401,9 +403,8 @@ class Translator
             }
 
             return ($number == 1 ? $singular : $plural);
-        }
-        if (is_string($translation)) {
-            return $translation;
+        } elseif (is_string($translation)) {
+            $translation = [$translation];
         }
 
         $index = $this->messages[$textDomain][$locale]
@@ -411,9 +412,9 @@ class Translator
                       ->evaluate($number);
 
         if (!isset($translation[$index])) {
-            throw new Exception\OutOfBoundsException(sprintf(
-                'Provided index %d does not exist in plural array', $index
-            ));
+            throw new Exception\OutOfBoundsException(
+                sprintf('Provided index %d does not exist in plural array', $index)
+            );
         }
 
         return $translation[$index];
@@ -433,7 +434,7 @@ class Translator
         $locale,
         $textDomain = 'default'
     ) {
-        if ($message === '') {
+        if ($message === '' || $message === null) {
             return '';
         }
 
@@ -446,25 +447,25 @@ class Translator
         }
 
         if ($this->isEventManagerEnabled()) {
-            $results = $this->getEventManager()->trigger(
-                self::EVENT_MISSING_TRANSLATION,
-                $this,
-                array(
-                    'message'     => $message,
-                    'locale'      => $locale,
-                    'text_domain' => $textDomain,
-                ),
-                function ($r) {
-                    return is_string($r);
-                }
-            );
+            $until = function ($r) {
+                return is_string($r);
+            };
+
+            $event = new Event(self::EVENT_MISSING_TRANSLATION, $this, [
+                'message'     => $message,
+                'locale'      => $locale,
+                'text_domain' => $textDomain,
+            ]);
+
+            $results = $this->getEventManager()->triggerEventUntil($until, $event);
+
             $last = $results->last();
             if (is_string($last)) {
                 return $last;
             }
         }
 
-        return null;
+        return;
     }
 
     /**
@@ -485,13 +486,13 @@ class Translator
         $locale = $locale ?: '*';
 
         if (!isset($this->files[$textDomain])) {
-            $this->files[$textDomain] = array();
+            $this->files[$textDomain] = [];
         }
 
-        $this->files[$textDomain][$locale][] = array(
+        $this->files[$textDomain][$locale][] = [
             'type' => $type,
             'filename' => $filename,
-        );
+        ];
 
         return $this;
     }
@@ -512,14 +513,14 @@ class Translator
         $textDomain = 'default'
     ) {
         if (!isset($this->patterns[$textDomain])) {
-            $this->patterns[$textDomain] = array();
+            $this->patterns[$textDomain] = [];
         }
 
-        $this->patterns[$textDomain][] = array(
+        $this->patterns[$textDomain][] = [
             'type'    => $type,
             'baseDir' => rtrim($baseDir, '/'),
             'pattern' => $pattern,
-        );
+        ];
 
         return $this;
     }
@@ -534,7 +535,7 @@ class Translator
     public function addRemoteTranslations($type, $textDomain = 'default')
     {
         if (!isset($this->remote[$textDomain])) {
-            $this->remote[$textDomain] = array();
+            $this->remote[$textDomain] = [];
         }
 
         $this->remote[$textDomain][] = $type;
@@ -554,7 +555,7 @@ class Translator
     protected function loadMessages($textDomain, $locale)
     {
         if (!isset($this->messages[$textDomain])) {
-            $this->messages[$textDomain] = array();
+            $this->messages[$textDomain] = [];
         }
 
         if (null !== ($cache = $this->getCache())) {
@@ -575,17 +576,17 @@ class Translator
         if (!$messagesLoaded) {
             $discoveredTextDomain = null;
             if ($this->isEventManagerEnabled()) {
-                $results = $this->getEventManager()->trigger(
-                    self::EVENT_NO_MESSAGES_LOADED,
-                    $this,
-                    array(
-                        'locale'      => $locale,
-                        'text_domain' => $textDomain,
-                    ),
-                    function ($r) {
-                        return ($r instanceof TextDomain);
-                    }
-                );
+                $until = function ($r) {
+                    return ($r instanceof TextDomain);
+                };
+
+                $event = new Event(self::EVENT_NO_MESSAGES_LOADED, $this, [
+                    'locale'      => $locale,
+                    'text_domain' => $textDomain,
+                ]);
+
+                $results = $this->getEventManager()->triggerEventUntil($until, $event);
+
                 $last = $results->last();
                 if ($last instanceof TextDomain) {
                     $discoveredTextDomain = $last;
@@ -683,7 +684,7 @@ class Translator
     {
         $messagesLoaded = false;
 
-        foreach (array($locale, '*') as $currentLocale) {
+        foreach ([$locale, '*'] as $currentLocale) {
             if (!isset($this->files[$textDomain][$currentLocale])) {
                 continue;
             }
@@ -711,6 +712,25 @@ class Translator
     }
 
     /**
+     * Return all the messages.
+     *
+     * @param string $textDomain
+     * @param null   $locale
+     *
+     * @return mixed
+     */
+    public function getAllMessages($textDomain = 'default', $locale = null)
+    {
+        $locale = $locale ?: $this->getLocale();
+
+        if (!isset($this->messages[$textDomain][$locale])) {
+            $this->loadMessages($textDomain, $locale);
+        }
+
+        return $this->messages[$textDomain][$locale];
+    }
+
+    /**
      * Get the event manager.
      *
      * @return EventManagerInterface|null
@@ -732,11 +752,11 @@ class Translator
      */
     public function setEventManager(EventManagerInterface $events)
     {
-        $events->setIdentifiers(array(
+        $events->setIdentifiers([
             __CLASS__,
             get_class($this),
             'translator',
-        ));
+        ]);
         $this->events = $events;
         return $this;
     }

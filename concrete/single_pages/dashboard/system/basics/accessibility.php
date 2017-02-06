@@ -1,8 +1,17 @@
 <form action="<?php echo View::action('save') ?>" method="post">
+    <?php
+    Core::make('token')->output('accessibility');
+    ?>
     <div class="checkbox">
         <label>
             <input name="show_titles" value="1" type="checkbox" <?php echo $show_titles ? 'checked' : '' ?> />
             <?php echo t('Enable Toolbar Titles') ?>
+        </label>
+    </div>
+    <div class="checkbox">
+        <label>
+            <input name="show_tooltips" value="1" type="checkbox" <?php echo $show_tooltips ? 'checked' : '' ?> />
+            <?php echo t('Enable Prominent Toolbar Tooltips') ?>
         </label>
     </div>
     <div class="checkbox">

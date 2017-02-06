@@ -1,5 +1,4 @@
 <?php
-
 namespace Concrete\Core\Block;
 
 use Area;
@@ -11,23 +10,26 @@ use Concrete\Core\Block\View\BlockView;
 use Concrete\Core\Feature\Assignment\Assignment as FeatureAssignment;
 use Concrete\Core\Feature\Assignment\CollectionVersionAssignment as CollectionVersionFeatureAssignment;
 use Concrete\Core\Foundation\Object;
+use Concrete\Core\Foundation\Queue\Queue;
 use Concrete\Core\Package\PackageList;
 use Concrete\Core\StyleCustomizer\Inline\StyleSet;
 use Config;
 use Loader;
 use Concrete\Core\Permission\Key\Key as PermissionKey;
 use Page;
+use Concrete\Core\Support\Facade\Facade;
 
 class Block extends Object implements \Concrete\Core\Permission\ObjectInterface
 {
-
     protected $cID;
     protected $arHandle;
     protected $c;
     protected $issID;
     protected $proxyBlock = false;
+    protected $cbRelationID;
     protected $bActionCID;
     protected $cacheSettings;
+    protected $cbOverrideBlockTypeCacheSettings;
     public $a;
 
     protected $bFilename;
@@ -120,7 +122,7 @@ class Block extends Object implements \Concrete\Core\Permission\ObjectInterface
             $cvID = $vo->getVersionID();
 
             $v = array($b->arHandle, $cID, $cvID, $bID);
-            $q = "select CollectionVersionBlocks.isOriginal, CollectionVersionBlocks.cbIncludeAll, Blocks.btCachedBlockRecord, BlockTypes.pkgID, CollectionVersionBlocks.cbOverrideAreaPermissions, CollectionVersionBlocks.cbOverrideBlockTypeCacheSettings,
+            $q = "select CollectionVersionBlocks.isOriginal, CollectionVersionBlocks.cbIncludeAll, Blocks.btCachedBlockRecord, BlockTypes.pkgID, CollectionVersionBlocks.cbOverrideAreaPermissions, CollectionVersionBlocks.cbOverrideBlockTypeCacheSettings, CollectionVersionBlocks.cbRelationID,
  CollectionVersionBlocks.cbOverrideBlockTypeContainerSettings, CollectionVersionBlocks.cbEnableBlockContainer, CollectionVersionBlocks.cbDisplayOrder, Blocks.bIsActive, Blocks.bID, Blocks.btID, bName, bDateAdded, bDateModified, bFilename, btHandle, Blocks.uID from CollectionVersionBlocks inner join Blocks on (CollectionVersionBlocks.bID = Blocks.bID) inner join BlockTypes on (Blocks.btID = BlockTypes.btID) where CollectionVersionBlocks.arHandle = ? and CollectionVersionBlocks.cID = ? and (CollectionVersionBlocks.cvID = ? or CollectionVersionBlocks.cbIncludeAll=1) and CollectionVersionBlocks.bID = ?";
         }
 
@@ -138,7 +140,8 @@ class Block extends Object implements \Concrete\Core\Permission\ObjectInterface
                 return false;
             }
 
-            $b->instance = new $class($b);
+            $app = Facade::getFacadeApplication();
+            $b->instance = $app->build($class, [$b]);
 
             if ($c != null || $a != null) {
                 CacheLocal::set('block', $bID . ':' . $cID . ':' . $cvID . ':' . $arHandle, $b);
@@ -148,6 +151,11 @@ class Block extends Object implements \Concrete\Core\Permission\ObjectInterface
 
             return $b;
         }
+    }
+
+    public function getBlockRelationID()
+    {
+        return $this->cbRelationID;
     }
 
     public function getBlockTypeID()
@@ -431,9 +439,11 @@ class Block extends Object implements \Concrete\Core\Permission\ObjectInterface
         } else {
             $bt = $this->getBlockTypeObject();
             $class = $bt->getBlockTypeClass();
-            $this->instance = new $class($this);
+            $app = Facade::getFacadeApplication();
+            $this->instance = $app->build($class, [$this]);
         }
         $this->instance->setBlockObject($this);
+
 
         return $this->instance;
     }
@@ -481,7 +491,8 @@ class Block extends Object implements \Concrete\Core\Permission\ObjectInterface
         $btID = $this->getBlockTypeID();
         $bt = BlockType::getByID($btID);
         $class = $bt->getBlockTypeClass();
-        $bc = new $class($this);
+        $app = Facade::getFacadeApplication();
+        $bc = $app->build($class, [$this]);
         $bc->save($data);
     }
 
@@ -522,6 +533,110 @@ class Block extends Object implements \Concrete\Core\Permission\ObjectInterface
         $db->query($q, array($this->bID));
     }
 
+    public function queueForDefaultsAliasing($addBlock, $queue)
+    {
+        $records = array();
+        $db = \Database::connection();
+        $oc = $this->getBlockCollectionObject();
+        $site = \Core::make('site')->getSite();
+        $siteTreeID = $site->getSiteTreeID();
+        $cbRelationID = $this->getBlockRelationID();
+        $rows = $db->GetAll('select p.cID, max(cvID) as cvID from Pages p inner join CollectionVersions cv on p.cID = cv.cID where ptID = ? and cIsTemplate = 0 and cIsActive = 1 and siteTreeID = ? group by cID order by cID', [$oc->getPageTypeID(), $siteTreeID]);
+
+        // now we have a list of all pages of this type in the site.
+        foreach($rows as $row) {
+
+            // Ok, first check. Does this block already exist with the SAME block ID on this page? If so, we don't need to do
+            // anything, because the block has already been updated, because it's in an unforked state
+
+            $r1 = $db->fetchAssoc('select arHandle, bID from CollectionVersionBlocks where cID = ? and cvID = ? and bID = ?', array(
+                $row['cID'], $row['cvID'], $this->getBlockID()
+            ));
+
+            if (!$r1['bID']) {
+                // Ok, no block found. So let's see if a block with the same relationID exists on the page instead.
+
+                $r2 = $db->fetchAssoc('select arHandle, bID from CollectionVersionBlocks where cID = ? and cvID = ? and cbRelationID = ?', array(
+                    $row['cID'], $row['cvID'], $cbRelationID
+                ));
+
+
+
+                if ($r2['bID'] || (!$r2['bID'] && $addBlock)) {
+
+                    // Ok, so either this block doesn't appear on the page at al, but addBlock set to true,
+                    // or, the block appears on the page and it is forked. Either way we're going to add it to the page.
+
+                    $record = array(
+                        'cID' => $row['cID'],
+                        'cvID' => $row['cvID'],
+                        'bID' => $this->getBlockID()
+                    );
+
+                    if ($r2['bID']) {
+                        $record['action'] = 'update_forked_alias';
+                        $record['arHandle'] = $r2['arHandle'];
+                        $record['bID'] = $r2['bID'];
+                    } else {
+                        $record['action'] = 'add_alias';
+                        $record['arHandle'] = $this->getAreaHandle();
+                    }
+
+                    $records[] = $record;
+                }
+            }
+        }
+
+        $name = $queue->getName();
+        $queue->deleteQueue();
+        $queue = Queue::get($name);
+
+        foreach ($records as $record) {
+            $queue->send(serialize($record));
+        }
+
+        return $queue;
+
+    }
+
+    public function queueForDefaultsUpdate($data, $queue, $includeThisBlock = true)
+    {
+        $blocks = array();
+        $db = \Database::connection();
+        $rows = $db->GetAll('select cID, max(cvID) as cvID, cbRelationID from CollectionVersionBlocks where cbRelationID = ? group by cID order by cID', [$this->getBlockRelationID()]);
+
+        $oc = $this->getBlockCollectionObject();
+        $ocID = $oc->getCollectionID();
+        $ocvID = $oc->getVersionID();
+
+        foreach($rows as $row) {
+            $row2 = $db->GetRow('select bID, arHandle from CollectionVersionBlocks where cID = ? and cvID = ? and cbRelationID = ?', [
+                $row['cID'], $row['cvID'], $row['cbRelationID']
+                ]);
+
+            if ($includeThisBlock || ($row['cID'] != $ocID || $row['cvID'] != $ocvID || $row2['arHandle'] != $this->getAreaHandle() || $row2['bID'] != $this->getBlockID())) {
+                $blocks[] = array(
+                    'cID' => $row['cID'],
+                    'cvID' => $row['cvID'],
+                    'cbRelationID' => $row['cbRelationID'],
+                    'bID' => $row2['bID'],
+                    'arHandle' => $row2['arHandle'],
+                    'data' => $data
+                );
+            }
+        }
+
+        $name = $queue->getName();
+        $queue->deleteQueue();
+        $queue = Queue::get($name);
+
+        foreach ($blocks as $block) {
+            $queue->send(serialize($block));
+        }
+
+        return $queue;
+    }
+
     public function alias($c)
     {
 
@@ -550,8 +665,8 @@ class Block extends Object implements \Concrete\Core\Permission\ObjectInterface
                     $this->a->getAreaParentID()
                 ));
             }*/
-            array_push($v, $newBlockDisplayOrder, 0, $this->overrideAreaPermissions(), $this->overrideBlockTypeCacheSettings(), $this->overrideBlockTypeContainerSettings(), $this->enableBlockContainer() ? 1 : 0);
-            $q = "insert into CollectionVersionBlocks (cID, cvID, bID, arHandle, cbDisplayOrder, isOriginal, cbOverrideAreaPermissions, cbOverrideBlockTypeCacheSettings, cbOverrideBlockTypeContainerSettings, cbEnableBlockContainer) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            array_push($v, $this->getBlockRelationID(), $newBlockDisplayOrder, 0, $this->overrideAreaPermissions(), $this->overrideBlockTypeCacheSettings(), $this->overrideBlockTypeContainerSettings(), $this->enableBlockContainer() ? 1 : 0);
+            $q = "insert into CollectionVersionBlocks (cID, cvID, bID, arHandle, cbRelationID, cbDisplayOrder, isOriginal, cbOverrideAreaPermissions, cbOverrideBlockTypeCacheSettings, cbOverrideBlockTypeContainerSettings, cbEnableBlockContainer) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $r = $db->prepare($q);
             $res = $db->execute($r, $v);
 
@@ -790,7 +905,7 @@ class Block extends Object implements \Concrete\Core\Permission\ObjectInterface
         $old_area_handle = $this->getAreaHandle();
         $new_area_handle = $area->getAreaHandle();
 
-        return !!\Database::connection()->update(
+        return (bool) \Database::connection()->update(
             'CollectionVersionBlocks',
             array(
                 'cID' => $new_collection,
@@ -816,10 +931,11 @@ class Block extends Object implements \Concrete\Core\Permission\ObjectInterface
 
         $bt = BlockType::getByID($this->getBlockTypeID());
         $blockTypeClass = $bt->getBlockTypeClass();
-        $bc = new $blockTypeClass($this);
-        if (!$bc) {
+        if (!$blockTypeClass) {
             return false;
         }
+        $app = Facade::getFacadeApplication();
+        $bc = $app->build($blockTypeClass, [$this]);
 
         $bDate = $dh->getOverridableNow();
         $v = array($this->bName, $bDate, $bDate, $this->bFilename, $this->btID, $this->uID);
@@ -838,14 +954,15 @@ class Block extends Object implements \Concrete\Core\Permission\ObjectInterface
 
         // Composer specific
         $row = $db->GetRow(
-            'select cID, arHandle, cbDisplayOrder, ptComposerFormLayoutSetControlID from PageTypeComposerOutputBlocks where cID = ? and bID = ? and arHandle = ?',
-            array($ocID, $this->bID, $this->arHandle)
+            'select cID, cvID, arHandle, cbDisplayOrder, ptComposerFormLayoutSetControlID from PageTypeComposerOutputBlocks where cID = ? and cvID = ? and bID = ? and arHandle = ?',
+            array($ocID, $ovID, $this->bID, $this->arHandle)
         );
         if ($row && is_array($row) && $row['cID']) {
             $db->insert(
                 'PageTypeComposerOutputBlocks',
                 array(
                     'cID' => $ncID,
+                    'cvID' => $nvID,
                     'arHandle' => $this->arHandle,
                     'cbDisplayOrder' => $row['cbDisplayOrder'],
                     'ptComposerFormLayoutSetControlID' => $row['ptComposerFormLayoutSetControlID'],
@@ -911,16 +1028,11 @@ class Block extends Object implements \Concrete\Core\Permission\ObjectInterface
             $newBlockDisplayOrder = $this->cbDisplayOrder;
         }
         //$v = array($ncID, $nvID, $newBID, $this->areaName, $newBlockDisplayOrder, 1);
-        $v = array($ncID, $nvID, $newBID, $this->arHandle, $newBlockDisplayOrder, 1, $this->overrideAreaPermissions(), $this->overrideBlockTypeCacheSettings(), $this->overrideBlockTypeContainerSettings(), $this->enableBlockContainer() ? 1 : 0);
-        $q = "insert into CollectionVersionBlocks (cID, cvID, bID, arHandle, cbDisplayOrder, isOriginal, cbOverrideAreaPermissions, cbOverrideBlockTypeCacheSettings,cbOverrideBlockTypeContainerSettings, cbEnableBlockContainer) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $v = array($ncID, $nvID, $newBID, $this->arHandle, $this->getBlockRelationID(), $newBlockDisplayOrder, 1, $this->overrideAreaPermissions(), $this->overrideBlockTypeCacheSettings(), $this->overrideBlockTypeContainerSettings(), $this->enableBlockContainer() ? 1 : 0);
+        $q = "insert into CollectionVersionBlocks (cID, cvID, bID, arHandle, cbRelationID, cbDisplayOrder, isOriginal, cbOverrideAreaPermissions, cbOverrideBlockTypeCacheSettings,cbOverrideBlockTypeContainerSettings, cbEnableBlockContainer) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $r = $db->prepare($q);
-        $res = $db->execute($r, $v);
+        $db->execute($r, $v);
 
-        // now we make a DUPLICATE entry in the BlockRelations table, so that we know that the blocks are chained together
-        $v2 = array($this->bID, $newBID, "DUPLICATE");
-        $q2 = "insert into BlockRelations (originalBID, bID, relationType) values (?, ?, ?)";
-        $r2 = $db->prepare($q2);
-        $res2 = $db->execute($r2, $v2);
         $nb = self::getByID($newBID, $nc, $this->arHandle);
 
         $issID = $this->getCustomStyleSetID();
@@ -1059,7 +1171,7 @@ class Block extends Object implements \Concrete\Core\Permission\ObjectInterface
         );
     }
 
-    public function setCustomStyleSet(StyleSet $set)
+    public function setCustomStyleSet(\Concrete\Core\Entity\StyleCustomizer\Inline\StyleSet $set)
     {
         $db = Loader::db();
         $c = $this->getBlockCollectionObject();
@@ -1319,8 +1431,6 @@ class Block extends Object implements \Concrete\Core\Permission\ObjectInterface
         $totalBlocks = $db->GetOne('select count(*) from CollectionVersionBlocks where bID = ?', array($bID));
         $totalBlocks += $db->GetOne('select count(*) from btCoreScrapbookDisplay where bOriginalID = ?', array($bID));
         if ($totalBlocks < 1) {
-            $q = "delete from BlockRelations where originalBID = ? or bID = ?";
-            $r = $db->query($q, array($this->bID, $this->bID));
             // this block is not referenced in the system any longer, so we delete the entry in the blocks table, as well as the entries in the corresponding
             // sub-blocks table
 
@@ -1330,8 +1440,8 @@ class Block extends Object implements \Concrete\Core\Permission\ObjectInterface
             $bt = BlockType::getByID($this->getBlockTypeID());
             if ($bt && method_exists($bt, 'getBlockTypeClass')) {
                 $class = $bt->getBlockTypeClass();
-
-                $bc = new $class($this);
+                $app = Facade::getFacadeApplication();
+                $bc = $app->build($class, [$this]);
                 $bc->delete();
             }
 
@@ -1362,10 +1472,10 @@ class Block extends Object implements \Concrete\Core\Permission\ObjectInterface
             $q = "select bID from CollectionVersionBlocks where bID = ? and cID=? and isOriginal = 0 and cvID = ?";
             $r = $db->query($q, array($this->bID, $cID, $cvID));
             if ($r) {
-                return ($r->numRows() > 0);
+                return $r->numRows() > 0;
             }
         } else {
-            return (!$this->isOriginal);
+            return !$this->isOriginal;
         }
     }
 
@@ -1502,7 +1612,9 @@ class Block extends Object implements \Concrete\Core\Permission\ObjectInterface
 
     public function export($node, $exportType = 'full')
     {
-        if (!$this->isAliasOfMasterCollection()) {
+        if (!$this->isAliasOfMasterCollection() || $this->c->isMasterCollection()) {
+            // We have the OR up here so that master collections that you have duplicated from other
+            // master collections export properly.
             $blockNode = $node->addChild('block');
             $blockNode->addAttribute('type', $this->getBlockTypeHandle());
             $blockNode->addAttribute('name', $this->getBlockName());

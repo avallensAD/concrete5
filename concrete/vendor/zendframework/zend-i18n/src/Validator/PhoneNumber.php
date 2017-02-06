@@ -3,19 +3,19 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
 namespace Zend\I18n\Validator;
 
+use Locale;
 use Traversable;
 use Zend\Stdlib\ArrayUtils;
 use Zend\Validator\AbstractValidator;
 
 class PhoneNumber extends AbstractValidator
 {
-
     const NO_MATCH    = 'phoneNumberNoMatch';
     const UNSUPPORTED = 'phoneNumberUnsupported';
     const INVALID     = 'phoneNumberInvalid';
@@ -25,11 +25,11 @@ class PhoneNumber extends AbstractValidator
      *
      * @var array
      */
-    protected $messageTemplates = array(
+    protected $messageTemplates = [
         self::NO_MATCH    => 'The input does not match a phone number format',
         self::UNSUPPORTED => 'The country provided is currently unsupported',
         self::INVALID     => 'Invalid type given. String expected',
-    );
+    ];
 
     /**
      * Phone Number Patterns
@@ -37,7 +37,7 @@ class PhoneNumber extends AbstractValidator
      * @link http://code.google.com/p/libphonenumber/source/browse/trunk/resources/PhoneNumberMetadata.xml
      * @var array
      */
-    protected static $phone = array();
+    protected static $phone = [];
 
     /**
      * ISO 3611 Country Code
@@ -58,7 +58,7 @@ class PhoneNumber extends AbstractValidator
      *
      * @var array
      */
-    protected $allowedTypes = array(
+    protected $allowedTypes = [
         'general',
         'fixed',
         'tollfree',
@@ -66,7 +66,7 @@ class PhoneNumber extends AbstractValidator
         'mobile',
         'voip',
         'uan',
-    );
+    ];
 
     /**
      * Constructor for the PhoneNumber validator
@@ -78,7 +78,7 @@ class PhoneNumber extends AbstractValidator
      *
      * @param array|Traversable $options
      */
-    public function __construct($options = array())
+    public function __construct($options = [])
     {
         if ($options instanceof Traversable) {
             $options = ArrayUtils::iteratorToArray($options);
@@ -86,6 +86,9 @@ class PhoneNumber extends AbstractValidator
 
         if (array_key_exists('country', $options)) {
             $this->setCountry($options['country']);
+        } else {
+            $country = Locale::getRegion(Locale::getDefault());
+            $this->setCountry($country);
         }
 
         if (array_key_exists('allowed_types', $options)) {
@@ -151,7 +154,7 @@ class PhoneNumber extends AbstractValidator
      */
     public function setCountry($country)
     {
-        $this->country = strtoupper($country);
+        $this->country = $country;
 
         return $this;
     }
@@ -198,12 +201,12 @@ class PhoneNumber extends AbstractValidator
 
         $country = $this->getCountry();
 
-        if (!$countryPattern = $this->loadPattern($country)) {
+        if (!$countryPattern = $this->loadPattern(strtoupper($country))) {
             if (isset($context[$country])) {
                 $country = $context[$country];
             }
 
-            if (!$countryPattern = $this->loadPattern($country)) {
+            if (!$countryPattern = $this->loadPattern(strtoupper($country))) {
                 $this->error(self::UNSUPPORTED);
 
                 return false;

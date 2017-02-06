@@ -1,13 +1,17 @@
 <?php
-
 namespace Concrete\Authentication\Community;
 
+use Concrete\Core\Authentication\Type\Community\Factory\CommunityServiceFactory;
 use Concrete\Core\Authentication\Type\Community\Service\Community;
+use Concrete\Core\Authentication\Type\Community\Service\Community as CommunityService;
 use Concrete\Core\Authentication\Type\OAuth\OAuth2\GenericOauth2TypeController;
+use Concrete\Core\Support\Facade\Application;
 use Core;
+use OAuth\ServiceFactory;
 
 class Controller extends GenericOauth2TypeController
 {
+
     public function registrationGroupID()
     {
         return \Config::get('auth.community.registration.group');
@@ -36,7 +40,13 @@ class Controller extends GenericOauth2TypeController
     public function getService()
     {
         if (!$this->service) {
-            $this->service = \Core::make('authentication/community');
+            /** @var ServiceFactory $serviceFactory */
+            $serviceFactory = $this->app->make('oauth/factory/service');
+            $serviceFactory->registerService('community', CommunityService::class);
+
+            /** @var CommunityServiceFactory $communityFactory */
+            $communityFactory = $this->app->make(CommunityServiceFactory::class);
+            $this->service = $communityFactory->createService($serviceFactory);
         }
 
         return $this->service;
@@ -46,7 +56,7 @@ class Controller extends GenericOauth2TypeController
     {
         \Config::save('auth.community.appid', $args['apikey']);
         \Config::save('auth.community.secret', $args['apisecret']);
-        \Config::save('auth.community.registration.enabled', !!$args['registration_enabled']);
+        \Config::save('auth.community.registration.enabled', (bool) $args['registration_enabled']);
         \Config::save('auth.community.registration.group', intval($args['registration_group'], 10));
     }
 
@@ -62,7 +72,7 @@ class Controller extends GenericOauth2TypeController
     }
 
     /**
-     * @return Array
+     * @return array
      */
     public function getAdditionalRequestParameters()
     {
@@ -77,4 +87,5 @@ class Controller extends GenericOauth2TypeController
             dd($e);
         }
     }
+
 }

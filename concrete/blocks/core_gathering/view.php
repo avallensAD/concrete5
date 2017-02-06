@@ -2,7 +2,8 @@
 
 
 <?php
-if ($enablePostingFromGathering && is_object($composer)) { ?>
+if ($enablePostingFromGathering && is_object($composer)) {
+    ?>
 
 	<div data-gathering-block-id="<?php echo $b->getBlockID()?>">
 
@@ -57,13 +58,14 @@ if ($enablePostingFromGathering && is_object($composer)) { ?>
 	});
 	</script>
 
-<?php } ?>
+<?php 
+} ?>
 
 <?php
   Loader::element('gathering/display', array(
-  	'gathering' => $gathering,
-  	'list' => $itemList,
-  	'itemsPerPage' => $itemsPerPage
+    'gathering' => $gathering,
+    'list' => $itemList,
+    'itemsPerPage' => $itemsPerPage,
   ));
 ?>
 

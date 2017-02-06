@@ -9,25 +9,26 @@ use Concrete\Core\Backup\ContentImporter\ValueInspector\InspectionRoutine\PageTy
 use Concrete\Core\Backup\ContentImporter\ValueInspector\InspectionRoutine\PictureRoutine;
 use Concrete\Core\Backup\ContentImporter\ValueInspector\ValueInspector;
 use Concrete\Core\Foundation\Service\Provider as ServiceProvider;
+use Concrete\Core\Backup\ContentImporter\Importer\Manager as ImporterManager;
 
 class ContentImporterServiceProvider extends ServiceProvider
 {
-
     public function register()
     {
         $this->app->bind(
             'import/value_inspector/core',
-            function($app) {
+            function ($app) {
                 $inspector = new ValueInspector();
+
                 return $inspector;
             }
         );
 
         $this->app->bindshared(
             'import/value_inspector',
-            function($app) {
-                /**
-                 * @var $inspector \Concrete\Core\Backup\ContentImporter\ValueInspector\ValueInspector
+            function ($app) {
+                /*
+                 * @var \Concrete\Core\Backup\ContentImporter\ValueInspector\ValueInspector
                  */
                 $inspector = $app->make('import/value_inspector/core');
                 $inspector->registerInspectionRoutine(new PageRoutine());
@@ -36,10 +37,21 @@ class ContentImporterServiceProvider extends ServiceProvider
                 $inspector->registerInspectionRoutine(new PageFeedRoutine());
                 $inspector->registerInspectionRoutine(new PageTypeRoutine());
                 $inspector->registerInspectionRoutine(new ImageRoutine());
+
                 return $inspector;
             }
         );
 
-    }
+        $this->app->bindshared(
+            'import/item/manager',
+            function ($app) {
+                $importer = $app->make(ImporterManager::class);
+                foreach($app->make('config')->get('app.importer_routines') as $routine) {
+                    $importer->registerImporterRoutine($app->make($routine));
+                }
+                return $importer;
+            }
+        );
 
+    }
 }

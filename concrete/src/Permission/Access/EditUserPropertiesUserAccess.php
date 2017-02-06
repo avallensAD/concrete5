@@ -1,5 +1,4 @@
 <?php
-
 namespace Concrete\Core\Permission\Access;
 
 use Database;
@@ -122,7 +121,7 @@ class EditUserPropertiesUserAccess extends UserAccess
         }
     }
 
-    public function getAccessListItems($accessType = UserPermissionKey::ACCESS_TYPE_INCLUDE, $filterEntities = array())
+    public function getAccessListItems($accessType = UserPermissionKey::ACCESS_TYPE_INCLUDE, $filterEntities = array(), $checkCache = true)
     {
         $db = Database::connection();
         $list = parent::getAccessListItems($accessType, $filterEntities);

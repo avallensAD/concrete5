@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -30,20 +30,20 @@ class Alnum extends AbstractValidator
      *
      * @var array
      */
-    protected $messageTemplates = array(
+    protected $messageTemplates = [
         self::INVALID      => "Invalid type given. String, integer or float expected",
         self::NOT_ALNUM    => "The input contains characters which are non alphabetic and no digits",
         self::STRING_EMPTY => "The input is an empty string",
-    );
+    ];
 
     /**
      * Options for this validator
      *
      * @var array
      */
-    protected $options = array(
+    protected $options = [
         'allowWhiteSpace' => false,  // Whether to allow white space characters; off by default
-    );
+    ];
 
     /**
      * Sets default option values for this instance

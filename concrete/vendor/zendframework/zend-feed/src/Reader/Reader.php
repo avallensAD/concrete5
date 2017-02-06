@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -14,10 +14,11 @@ use DOMXPath;
 use Zend\Cache\Storage\StorageInterface as CacheStorage;
 use Zend\Http as ZendHttp;
 use Zend\Stdlib\ErrorHandler;
+use Zend\Feed\Reader\Exception\InvalidHttpClientException;
 
 /**
 */
-class Reader
+class Reader implements ReaderImportInterface
 {
     /**
      * Namespace constants
@@ -57,7 +58,7 @@ class Reader
     /**
      * HTTP client object to use for retrieving feeds
      *
-     * @var ZendHttp\Client
+     * @var Http\ClientInterface
      */
     protected static $httpClient = null;
 
@@ -72,24 +73,24 @@ class Reader
 
     protected static $extensionManager = null;
 
-    protected static $extensions = array(
-        'feed' => array(
+    protected static $extensions = [
+        'feed' => [
             'DublinCore\Feed',
             'Atom\Feed'
-        ),
-        'entry' => array(
+        ],
+        'entry' => [
             'Content\Entry',
             'DublinCore\Entry',
             'Atom\Entry'
-        ),
-        'core' => array(
+        ],
+        'core' => [
             'DublinCore\Feed',
             'Atom\Feed',
             'Content\Entry',
             'DublinCore\Entry',
             'Atom\Entry'
-        )
-    );
+        ]
+    ];
 
     /**
      * Get the Feed cache
@@ -117,24 +118,30 @@ class Reader
      *
      * Sets the HTTP client object to use for retrieving the feeds.
      *
-     * @param  ZendHttp\Client $httpClient
+     * @param  ZendHttp\Client | Http\ClientInterface $httpClient
      * @return void
      */
-    public static function setHttpClient(ZendHttp\Client $httpClient)
+    public static function setHttpClient($httpClient)
     {
+        if ($httpClient instanceof ZendHttp\Client) {
+            $httpClient = new Http\ZendHttpClientDecorator($httpClient);
+        }
+
+        if (! $httpClient instanceof Http\ClientInterface) {
+            throw new InvalidHttpClientException();
+        }
         static::$httpClient = $httpClient;
     }
-
 
     /**
      * Gets the HTTP client object. If none is set, a new ZendHttp\Client will be used.
      *
-     * @return ZendHttp\Client
+     * @return Http\ClientInterface
      */
     public static function getHttpClient()
     {
-        if (!static::$httpClient instanceof ZendHttp\Client) {
-            static::$httpClient = new ZendHttp\Client();
+        if (! static::$httpClient) {
+            static::$httpClient = new Http\ZendHttpClientDecorator(new ZendHttp\Client());
         }
 
         return static::$httpClient;
@@ -190,19 +197,16 @@ class Reader
      */
     public static function import($uri, $etag = null, $lastModified = null)
     {
-        $cache       = self::getCache();
-        $feed        = null;
-        $responseXml = '';
-        $client      = self::getHttpClient();
-        $client->resetParameters();
-        $headers = new ZendHttp\Headers();
-        $client->setHeaders($headers);
-        $client->setUri($uri);
+        $cache   = self::getCache();
+        $client  = self::getHttpClient();
         $cacheId = 'Zend_Feed_Reader_' . md5($uri);
 
         if (static::$httpConditionalGet && $cache) {
-            $data = $cache->getItem($cacheId);
-            if ($data) {
+            $headers = [];
+            $data    = $cache->getItem($cacheId);
+            if ($data && $client instanceof Http\HeaderAwareClientInterface) {
+                // Only check for ETag and last modified values in the cache
+                // if we have a client capable of emitting headers in the first place.
                 if ($etag === null) {
                     $etag = $cache->getItem($cacheId . '_etag');
                 }
@@ -210,13 +214,13 @@ class Reader
                     $lastModified = $cache->getItem($cacheId . '_lastmodified');
                 }
                 if ($etag) {
-                    $headers->addHeaderLine('If-None-Match', $etag);
+                    $headers['If-None-Match'] = [$etag];
                 }
                 if ($lastModified) {
-                    $headers->addHeaderLine('If-Modified-Since', $lastModified);
+                    $headers['If-Modified-Since'] = [$lastModified];
                 }
             }
-            $response = $client->send();
+            $response = $client->get($uri, $headers);
             if ($response->getStatusCode() !== 200 && $response->getStatusCode() !== 304) {
                 throw new Exception\RuntimeException('Feed failed to load, got response code ' . $response->getStatusCode());
             }
@@ -225,11 +229,14 @@ class Reader
             } else {
                 $responseXml = $response->getBody();
                 $cache->setItem($cacheId, $responseXml);
-                if ($response->getHeaders()->get('ETag')) {
-                    $cache->setItem($cacheId . '_etag', $response->getHeaders()->get('ETag')->getFieldValue());
-                }
-                if ($response->getHeaders()->get('Last-Modified')) {
-                    $cache->setItem($cacheId . '_lastmodified', $response->getHeaders()->get('Last-Modified')->getFieldValue());
+
+                if ($response instanceof Http\HeaderAwareResponseInterface) {
+                    if ($response->getHeaderLine('ETag', false)) {
+                        $cache->setItem($cacheId . '_etag', $response->getHeaderLine('ETag'));
+                    }
+                    if ($response->getHeaderLine('Last-Modified', false)) {
+                        $cache->setItem($cacheId . '_lastmodified', $response->getHeaderLine('Last-Modified'));
+                    }
                 }
             }
             return static::importString($responseXml);
@@ -238,7 +245,7 @@ class Reader
             if ($data) {
                 return static::importString($data);
             }
-            $response = $client->send();
+            $response = $client->get($uri);
             if ((int) $response->getStatusCode() !== 200) {
                 throw new Exception\RuntimeException('Feed failed to load, got response code ' . $response->getStatusCode());
             }
@@ -246,7 +253,7 @@ class Reader
             $cache->setItem($cacheId, $responseXml);
             return static::importString($responseXml);
         } else {
-            $response = $client->send();
+            $response = $client->get($uri);
             if ((int) $response->getStatusCode() !== 200) {
                 throw new Exception\RuntimeException('Feed failed to load, got response code ' . $response->getStatusCode());
             }
@@ -266,14 +273,14 @@ class Reader
      * HTTP client implementations.
      *
      * @param  string $uri
-     * @param  Http\Client $client
+     * @param  Http\ClientInterface $client
      * @return self
      * @throws Exception\RuntimeException if response is not an Http\ResponseInterface
      */
     public static function importRemoteFeed($uri, Http\ClientInterface $client)
     {
         $response = $client->get($uri);
-        if (!$response instanceof Http\ResponseInterface) {
+        if (! $response instanceof Http\ResponseInterface) {
             throw new Exception\RuntimeException(sprintf(
                 'Did not receive a %s\Http\ResponseInterface from the provided HTTP client; received "%s"',
                 __NAMESPACE__,
@@ -299,6 +306,11 @@ class Reader
      */
     public static function importString($string)
     {
+        $trimmed = trim($string);
+        if (!is_string($string) || empty($trimmed)) {
+            throw new Exception\InvalidArgumentException('Only non empty strings are allowed as input');
+        }
+
         $libxmlErrflag = libxml_use_internal_errors(true);
         $oldValue = libxml_disable_entity_loader(true);
         $dom = new DOMDocument;
@@ -369,9 +381,8 @@ class Reader
      */
     public static function findFeedLinks($uri)
     {
-        $client = static::getHttpClient();
-        $client->setUri($uri);
-        $response = $client->send();
+        $client   = static::getHttpClient();
+        $response = $client->get($uri);
         if ($response->getStatusCode() !== 200) {
             throw new Exception\RuntimeException("Failed to access $uri, got response code " . $response->getStatusCode());
         }
@@ -542,7 +553,7 @@ class Reader
     public static function getExtensionManager()
     {
         if (!isset(static::$extensionManager)) {
-            static::setExtensionManager(new ExtensionManager());
+            static::setExtensionManager(new StandaloneExtensionManager());
         }
         return static::$extensionManager;
     }
@@ -617,24 +628,24 @@ class Reader
         static::$httpMethodOverride = false;
         static::$httpConditionalGet = false;
         static::$extensionManager   = null;
-        static::$extensions         = array(
-            'feed' => array(
+        static::$extensions         = [
+            'feed' => [
                 'DublinCore\Feed',
                 'Atom\Feed'
-            ),
-            'entry' => array(
+            ],
+            'entry' => [
                 'Content\Entry',
                 'DublinCore\Entry',
                 'Atom\Entry'
-            ),
-            'core' => array(
+            ],
+            'core' => [
                 'DublinCore\Feed',
                 'Atom\Feed',
                 'Content\Entry',
                 'DublinCore\Entry',
                 'Atom\Entry'
-            )
-        );
+            ]
+        ];
     }
 
     /**

@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -27,20 +27,20 @@ class WordCount extends AbstractValidator
     /**
      * @var array Error message templates
      */
-    protected $messageTemplates = array(
+    protected $messageTemplates = [
         self::TOO_MUCH => "Too many words, maximum '%max%' are allowed but '%count%' were counted",
         self::TOO_LESS => "Too few words, minimum '%min%' are expected but '%count%' were counted",
         self::NOT_FOUND => "File is not readable or does not exist",
-    );
+    ];
 
     /**
      * @var array Error message template variables
      */
-    protected $messageVariables = array(
-        'min'   => array('options' => 'min'),
-        'max'   => array('options' => 'max'),
+    protected $messageVariables = [
+        'min'   => ['options' => 'min'],
+        'max'   => ['options' => 'max'],
         'count' => 'count'
-    );
+    ];
 
     /**
      * Word count
@@ -54,10 +54,10 @@ class WordCount extends AbstractValidator
      *
      * @var array
      */
-    protected $options = array(
+    protected $options = [
         'min' => null,  // Minimum word count, if null there is no minimum word count
         'max' => null,  // Maximum word count, if null there is no maximum word count
-    );
+    ];
 
     /**
      * Sets validator options
@@ -65,7 +65,7 @@ class WordCount extends AbstractValidator
      * Min limits the word count, when used with max=null it is the maximum word count
      * It also accepts an array with the keys 'min' and 'max'
      *
-     * If $options is a integer, it will be used as maximum word count
+     * If $options is an integer, it will be used as maximum word count
      * As Array is accepts the following keys:
      * 'min': Minimum word count
      * 'max': Maximum word count
@@ -74,13 +74,16 @@ class WordCount extends AbstractValidator
      */
     public function __construct($options = null)
     {
-        if (is_string($options) || is_numeric($options)) {
-            $options = array('max' => $options);
+        if (1 < func_num_args()) {
+            $args = func_get_args();
+            $options = [
+                'min' => array_shift($args),
+                'max' => array_shift($args),
+            ];
         }
 
-        if (1 < func_num_args()) {
-            $options['min'] = func_get_arg(0);
-            $options['max'] = func_get_arg(1);
+        if (is_string($options) || is_numeric($options)) {
+            $options = ['max' => $options];
         }
 
         parent::__construct($options);
@@ -109,15 +112,15 @@ class WordCount extends AbstractValidator
             $min = $min['min'];
         }
 
-        if (!is_string($min) and !is_numeric($min)) {
+        if (! is_numeric($min)) {
             throw new Exception\InvalidArgumentException('Invalid options to validator provided');
         }
 
         $min = (int) $min;
         if (($this->getMax() !== null) && ($min > $this->getMax())) {
             throw new Exception\InvalidArgumentException(
-                "The minimum must be less than or equal to the maximum word count, but $min >"
-                . " {$this->getMax()}");
+                "The minimum must be less than or equal to the maximum word count, but $min > {$this->getMax()}"
+            );
         }
 
         $this->options['min'] = $min;
@@ -147,15 +150,15 @@ class WordCount extends AbstractValidator
             $max = $max['max'];
         }
 
-        if (!is_string($max) and !is_numeric($max)) {
+        if (! is_numeric($max)) {
             throw new Exception\InvalidArgumentException('Invalid options to validator provided');
         }
 
         $max = (int) $max;
         if (($this->getMin() !== null) && ($max < $this->getMin())) {
             throw new Exception\InvalidArgumentException(
-                "The maximum must be greater than or equal to the minimum word count, but "
-                . "$max < {$this->getMin()}");
+                "The maximum must be greater than or equal to the minimum word count, but $max < {$this->getMin()}"
+            );
         }
 
         $this->options['max'] = $max;

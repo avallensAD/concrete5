@@ -12,6 +12,8 @@
 /* Checkboxes and stars in search results above menus */
 @index-level-search-results-checkboxes: 550;
 @index-level-search-results-stars: 550;
+@index-level-search-reset: 550;
+
 
 /* Inline Editing in Page */
 @index-level-inline-commands: 600;
@@ -56,10 +58,7 @@
 /* overlay because it makes it ambiguous whether help is available in the lefthand panel or not */
 @index-level-page-help: 840;
 
-/* Show the toolbar over the dialog/widget overlay – used during help guided tours */
-@index-level-toolbar-tour-guide: 1400;
-
-/* Dashboard Help Notifications – has to come BELOW the modal dialog stuff, because it's not really an ephemeral notification */
+/* Dashboard Help Notifications – has to come BELOW the modal dialog stuff, because it's not really an ephemeral notification */
 /* also has to come below the dashboard toolbar */
 @index-level-dashboard-help: 990;
 
@@ -73,40 +72,51 @@
 @index-level-intelligent-search: 1200;
 
 /* Dialogs */
-@index-level-dialog-overlay: 1200;
-@index-level-modal-overlay: 1200;
-@index-level-modal-loader: 1201;
-@index-level-dialog: 1300;
+@index-level-modal-overlay: 1500;
+@index-level-dialog: 2000;
 
 /* Magnific Popup –has to come above dialogs because it might get called from a dialog*/
-@lightbox-overlay: 1330;
-@lightbox-overlay-wrap: 1335;
-@lightbox-loader: 1338;
-@lightbox-content: 1340;
-@lightbox-arrows: 1340;
+@lightbox-overlay: 2100;
+@lightbox-overlay-wrap: 2200;
+@lightbox-loader: 2300;
+@lightbox-content: 2400;
+@lightbox-arrows: 2400;
+
+/* Show the toolbar over the dialog/widget overlay – used during help guided tours. Has to come above index level dialog because jQuery UI assigns that to the widget overlay */
+@index-level-toolbar-tour-guide: 2100;
 
 
 /* Redactor dropdown –can be either inline OR in a dialog box so we have to come above dialog. Hopefully this doesn't
 cause other problems */
-@index-level-redactor-toolbar-dropdown: 1350;
+@index-level-redactor-toolbar-dropdown: 2500;
 
 /* Dialog Content */
-@index-level-dialog-content: 1500;
-@index-level-dialog-content-click-proxy: 1550;
+@index-level-dialog-content: 3000;
+@index-level-dialog-content-click-proxy: 3200;
 
 /* Search Checkboxes */
-@index-level-search-checkbox: 1575;
+@index-level-search-checkbox: 3400;
 
 /* Dialog Chrome */
-@index-level-dialog-options: 1600;
-@index-level-dialog-title-bar: 1700;
-@index-level-dialog-footer-bar: 1700;
+@index-level-dialog-options: 3800;
+@index-level-dialog-title-bar: 3900;
+@index-level-dialog-footer-bar: 3900;
+@index-level-dialog-title-bar-search: 4000;
 
 /* Tooltips and hovers in dialogs */
-@index-level-tooltip-holder: 2000;
-@index-level-menu-panel-and-dialog: 2000;
-@index-level-dialog-hover: 2000;
-@index-level-editor-full-screen: 2000;
+@index-level-tooltip-holder: 5000;
+@index-level-menu-panel-and-dialog: 5000;
+@index-level-dialog-hover: 5000;
+@index-level-editor-full-screen: 5000;
+@index-level-tooltip-in-menu: 5001; /* tooltips that live on the same plane as menus */
 
 /* Edit Response HUDs - should come above modal dialog stuff. */
-@index-level-hud: 2100;
+@index-level-hud-underlay: 5199;
+@index-level-hud: 5200;
+
+/* Dashboard panels */
+@panel-border-color: #101114;
+@panel-form-element-bg-color: #4c4e53;
+@panel-form-element-text-color: #bababa;
+@panel-normal-text-color: #676767;
+@panel-datepicker-highlight-day-color: #828282;

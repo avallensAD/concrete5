@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -16,20 +16,19 @@ use Zend\Feed\Uri;
 */
 class Entry
 {
-
     /**
      * Internal array containing all data associated with this entry or item.
      *
      * @var array
      */
-    protected $data = array();
+    protected $data = [];
 
     /**
      * Registered extensions
      *
      * @var array
      */
-    protected $extensions = array();
+    protected $extensions = [];
 
     /**
      * Holds the value "atom" or "rss" depending on the feed type set when
@@ -312,12 +311,12 @@ class Entry
         if (!isset($link['uri']) || !is_string($link['uri']) || !Uri::factory($link['uri'])->isValid()) {
             throw new Exception\InvalidArgumentException('Invalid parameter: "link" must be a non-empty string and valid URI/IRI');
         }
-        if (!isset($link['type']) || !in_array($link['type'], array('atom', 'rss', 'rdf'))) {
+        if (!isset($link['type']) || !in_array($link['type'], ['atom', 'rss', 'rdf'])) {
             throw new Exception\InvalidArgumentException('Invalid parameter: "type" must be one'
             . ' of "atom", "rss" or "rdf"');
         }
         if (!isset($this->data['commentFeedLinks'])) {
-            $this->data['commentFeedLinks'] = array();
+            $this->data['commentFeedLinks'] = [];
         }
         $this->data['commentFeedLinks'][] = $link;
 
@@ -366,7 +365,7 @@ class Entry
     public function getAuthors()
     {
         if (!array_key_exists('authors', $this->data)) {
-            return null;
+            return;
         }
         return $this->data['authors'];
     }
@@ -379,7 +378,7 @@ class Entry
     public function getContent()
     {
         if (!array_key_exists('content', $this->data)) {
-            return null;
+            return;
         }
         return $this->data['content'];
     }
@@ -392,7 +391,7 @@ class Entry
     public function getCopyright()
     {
         if (!array_key_exists('copyright', $this->data)) {
-            return null;
+            return;
         }
         return $this->data['copyright'];
     }
@@ -405,7 +404,7 @@ class Entry
     public function getDateCreated()
     {
         if (!array_key_exists('dateCreated', $this->data)) {
-            return null;
+            return;
         }
         return $this->data['dateCreated'];
     }
@@ -418,7 +417,7 @@ class Entry
     public function getDateModified()
     {
         if (!array_key_exists('dateModified', $this->data)) {
-            return null;
+            return;
         }
         return $this->data['dateModified'];
     }
@@ -431,7 +430,7 @@ class Entry
     public function getDescription()
     {
         if (!array_key_exists('description', $this->data)) {
-            return null;
+            return;
         }
         return $this->data['description'];
     }
@@ -444,7 +443,7 @@ class Entry
     public function getId()
     {
         if (!array_key_exists('id', $this->data)) {
-            return null;
+            return;
         }
         return $this->data['id'];
     }
@@ -457,7 +456,7 @@ class Entry
     public function getLink()
     {
         if (!array_key_exists('link', $this->data)) {
-            return null;
+            return;
         }
         return $this->data['link'];
     }
@@ -471,7 +470,7 @@ class Entry
     public function getLinks()
     {
         if (!array_key_exists('links', $this->data)) {
-            return null;
+            return;
         }
         return $this->data['links'];
     }
@@ -484,7 +483,7 @@ class Entry
     public function getTitle()
     {
         if (!array_key_exists('title', $this->data)) {
-            return null;
+            return;
         }
         return $this->data['title'];
     }
@@ -497,7 +496,7 @@ class Entry
     public function getCommentCount()
     {
         if (!array_key_exists('commentCount', $this->data)) {
-            return null;
+            return;
         }
         return $this->data['commentCount'];
     }
@@ -510,7 +509,7 @@ class Entry
     public function getCommentLink()
     {
         if (!array_key_exists('commentLink', $this->data)) {
-            return null;
+            return;
         }
         return $this->data['commentLink'];
     }
@@ -524,13 +523,13 @@ class Entry
     public function getCommentFeedLinks()
     {
         if (!array_key_exists('commentFeedLinks', $this->data)) {
-            return null;
+            return;
         }
         return $this->data['commentFeedLinks'];
     }
 
     /**
-     * Add a entry category
+     * Add an entry category
      *
      * @param array $category
      * @throws Exception\InvalidArgumentException
@@ -553,7 +552,7 @@ class Entry
             }
         }
         if (!isset($this->data['categories'])) {
-            $this->data['categories'] = array();
+            $this->data['categories'] = [];
         }
         $this->data['categories'][] = $category;
 
@@ -583,7 +582,7 @@ class Entry
     public function getCategories()
     {
         if (!array_key_exists('categories', $this->data)) {
-            return null;
+            return;
         }
         return $this->data['categories'];
     }
@@ -619,7 +618,7 @@ class Entry
     public function getEnclosure()
     {
         if (!array_key_exists('enclosure', $this->data)) {
-            return null;
+            return;
         }
         return $this->data['enclosure'];
     }
@@ -660,7 +659,7 @@ class Entry
         if (array_key_exists($name . '\\Entry', $this->extensions)) {
             return $this->extensions[$name . '\\Entry'];
         }
-        return null;
+        return;
     }
 
     /**
@@ -699,7 +698,7 @@ class Entry
     {
         foreach ($this->extensions as $extension) {
             try {
-                return call_user_func_array(array($extension, $method), $args);
+                return call_user_func_array([$extension, $method], $args);
             } catch (\BadMethodCallException $e) {
             }
         }
@@ -745,7 +744,7 @@ class Entry
         if (isset($this->data['source'])) {
             return $this->data['source'];
         }
-        return null;
+        return;
     }
 
     /**

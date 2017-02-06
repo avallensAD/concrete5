@@ -17,9 +17,11 @@
     <label class="control-label">
     <?php echo t('Choose Sharing Service')?></label>
     <select name="service[]" class="form-control">
-        <?php foreach($services as $service) { ?>
+        <?php foreach ($services as $service) {
+    ?>
             <option value="<?php echo $service->getHandle()?>" <% if (service == '<?php echo $service->getHandle()?>') { %>selected<% } %>><?php echo $service->getDisplayName()?></option>
-        <?php } ?>
+        <?php 
+} ?>
     </select>
 </div>
 </script>

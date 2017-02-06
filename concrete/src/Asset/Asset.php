@@ -1,5 +1,4 @@
 <?php
-
 namespace Concrete\Core\Asset;
 
 use Concrete\Core\Package\Package;
@@ -141,6 +140,12 @@ abstract class Asset implements AssetInterface
         }
 
         return $result;
+    }
+
+    public function getAssetPointer()
+    {
+        $pointer = new AssetPointer($this->getAssetType(), $this->getAssetHandle());
+        return $pointer;
     }
 
     /**
@@ -341,7 +346,7 @@ abstract class Asset implements AssetInterface
     public function register($filename, $args, $pkg = false)
     {
         if ($pkg != false) {
-            if (!($pkg instanceof Package)) {
+            if ($pkg !== false && is_string($pkg)) {
                 $pkg = Package::getByHandle($pkg);
             }
             $this->setPackageObject($pkg);

@@ -1,16 +1,16 @@
 <?php
 defined('C5_EXECUTE') or die("Access Denied.");
-/** @var $control Concrete\Core\Page\Type\Composer\FormLayoutSetControl */
+/* @var $control Concrete\Core\Page\Type\Composer\FormLayoutSetControl */
 
 $der = Concrete\Core\Page\Type\Composer\Control\Type\Type::getByID($control->getPageTypeComposerControlTypeID());
 $pto = $control->getPageTypeComposerControlObject();
 $name = '';
 if (strlen($control->getPageTypeComposerFormLayoutSetControlCustomLabel())) {
-	$name = $pto->getPageTypeComposerControlName() . ' ';
+    $name = $pto->getPageTypeComposerControlName() . ' ';
 }
 
 ?>
-<tr class="ccm-page-type-composer-form-layout-control-set-control" data-page-type-composer-form-layout-control-set-control-id="<?php echo $control->getPageTypeComposerFormLayoutSetControlID()?>">
+<tr class="ccm-item-set-control" data-page-type-composer-form-layout-control-set-control-id="<?php echo $control->getPageTypeComposerFormLayoutSetControlID()?>">
 	<td style="white-space: nowrap; width: 20%;">
 		<?php echo $control->getPageTypeComposerControlDisplayLabel(); ?>
 	</td>
@@ -27,7 +27,7 @@ if (strlen($control->getPageTypeComposerFormLayoutSetControlCustomLabel())) {
 	</td>
 
 	<td style="text-align: right; white-space: nowrap;">
-		<ul class="ccm-page-type-composer-item-controls">
+		<ul class="ccm-item-set-controls">
 			<li><a href="#" data-command="move-set-control" style="cursor: move"><i class="fa fa-arrows"></i></a></li>
 			<li><a data-command="edit-form-set-control" href="<?php echo REL_DIR_FILES_TOOLS_REQUIRED?>/page_types/composer/form/edit_control?ptComposerFormLayoutSetControlID=<?php echo $control->getPageTypeComposerFormLayoutSetControlID()?>" class="dialog-launch" dialog-width="400" dialog-height="auto" dialog-modal="true" dialog-title="<?php echo t('Edit Form Control')?>"><i class="fa fa-pencil"></i></a></li>
 			<li><a href="#" data-delete-set-control="<?php echo $control->getPageTypeComposerFormLayoutSetControlID()?>"><i class="fa fa-trash-o"></i></a></li>

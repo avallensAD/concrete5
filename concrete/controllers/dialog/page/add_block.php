@@ -18,7 +18,6 @@ use User;
 
 class AddBlock extends BackendInterfacePageController
 {
-
     protected $viewPath = '/dialogs/page/add_block';
 
     public function on_start()
@@ -46,7 +45,7 @@ class AddBlock extends BackendInterfacePageController
         }
         $this->blockTypeController = $cnt;
         if (isset($_REQUEST['arCustomTemplates']) && is_array($_REQUEST['arCustomTemplates'])) {
-            foreach($_REQUEST['arCustomTemplates'] as $btHandle => $template) {
+            foreach ($_REQUEST['arCustomTemplates'] as $btHandle => $template) {
                 $this->area->setCustomTemplate($btHandle, $template);
             }
         }
@@ -64,11 +63,11 @@ class AddBlock extends BackendInterfacePageController
             $this->area->enableGridContainer();
         }
         if (isset($_REQUEST['arCustomTemplates']) && is_array($_REQUEST['arCustomTemplates'])) {
-            foreach($_REQUEST['arCustomTemplates'] as $btHandle => $template) {
+            foreach ($_REQUEST['arCustomTemplates'] as $btHandle => $template) {
                 $this->area->setCustomTemplate($btHandle, $template);
             }
         }
-        $bv->addScopeItems(array('a' => $this->a, 'cp' => $this->permissions, 'ap' => $this->areaPermissions));
+        $bv->addScopeItems(array('a' => isset($this->a) ? $this->a : null, 'cp' => $this->permissions, 'ap' => $this->areaPermissions));
         $this->set('blockView', $bv);
         $this->set('blockType', $this->blockType);
         $this->set('btHandle', $this->blockType->getBlockTypeHandle());
@@ -84,15 +83,13 @@ class AddBlock extends BackendInterfacePageController
             && !$this->blockType->hasAddTemplate()
             && Loader::helper('validation/token')->validate()
         ) {
-
             $data = $_POST;
             $bt = $this->blockType;
             $u = new User();
             $data['uID'] = $u->getUserID();
 
             $e = $this->blockTypeController->validate($data);
-            if ((!is_object($e)) || (($e instanceof \Concrete\Core\Error\Error) && (!$e->has()))) {
-
+            if ((!is_object($e)) || (($e instanceof \Concrete\Core\Error\ErrorList\ErrorList) && (!$e->has()))) {
                 if (!$bt->includeAll()) {
                     $nvc = $this->pageToModify->getVersionToModify();
                     $nb = $nvc->addBlock($bt, $this->areaToModify, $data);
@@ -109,6 +106,7 @@ class AddBlock extends BackendInterfacePageController
                     $xvc->relateVersionEdits($nvc);
                 }
 
+                $db = null;
                 // now we check to see if there's a block in this area that we are adding it after.
                 if ($_REQUEST['dragAreaBlockID'] > 0 && Loader::helper('validation/numbers')->integer(
                                                               $_REQUEST['dragAreaBlockID'])
@@ -130,7 +128,6 @@ class AddBlock extends BackendInterfacePageController
             } else {
                 $pc->setError($e);
             }
-
         }
         $pc->outputJSON();
     }
@@ -139,6 +136,4 @@ class AddBlock extends BackendInterfacePageController
     {
         return $this->areaPermissions->canAddBlock($this->blockType);
     }
-
 }
-

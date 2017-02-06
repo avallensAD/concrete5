@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -30,14 +30,14 @@ class Decode
         $body = str_replace("\r", '', $body);
 
         $start = 0;
-        $res = array();
+        $res = [];
         // find every mime part limiter and cut out the
         // string before it.
         // the part before the first boundary string is discarded:
         $p = strpos($body, '--' . $boundary . "\n", $start);
         if ($p === false) {
             // no parts found!
-            return array();
+            return [];
         }
 
         // position after first boundary line
@@ -73,15 +73,15 @@ class Decode
     {
         $parts = static::splitMime($message, $boundary);
         if (count($parts) <= 0) {
-            return null;
+            return;
         }
-        $result = array();
+        $result = [];
         $headers = null; // "Declare" variable before the first usage "for reading"
         $body    = null; // "Declare" variable before the first usage "for reading"
         foreach ($parts as $part) {
             static::splitMessage($part, $headers, $body, $EOL);
-            $result[] = array('header' => $headers,
-                              'body'   => $body    );
+            $result[] = ['header' => $headers,
+                              'body'   => $body    ];
         }
         return $result;
     }
@@ -105,11 +105,12 @@ class Decode
             $message = $message->toString();
         }
         // check for valid header at first line
-        $firstline = strtok($message, "\n");
+        $firstlinePos = strpos($message, "\n");
+        $firstline = $firstlinePos === false ? $message : substr($message, 0, $firstlinePos);
         if (!preg_match('%^[^\s]+[^:]*:%', $firstline)) {
-            $headers = array();
+            $headers = [];
             // TODO: we're ignoring \r for now - is this function fast enough and is it safe to assume noone needs \r?
-            $body = str_replace(array("\r", "\n"), array('', $EOL), $message);
+            $body = str_replace(["\r", "\n"], ['', $EOL], $message);
             return;
         }
 
@@ -188,10 +189,10 @@ class Decode
                 }
                 return substr($matches[2][$key], 1, -1);
             }
-            return null;
+            return;
         }
 
-        $split = array();
+        $split = [];
         foreach ($matches[1] as $key => $name) {
             $name = strtolower($name);
             if ($matches[2][$key][0] == '"') {

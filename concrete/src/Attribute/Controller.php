@@ -1,19 +1,21 @@
 <?php
-
 namespace Concrete\Core\Attribute;
 
+use Concrete\Core\Attribute\Value\EmptyRequestAttributeValue;
 use Concrete\Core\Controller\AbstractController;
+use Concrete\Core\Entity\Attribute\Key\Settings\EmptySettings;
 use Concrete\Core\Search\ItemList\Database\AttributedItemList;
 use Core;
 use Concrete\Core\Attribute\View as AttributeTypeView;
-use Concrete\Core\Attribute\Key\Category as AttributeKeyCategory;
+use Doctrine\ORM\EntityManager;
 
 class Controller extends AbstractController
 {
-    protected $identifier;
+    protected $entityManager;
+
     /** @var \Concrete\Core\Attribute\Key\Key */
     protected $attributeKey;
-    /** @var \Concrete\Core\Attribute\Value\Value */
+    /** @var \Concrete\Core\Entity\Attribute\Value\AbstractValue */
     protected $attributeValue;
     protected $searchIndexFieldDefinition;
     protected $requestArray = false;
@@ -38,6 +40,13 @@ class Controller extends AbstractController
         return $this->attributeKey;
     }
 
+    public function getDisplayValue()
+    {
+        if (is_object($this->attributeValue)) {
+            return (string) $this->attributeValue->getValueObject();
+        }
+    }
+
     public function getAttributeValue()
     {
         return $this->attributeValue;
@@ -60,6 +69,28 @@ class Controller extends AbstractController
         }
     }
 
+    public function importKey(\SimpleXMLElement $element)
+    {
+    }
+
+    public function getValidator()
+    {
+        return \Core::make('Concrete\Core\Attribute\StandardValidator');
+    }
+
+    public function deleteKey()
+    {
+        $settings = $this->retrieveAttributeKeySettings();
+        if (is_object($settings)) {
+            $this->entityManager->remove($settings);
+            $this->entityManager->flush();
+        }
+    }
+
+    public function deleteValue()
+    {
+    }
+
     public function exportValue(\SimpleXMLElement $akv)
     {
         $val = $this->attributeValue->getValue();
@@ -77,17 +108,6 @@ class Controller extends AbstractController
         $node->appendChild($no->createCDataSection($val));
 
         return $cnode;
-    }
-
-    public function importKey($akn)
-    {
-    }
-
-    protected function getAttributeValueID()
-    {
-        if (is_object($this->attributeValue)) {
-            return $this->attributeValue->getAttributeValueID();
-        }
     }
 
     public function filterByAttribute(AttributedItemList $list, $value, $comparison = '=')
@@ -109,27 +129,40 @@ class Controller extends AbstractController
         }
         /** @var \Concrete\Core\Form\Service\Form $form */
         $form = Core::make('helper/form');
-        print $form->label($this->field('value'), $text);
+        echo $form->label($this->getLabelID(), $text);
+    }
+
+    /**
+     * Get the ID to use for label elements
+     */
+    public function getLabelID()
+    {
+        return $this->field('value');
     }
 
     /**
      * @param \Concrete\Core\Attribute\Type $attributeType
      */
-    public function __construct($attributeType)
+    public function __construct(EntityManager $entityManager)
     {
-        $this->identifier = $attributeType->getAttributeTypeID();
-        $this->attributeType = $attributeType;
+        parent::__construct();
+        $this->entityManager = $entityManager;
         $this->set('controller', $this);
     }
 
+    public function setAttributeType($attributeType)
+    {
+        $this->attributeType = $attributeType;
+    }
     public function post($field = false, $defaultValue = null)
     {
         // the only post that matters is the one for this attribute's name space
-        $req = ($this->requestArray == false) ? $_POST : $this->requestArray;
+        $req = ($this->requestArray == false) ? $this->request->request->all() : $this->requestArray;
         if (is_object($this->attributeKey) && isset($req['akID']) && is_array($req['akID'])) {
-            $p = $req['akID'][$this->attributeKey->getAttributeKeyID()];
+            $akID = $this->attributeKey->getAttributeKeyID();
+            $p = isset($req['akID'][$akID]) ? $req['akID'][$akID] : null;
             if ($field) {
-                return $p[$field];
+                return (is_array($p) && isset($p[$field])) ? $p[$field] : null;
             }
 
             return $p;
@@ -140,17 +173,19 @@ class Controller extends AbstractController
 
     public function requestFieldExists()
     {
-        $req = ($this->requestArray == false) ? $_REQUEST : $this->requestArray;
+        $request = array_merge($this->request->request->all(), $this->request->query->all());
+        $req = ($this->requestArray == false) ? $request : $this->requestArray;
         if (is_object($this->attributeKey) && is_array($req['akID'])) {
             return true;
         }
+
         return false;
     }
 
     public function request($field = false)
     {
-        $req = ($this->requestArray == false) ? $_REQUEST : $this->requestArray;
-
+        $request = array_merge($this->request->request->all(), $this->request->query->all());
+        $req = ($this->requestArray == false) ? $request : $this->requestArray;
         if (is_object($this->attributeKey) && is_array($req['akID'])) {
             $p = $req['akID'][$this->attributeKey->getAttributeKeyID()];
             if ($field) {
@@ -178,6 +213,11 @@ class Controller extends AbstractController
         return $av;
     }
 
+    public function getSearchIndexValue()
+    {
+        return $this->attributeValue->getValue();
+    }
+
     public function getSearchIndexFieldDefinition()
     {
         return $this->searchIndexFieldDefinition;
@@ -194,7 +234,7 @@ class Controller extends AbstractController
             $this->on_start($method);
         }
         if ($method == 'composer') {
-            $method = array('composer', 'form');
+            $method = ['composer', 'form'];
         }
 
         if ($method) {
@@ -206,6 +246,18 @@ class Controller extends AbstractController
         }
     }
 
+    public function getAttributeTypeFileURL($_file)
+    {
+        $env = \Environment::get();
+        $r = $env->getRecord(
+            implode('/', [DIRNAME_ATTRIBUTES . '/' . $this->attributeType->getAttributeTypeHandle() . '/' . $_file]),
+            $this->attributeType->getPackageHandle()
+        );
+        if ($r->exists()) {
+            return $r->url;
+        }
+    }
+
     public function saveKey($data)
     {
     }
@@ -214,60 +266,96 @@ class Controller extends AbstractController
     {
     }
 
+    public function createAttributeValueFromRequest()
+    {
+        return new EmptyRequestAttributeValue();
+    }
+
+    public function createAttributeValue($mixed)
+    {
+        return $this->saveValue($mixed);
+    }
+
+    /**
+     * @deprecated
+     */
+    public function saveForm($data)
+    {
+    }
+
+    /**
+     * @deprecated
+     */
+    public function saveValue($mixed)
+    {
+        return false;
+    }
+
     public function searchKeywords($keywords, $queryBuilder)
     {
         return $queryBuilder->expr()->like('ak_' . $this->attributeKey->getAttributeKeyHandle(), ':keywords');
     }
 
-    /**
-     * Automatically run when an attribute key is added or updated.
-     *
-     * @param bool|array $args
-     *
-     * @return \Concrete\Core\Error\Error
-     */
-    public function validateKey($args = false)
+    public function validateKey($data = false)
     {
-        if ($args == false) {
-            $args = $this->post();
-        }
-        /** @var \Concrete\Core\Form\Service\Validation $val */
-        $val = Core::make('helper/validation/form');
-        /** @var \Concrete\Core\Validation\CSRF\Token $valt */
-        $valt = Core::make('helper/validation/token');
-        $val->setData($args);
-        $val->addRequired("akHandle", t("Handle required."));
-        $val->addRequired("akName", t('Name required.'));
-        $val->addRequired("atID", t('Type required.'));
-        $val->test();
-        $error = $val->getError();
+        $e = $this->app->make('error');
 
-        if (!$valt->validate('add_or_update_attribute')) {
-            $error->add($valt->getErrorMessage());
-        }
+        return $e;
+    }
 
-        /** @var \Concrete\Core\Utility\Service\Validation\Strings $stringValidator */
-        $stringValidator = Core::make('helper/validation/strings');
-        if (!$stringValidator->handle($args['akHandle'])) {
-            $error->add(t('Attribute handles may only contain letters, numbers and underscore "_" characters'));
-        }
+    public function getAttributeKeySettingsClass()
+    {
+        return EmptySettings::class;
+    }
 
-        $akc = AttributeKeyCategory::getByID($args['akCategoryID']);
-        if (is_object($akc)) {
-            if ($akc->handleExists($args['akHandle'])) {
-                if (is_object($this->attributeKey)) {
-                    $ak2 = $akc->getAttributeKeyByHandle($args['akHandle']);
-                    if ($ak2->getAttributeKeyID() != $this->attributeKey->getAttributeKeyID()) {
-                        $error->add(t("An attribute with the handle %s already exists.", $args['akHandle']));
-                    }
-                } else {
-                    $error->add(t("An attribute with the handle %s already exists.", $args['akHandle']));
-                }
-            }
-        } else {
-            $error->add('Invalid attribute category.');
-        }
+    public function createAttributeKeySettings()
+    {
+        $class = $this->getAttributeKeySettingsClass();
+        return new $class();
+    }
 
-        return $error;
+    protected function retrieveAttributeKeySettings()
+    {
+        return $this->entityManager->find($this->getAttributeKeySettingsClass(), $this->attributeKey);
+    }
+
+    /*
+     * @deprecated
+     */
+    public function getAttributeValueID()
+    {
+        if (is_object($this->attributeValue)) {
+            return $this->attributeValue->getAttributeValueID();
+        }
+    }
+
+    public function getAttributeValueClass()
+    {
+        return null;
+    }
+
+    public function getAttributeValueObject()
+    {
+        $class = $this->getAttributeValueClass();
+        if ($class) {
+            return $this->entityManager->find($class, $this->attributeValue->getGenericValue());
+        }
+    }
+
+    public function getAttributeKeySettings()
+    {
+        $settings = null;
+        if ($this->attributeKey) {
+            $settings = $this->retrieveAttributeKeySettings();
+        }
+        if (!is_object($settings)) {
+            $settings = $this->createAttributeKeySettings();
+        }
+        return $settings;
+    }
+
+    public function getIconFormatter()
+    {
+        return new FileIconFormatter($this);
     }
 }

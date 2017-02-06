@@ -7,7 +7,6 @@ use Core;
 
 class Controller extends BlockController
 {
-
     public $itemsToDisplay = "5";
     public $showSummary = "1";
     public $launchInNewWindow = "1";
@@ -20,18 +19,18 @@ class Controller extends BlockController
     protected $btCacheBlockOutputOnPost = true;
     protected $btWrapperClass = 'ccm-ui';
     protected $btCacheBlockOutputForRegisteredUsers = true;
-    
+
     /**
      * Default number of seconds that the output of this block should be cached
-     * (Can be overridden by the user within C5 UI)
+     * (Can be overridden by the user within C5 UI).
      * 
-     * @var integer
+     * @var int
      */
     protected $btCacheBlockOutputLifetime = 3600;
-    
+
     /**
      * Number of seconds that the RSS feed itself should be cached before fetching
-     * a fresh copy 
+     * a fresh copy.
      * 
      * (Perhaps this could eventually become a user-setting?)
      * 
@@ -43,12 +42,12 @@ class Controller extends BlockController
      * Should probably be less than $btCacheBlockOutputLifetime above, otherwise the
      * block will be re-rendered using the same stale RSS data.
      * 
-     * @var integer
+     * @var int
      */
-    protected $rssFeedCacheLifetime = 1800;   
+    protected $rssFeedCacheLifetime = 1800;
 
     /**
-     * Used for localization. If we want to localize the name/description we have to include this
+     * Used for localization. If we want to localize the name/description we have to include this.
      */
     public function getBlockTypeDescription()
     {
@@ -62,15 +61,15 @@ class Controller extends BlockController
 
     public function getJavaScriptStrings()
     {
-        return array(
-            'feed-address'   => t('Please enter a valid feed address.'),
-            'feed-num-items' => t('Please enter the number of items to display.')
-        );
+        return [
+            'feed-address' => t('Please enter a valid feed address.'),
+            'feed-num-items' => t('Please enter the number of items to display.'),
+        ];
     }
 
     public function getDefaultDateTimeFormats()
     {
-        $formats = array(
+        $formats = [
             ':longDate:',
             ':shortDate:',
             ':longTime:',
@@ -78,10 +77,10 @@ class Controller extends BlockController
             ':longDate:longTime:',
             ':longDate:shortTime:',
             ':shortDate:longTime:',
-            ':shortDate:shortTime:'
-        );
+            ':shortDate:shortTime:',
+        ];
         $now = new \DateTime();
-        $result = array();
+        $result = [];
         foreach ($formats as $format) {
             $result[$format] = $this->formatDateTime($now, $format);
         }
@@ -90,7 +89,8 @@ class Controller extends BlockController
     }
 
     /**
-     * Format a \DateTime instance accordingly to $format
+     * Format a \DateTime instance accordingly to $format.
+     *
      * @param \DateTime|null $date
      * @param string|bool $format Set to true (default) to use the default format
      */
@@ -144,7 +144,7 @@ class Controller extends BlockController
     public function view()
     {
         $fp = Loader::helper("feed");
-        $posts = array();
+        $posts = [];
 
         try {
             $channel = $fp->load($this->url, $this->rssFeedCacheLifetime);
@@ -154,7 +154,7 @@ class Controller extends BlockController
                 if (($i + 1) == intval($this->itemsToDisplay)) {
                     break;
                 }
-                $i++;
+                ++$i;
             }
         } catch (\Exception $e) {
             $this->set('errorMsg', $e->getMessage());
@@ -166,12 +166,22 @@ class Controller extends BlockController
 
     public function save($data)
     {
-        $args['url'] = isset($data['url']) ? $data['url'] : '';
-        $args['dateFormat'] = $data['dateFormat'];
-        $args['itemsToDisplay'] = (intval($data['itemsToDisplay']) > 0) ? intval($data['itemsToDisplay']) : 5;
-        $args['showSummary'] = ($data['showSummary'] == 1) ? 1 : 0;
-        $args['launchInNewWindow'] = ($data['launchInNewWindow'] == 1) ? 1 : 0;
-        $args['title'] = isset($data['title']) ? $data['title'] : '';
+        $data += [
+            'url' => '',
+            'itemsToDisplay' => 0,
+            'showSummary' => 0,
+            'launchInNewWindow' => 0,
+            'title' => '',
+            'standardDateFormat' => '',
+            'customDateFormat' => '',
+        ];
+        $args = [
+            'url' => $data['url'],
+            'itemsToDisplay' => (intval($data['itemsToDisplay']) > 0) ? intval($data['itemsToDisplay']) : 5,
+            'showSummary' => $data['showSummary'] ? 1 : 0,
+            'launchInNewWindow' => $data['launchInNewWindow'] ? 1 : 0,
+            'title' => $data['title'],
+        ];
         switch ($data['standardDateFormat']) {
             case ':custom:':
                 $args['dateFormat'] = $data['customDateFormat'];
@@ -186,7 +196,7 @@ class Controller extends BlockController
     public function getSearchableContent()
     {
         $fp = Loader::helper("feed");
-        $posts = array();
+        $posts = [];
 
         try {
             // We manually set cache time to 2hrs here as getSearchableContent()
@@ -198,10 +208,9 @@ class Controller extends BlockController
                 if (($i + 1) == intval($this->itemsToDisplay)) {
                     break;
                 }
-                $i++;
+                ++$i;
             }
         } catch (\Exception $e) {
-
         }
 
         $searchContent = '';
@@ -211,5 +220,4 @@ class Controller extends BlockController
 
         return $searchContent;
     }
-
 }

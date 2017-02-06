@@ -15,9 +15,11 @@
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the LGPL. For more information, see
  * <http://www.doctrine-project.org>.
-*/
+ */
 
 namespace Doctrine\DBAL\Migrations;
+
+use \Doctrine\DBAL\Migrations\Finder\MigrationFinderInterface;
 
 /**
  * Class for Migrations specific exceptions
@@ -62,5 +64,56 @@ class MigrationException extends \Exception
     public static function configurationFileAlreadyLoaded()
     {
         return new self(sprintf('Migrations configuration file already loaded'), 8);
+    }
+
+    public static function configurationIncompatibleWithFinder(
+        $configurationParameterName,
+        MigrationFinderInterface $finder
+    ) {
+        return new self(
+            sprintf(
+                'Configuration-parameter "%s" cannot be used with finder of type "%s"',
+                $configurationParameterName,
+                get_class($finder)
+            ),
+            9
+        );
+    }
+
+    public static function configurationNotValid($msg)
+    {
+        return new self($msg, 10);
+    }
+
+    /**
+     * @param string $migrationClass
+     * @param string $migrationNamespace
+     * @return MigrationException
+     */
+    public static function migrationClassNotFound($migrationClass, $migrationNamespace)
+    {
+        return new self(
+            sprintf(
+                'Migration class "%s" was not found. Is it placed in "%s" namespace?',
+                $migrationClass,
+                $migrationNamespace
+            )
+        );
+    }
+
+    /**
+     * @param string $migrationClass
+     * @return MigrationException
+     */
+    public static function migrationNotConvertibleToSql($migrationClass)
+    {
+        return new self(
+            sprintf(
+                'Migration class "%s" contains a prepared statement.
+                Unfortunately there is no cross platform way of outputing it as an sql string.
+                Do you want to write a PR for it ?',
+                $migrationClass
+            )
+        );
     }
 }

@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -21,25 +21,25 @@ class StringLength extends AbstractValidator
     /**
      * @var array
      */
-    protected $messageTemplates = array(
+    protected $messageTemplates = [
         self::INVALID   => "Invalid type given. String expected",
         self::TOO_SHORT => "The input is less than %min% characters long",
         self::TOO_LONG  => "The input is more than %max% characters long",
-    );
+    ];
 
     /**
      * @var array
      */
-    protected $messageVariables = array(
-        'min' => array('options' => 'min'),
-        'max' => array('options' => 'max'),
-    );
+    protected $messageVariables = [
+        'min' => ['options' => 'min'],
+        'max' => ['options' => 'max'],
+    ];
 
-    protected $options = array(
+    protected $options = [
         'min'      => 0,       // Minimum length
         'max'      => null,    // Maximum length, null if there is no length limitation
         'encoding' => 'UTF-8', // Encoding to use
-    );
+    ];
 
     protected $stringWrapper;
 
@@ -48,7 +48,7 @@ class StringLength extends AbstractValidator
      *
      * @param  int|array|\Traversable $options
      */
-    public function __construct($options = array())
+    public function __construct($options = [])
     {
         if (!is_array($options)) {
             $options     = func_get_args();
@@ -87,8 +87,9 @@ class StringLength extends AbstractValidator
     public function setMin($min)
     {
         if (null !== $this->getMax() && $min > $this->getMax()) {
-            throw new Exception\InvalidArgumentException("The minimum must be less than or equal to the maximum length, but $min >"
-                                            . " " . $this->getMax());
+            throw new Exception\InvalidArgumentException(
+                "The minimum must be less than or equal to the maximum length, but {$min} > {$this->getMax()}"
+            );
         }
 
         $this->options['min'] = max(0, (int) $min);
@@ -117,8 +118,9 @@ class StringLength extends AbstractValidator
         if (null === $max) {
             $this->options['max'] = null;
         } elseif ($max < $this->getMin()) {
-            throw new Exception\InvalidArgumentException("The maximum must be greater than or equal to the minimum length, but "
-                                            . "$max < " . $this->getMin());
+            throw new Exception\InvalidArgumentException(
+                "The maximum must be greater than or equal to the minimum length, but {$max} < {$this->getMin()}"
+            );
         } else {
             $this->options['max'] = (int) $max;
         }

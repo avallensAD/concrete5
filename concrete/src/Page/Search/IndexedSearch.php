@@ -2,7 +2,9 @@
 namespace Concrete\Core\Page\Search;
 
 use Concrete\Core\Cache\Cache;
-use Core;
+use Concrete\Core\Page\Page;
+use Concrete\Core\Search\Index\IndexManagerInterface;
+use Concrete\Core\Support\Facade\Application;
 use Loader;
 use Config;
 use PageList;
@@ -14,14 +16,14 @@ use stdClass;
 
 class IndexedSearch
 {
-
     public $searchBatchSize;
     public $searchReindexTimeout;
 
     private $cPathSections = array();
     private $searchableAreaNames;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->searchReindexTimeout = Config::get('concrete.misc.page_search_index_lifetime');
         $this->searchBatchSize = Config::get('concrete.limits.page_search_index_batch');
     }
@@ -32,6 +34,7 @@ class IndexedSearch
         if (!strlen($action)) {
             $action = 'blacklist';
         }
+
         return $action;
     }
 
@@ -42,6 +45,7 @@ class IndexedSearch
         if (!is_array($areas)) {
             $areas = array();
         }
+
         return $areas;
     }
 
@@ -94,7 +98,7 @@ class IndexedSearch
                     'cPath' => $page->getCollectionPath(),
                     'cDatePublic' => $page->getCollectionDatePublic(),
                     'content' => $this->getBodyContentFromPage($page),
-                    'cDateLastIndexed' => $datetime
+                    'cDateLastIndexed' => $datetime,
                 ),
                 array('cID'),
                 true
@@ -106,7 +110,6 @@ class IndexedSearch
 
     public function getBodyContentFromPage($c)
     {
-
         $text = '';
 
         $tagsToSpaces = array(
@@ -119,7 +122,7 @@ class IndexedSearch
             '<div>',
             '</div>',
             '</ div>',
-            '&nbsp;'
+            '&nbsp;',
         );
         $blarray = array();
         $db = Loader::db();
@@ -160,8 +163,10 @@ class IndexedSearch
     {
         Cache::disableAll();
 
-        $db = Loader::db();
+        /** @var IndexManagerInterface $indexStack */
+        $indexStack = Application::getFacadeApplication()->make(IndexManagerInterface::class);
 
+        $db = Loader::db();
 
         if ($fullReindex) {
             $db->Execute("truncate table PageSearchIndex");
@@ -180,25 +185,16 @@ class IndexedSearch
 
         $num = 0;
         foreach ($pages as $c) {
-
-            // make sure something is approved
-            $cv = $c->getVersionObject();
-            if (!$cv->cvIsApproved) {
-                continue;
-            }
-
-            $c->reindex($this, true);
-            $num++;
-            unset($c);
+            $indexStack->index(Page::class, $c);
         }
 
         $pnum = Collection::reindexPendingPages();
         $num = $num + $pnum;
 
         Cache::enableAll();
-        $result = new stdClass;
+        $result = new stdClass();
         $result->count = $num;
+
         return $result;
     }
-
 }

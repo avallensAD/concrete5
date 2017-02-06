@@ -16,25 +16,95 @@ namespace Pagerfanta\View\Template;
  */
 interface TemplateInterface
 {
-    function container();
+    /**
+     * Renders the container for the pagination.
+     *
+     * The %pages% placeholder will be replaced by the rendering of pages
+     *
+     * @return string
+     */
+    public function container();
 
-    function page($page);
+    /**
+     * Renders a given page.
+     *
+     * @param int $page
+     *
+     * @return string
+     */
+    public function page($page);
 
-    function pageWithText($page, $text);
+    /**
+     * Renders a given page with a specified text.
+     *
+     * @param int    $page
+     * @param string $text
+     *
+     * @return string
+     */
+    public function pageWithText($page, $text);
 
-    function previousDisabled();
+    /**
+     * Renders the disabled state of the previous page.
+     *
+     * @return string
+     */
+    public function previousDisabled();
 
-    function previousEnabled($page);
+    /**
+     * Renders the enabled state of the previous page.
+     *
+     * @param int $page
+     *
+     * @return string
+     */
+    public function previousEnabled($page);
 
-    function nextDisabled();
+    /**
+     * Renders the disabled state of the next page.
+     *
+     * @return string
+     */
+    public function nextDisabled();
 
-    function nextEnabled($page);
+    /**
+     * Renders the enabled state of the next page.
+     *
+     * @param int $page
+     *
+     * @return string
+     */
+    public function nextEnabled($page);
 
-    function first();
+    /**
+     * Renders the first page.
+     *
+     * @return string
+     */
+    public function first();
 
-    function last($page);
+    /**
+     * Renders the last page.
+     *
+     * @param int $page
+     *
+     * @return string
+     */
+    public function last($page);
 
-    function current($page);
+    /**
+     * Renders the current page.
+     *
+     * @param int $page
+     *
+     * @return string
+     */
+    public function current($page);
 
-    function separator();
+    /**
+     * Renders the separator between pages.
+     *
+     * @return string
+     */
+    public function separator();
 }

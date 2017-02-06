@@ -13,34 +13,38 @@ $token = \Core::make('Concrete\Core\Validation\CSRF\Token');
 <?php
 $attribs = UserAttributeKey::getRegistrationList();
 
-if($registerSuccess) { ?>
+if ($registerSuccess) {
+    ?>
 <div class="row">
 <div class="col-sm-10 col-sm-offset-1">
-<?php	switch($registerSuccess) {
-		case "registered":
-			?>
+<?php    switch ($registerSuccess) {
+        case "registered":
+            ?>
 			<p><strong><?php echo $successMsg ?></strong><br/><br/>
 			<a href="<?php echo $view->url('/')?>"><?php echo t('Return to Home')?></a></p>
 			<?php
-		break;
-		case "validate":
-			?>
+        break;
+        case "validate":
+            ?>
 			<p><?php echo $successMsg[0] ?></p>
 			<p><?php echo $successMsg[1] ?></p>
 			<p><a href="<?php echo $view->url('/')?>"><?php echo t('Return to Home')?></a></p>
 			<?php
-		break;
-		case "pending":
-			?>
+        break;
+        case "pending":
+            ?>
 			<p><?php echo $successMsg ?></p>
 			<p><a href="<?php echo $view->url('/')?>"><?php echo t('Return to Home')?></a></p>
             <?php
-		break;
-	} ?>
+        break;
+    }
+    ?>
 </div>
 </div>
 <?php
-} else { ?>
+
+} else {
+    ?>
 	<form method="post" action="<?php echo $view->url('/register', 'do_register')?>" class="form-stacked">
 		<?php $token->output('register.do_register') ?>
 		<div class="row">
@@ -48,72 +52,77 @@ if($registerSuccess) { ?>
 				<fieldset>
 					<legend><?php echo t('Your Details')?></legend>
 					<?php
-					if ($displayUserName) {
-						?>
+                    if ($displayUserName) {
+                        ?>
 						<div class="form-group">
-							<?php echo $form->label('uName',t('Username'))?>
+							<?php echo $form->label('uName', t('Username'))?>
                             <?php echo $form->text('uName')?>
 						</div>
 						<?php
-					}
-					?>
+
+                    }
+    ?>
                     <div class="form-group">
-                        <?php echo $form->label('uEmail',t('Email Address'))?>
+                        <?php echo $form->label('uEmail', t('Email Address'))?>
                         <?php echo $form->text('uEmail')?>
                     </div>
                     <div class="form-group">
-						<?php echo $form->label('uPassword',t('Password'))?>
-					    <?php echo $form->password('uPassword',array('autocomplete' => 'off'))?>
+						<?php echo $form->label('uPassword', t('Password'))?>
+					    <?php echo $form->password('uPassword', array('autocomplete' => 'off'))?>
 					</div>
                     <div class="form-group">
-						<?php echo $form->label('uPasswordConfirm',t('Confirm Password'))?>
-						<?php echo $form->password('uPasswordConfirm',array('autocomplete' => 'off'))?>
+						<?php echo $form->label('uPasswordConfirm', t('Confirm Password'))?>
+						<?php echo $form->password('uPasswordConfirm', array('autocomplete' => 'off'))?>
 					</div>
 
 				</fieldset>
 			</div>
 		</div>
 		<?php
-		if (count($attribs) > 0) {
-			?>
+        if (count($attribs) > 0) {
+            ?>
 			<div class="row">
 				<div class="col-sm-10 col-sm-offset-1">
 					<fieldset>
 						<legend><?php echo t('Options')?></legend>
 						<?php
-						$af = Loader::helper('form/attribute');
-						foreach($attribs as $ak) {
-							echo $af->display($ak, $ak->isAttributeKeyRequiredOnRegister());
-						}
-						?>
+                        $af = Loader::helper('form/attribute');
+            foreach ($attribs as $ak) {
+                echo $af->display($ak, $ak->isAttributeKeyRequiredOnRegister());
+            }
+            ?>
 					</fieldset>
 				</div>
 			</div>
 			<?php
-		}
-		if (Config::get('concrete.user.registration.captcha')) {
-			?>
+
+        }
+    if (Config::get('concrete.user.registration.captcha')) {
+        ?>
 			<div class="row">
 				<div class="col-sm-10 col-sm-offset-1 ">
 
 					<div class="form-group">
 						<?php
-						$captcha = Loader::helper('validation/captcha');
-						echo $captcha->label();
-						?>
+                        $captcha = Loader::helper('validation/captcha');
+        echo $captcha->label();
+        ?>
                         <?php
                         $captcha->showInput();
-                        $captcha->display();
-                        ?>
+        $captcha->display();
+        ?>
 					</div>
 				</div>
 			</div>
 
-		<?php } ?>
+		<?php 
+    }
+    ?>
 		<div class="row">
 			<div class="col-sm-10 col-sm-offset-1">
 				<div class="form-actions">
-					<?php echo $form->hidden('rcID', $rcID); ?>
+					<?php echo $form->hidden('rcID', $rcID);
+    ?>
 					<?php echo $form->submit('register', t('Register') . ' &gt;', array('class' => 'btn-lg btn-primary'))?>
 				</div>
 			</div>
@@ -121,5 +130,6 @@ if($registerSuccess) { ?>
 	</form>
 
 	<?php
+
 }
 ?>

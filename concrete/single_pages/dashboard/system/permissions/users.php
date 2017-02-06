@@ -10,12 +10,16 @@
 	<?php echo Loader::helper('validation/token')->output('save_permissions')?>
 	
 	<?php
-	$tp = new TaskPermission();
-	if ($tp->canAccessTaskPermissions()) { ?>	
+    $tp = new TaskPermission();
+    if ($tp->canAccessTaskPermissions()) {
+        ?>	
 		<?php Loader::element('permission/lists/user')?>
-	<?php } else { ?>
+	<?php 
+    } else {
+        ?>
 		<p><?php echo t('You cannot access task permissions.')?></p>
-	<?php } ?>
+	<?php 
+    } ?>
 
 	<div class="ccm-dashboard-form-actions-wrapper">
 	    <div class="ccm-dashboard-form-actions">

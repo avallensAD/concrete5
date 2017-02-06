@@ -3,54 +3,72 @@
 <div class="ccm-ui">
 <?php
 $assignments = $cp->getAllTimedAssignmentsForPage();
-if (count($assignments) > 0) { ?>
+if (count($assignments) > 0) {
+    ?>
 
 <table class="ccm-permission-grid table table-striped">
 <?php
-foreach($assignments as $ppc) {
-	$pk = $ppc->getPermissionKeyObject();
-	?>
+foreach ($assignments as $ppc) {
+    $pk = $ppc->getPermissionKeyObject();
+    ?>
 	<tr>
 	<td>
 	<strong><?php echo $pk->getPermissionKeyDisplayName()?></strong>
 	<?php echo t('Permission on ')?><?php
-		if ($pk instanceof AreaPermissionKey) {  ?>
+        if ($pk instanceof AreaPermissionKey) {
+            ?>
 			<strong><?php echo $pk->getPermissionObject()->getAreaHandle() ?></strong>.
-		<?php } else if ($pk instanceof BlockPermissionKey) { 
-			$bt = BlockType::getByID($pk->getPermissionObject()->getBlockTypeID());
-			$obj = $pk->getPermissionObject();
-			if ($obj->getBlockName() != '') { ?>
+		<?php 
+        } elseif ($pk instanceof BlockPermissionKey) {
+            $bt = BlockType::getByID($pk->getPermissionObject()->getBlockTypeID());
+            $obj = $pk->getPermissionObject();
+            if ($obj->getBlockName() != '') {
+                ?>
 
 			<?php echo t('the %s block named <strong>%s</strong> in <strong>%s</strong> Area. ', t($bt->getBlockTypeName()), $obj->getBlockName(), $pk->getPermissionObject()->getAreaHandle())?>
 			
-			<?php } else { ?>
+			<?php 
+            } else {
+                ?>
 			
 			<?php echo t('<strong>%s Block</strong> in <strong>%s</strong> Area. ', t($bt->getBlockTypeName()), $pk->getPermissionObject()->getAreaHandle())?>
 			
-			<?php } ?>		
-		<?php } else { ?>
-			<strong><?php echo t('Entire Page')?></strong>.
-		<?php } ?>
-		<?php
-		$pd = $ppc->getDurationObject();
-		?>
-		<div>
+			<?php 
+            }
+            ?>		
 		<?php 
-		$assignee = t('Nobody');
-		$pae = $ppc->getAccessEntityObject();
-		if (is_object($pae)) {
-			$assignee = $pae->getAccessEntityLabel();
-		}?>
+        } else {
+            ?>
+			<strong><?php echo t('Entire Page')?></strong>.
+		<?php 
+        }
+    ?>
+		<?php
+        $pd = $ppc->getDurationObject();
+    ?>
+		<div>
+		<?php
+        $assignee = t('Nobody');
+    $pae = $ppc->getAccessEntityObject();
+    if (is_object($pae)) {
+        $assignee = $pae->getAccessEntityLabel();
+    }
+    ?>
 		<?php echo t('Assigned to <strong>%s</strong>. ', $assignee)?>
 		<?php echo $pd->getTextRepresentation()?>
 		</div>
 	</td>
 	</tr>
-<?php } ?>
+<?php 
+}
+    ?>
 </table>
 
-<?php } else { ?>
+<?php 
+} else {
+    ?>
 	<p><?php echo t('No timed permission assignments')?></p>
-<?php } ?>
+<?php 
+} ?>
 
 </div>

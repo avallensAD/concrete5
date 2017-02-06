@@ -1,8 +1,10 @@
 <?php
-
 namespace Concrete\Attribute\Textarea;
 
 use Concrete\Core\Attribute\DefaultController;
+use Concrete\Core\Attribute\FontAwesomeIconFormatter;
+use Concrete\Core\Entity\Attribute\Key\Settings\TextareaSettings;
+use Concrete\Core\Entity\Attribute\Value\Value\TextValue;
 use Core;
 use Database;
 
@@ -10,10 +12,18 @@ class Controller extends DefaultController
 {
     protected $searchIndexFieldDefinition = array('type' => 'text', 'options' => array('default' => null, 'notnull' => false));
 
+    public function getIconFormatter()
+    {
+        return new FontAwesomeIconFormatter('font');
+    }
+
+    protected $akTextareaDisplayMode;
+    protected $akTextareaDisplayModeCustomOptions;
     public $helpers = array('form');
 
     public function saveKey($data)
     {
+        $type = $this->getAttributeKeySettings();
         $data += array(
             'akTextareaDisplayMode' => null,
         );
@@ -25,17 +35,20 @@ class Controller extends DefaultController
         if ($akTextareaDisplayMode == 'rich_text_custom') {
             $options = $data['akTextareaDisplayModeCustomOptions'];
         }
-        $this->setDisplayMode($akTextareaDisplayMode, $options);
+
+        $type->setMode($akTextareaDisplayMode);
+
+        return $type;
     }
 
-    public function getDisplaySanitizedValue()
+    public function getDisplayValue()
     {
         $this->load();
         if ($this->akTextareaDisplayMode == 'text') {
-            return parent::getDisplaySanitizedValue();
+            return parent::getDisplayValue();
         }
 
-        return htmLawed(parent::getValue(), array('safe' => 1, 'deny_attribute' => 'style'));
+        return htmLawed($this->getAttributeValue()->getValue(), array('safe' => 1, 'deny_attribute' => 'style'));
     }
 
     public function form($additionalClass = false)
@@ -43,14 +56,15 @@ class Controller extends DefaultController
         $this->load();
         $this->requireAsset('jquery/ui');
 
+        $value = null;
         if (is_object($this->attributeValue)) {
             $value = $this->getAttributeValue()->getValue();
         }
         // switch display type here
         if ($this->akTextareaDisplayMode == 'text' || $this->akTextareaDisplayMode == '') {
-            print Core::make('helper/form')->textarea($this->field('value'), $value, array('class' => $additionalClass, 'rows' => 5));
+            echo Core::make('helper/form')->textarea($this->field('value'), $value, array('class' => $additionalClass, 'rows' => 5));
         } else {
-            print Core::make('editor')->outputStandardEditor($this->field('value'), $value);
+            echo Core::make('editor')->outputStandardEditor($this->field('value'), $value);
         }
     }
 
@@ -69,41 +83,7 @@ class Controller extends DefaultController
     public function search()
     {
         $f = Core::make('helper/form');
-        print $f->text($this->field('value'), $this->request('value'));
-    }
-
-    public function setDisplayMode($akTextareaDisplayMode, $akTextareaDisplayModeCustomOptions = array())
-    {
-        $db = Database::connection();
-        $ak = $this->getAttributeKey();
-        $akTextareaDisplayModeCustomOptionsValue = '';
-        if (is_array($akTextareaDisplayModeCustomOptions) && count($akTextareaDisplayModeCustomOptions) > 0) {
-            $akTextareaDisplayModeCustomOptionsValue = serialize($akTextareaDisplayModeCustomOptions);
-        }
-        $db->Replace('atTextareaSettings', array(
-            'akID' => $ak->getAttributeKeyID(),
-            'akTextareaDisplayMode' => $akTextareaDisplayMode,
-            'akTextareaDisplayModeCustomOptions' => $akTextareaDisplayModeCustomOptionsValue,
-        ), array('akID'), true);
-    }
-
-    /*
-    public function saveForm($data)
-    {
-        $this->saveValue($data['value']);
-    }
-    */
-
-    // should have to delete the at thing
-    public function deleteKey()
-    {
-        $db = Database::connection();
-        $arr = $this->attributeKey->getAttributeValueIDList();
-        foreach ($arr as $id) {
-            $db->Execute('delete from atDefault where avID = ?', array($id));
-        }
-
-        $db->Execute('delete from atTextareaSettings where akID = ?', array($this->attributeKey->getAttributeKeyID()));
+        echo $f->text($this->field('value'), $this->request('value'));
     }
 
     public function type_form()
@@ -119,15 +99,18 @@ class Controller extends DefaultController
             return false;
         }
 
-        $db = Database::connection();
-        $row = $db->GetRow('select akTextareaDisplayMode, akTextareaDisplayModeCustomOptions from atTextareaSettings where akID = ?', array($ak->getAttributeKeyID()));
-        $this->akTextareaDisplayMode = $row['akTextareaDisplayMode'];
-        $this->akTextareaDisplayModeCustomOptions = array();
-        if ($row['akTextareaDisplayMode'] == 'rich_text_custom') {
-            $this->akTextareaDisplayModeCustomOptions = unserialize($row['akTextareaDisplayModeCustomOptions']);
-        }
-        $this->set('akTextareaDisplayMode', $this->akTextareaDisplayMode);
-        $this->set('akTextareaDisplayModeCustomOptions', $this->akTextareaDisplayModeCustomOptions);
+        $type = $ak->getAttributeKeySettings();
+        /**
+         * @var $type TextareaSettings
+         */
+
+        $this->akTextareaDisplayMode = $type->getMode();
+        $this->set('akTextareaDisplayMode', $type->getMode());
+    }
+
+    public function getAttributeValueClass()
+    {
+        return TextValue::class;
     }
 
     public function exportKey($akey)
@@ -138,21 +121,28 @@ class Controller extends DefaultController
         return $akey;
     }
 
-    public function importKey($akey)
+    public function createAttributeValue($value)
     {
-        if (isset($akey->type)) {
-            $data['akTextareaDisplayMode'] = $akey->type['mode'];
-            $this->saveKey($data);
-        }
+        $av = new TextValue();
+        $av->setValue($value);
+
+        return $av;
     }
 
-    public function duplicateKey($newAK)
+    public function importKey(\SimpleXMLElement $akey)
     {
-        $this->load();
-        $db = Database::connection();
-        $db->Replace('atTextareaSettings', array(
-            'akID' => $newAK->getAttributeKeyID(),
-            'akTextareaDisplayMode' => $this->akDateDisplayMode,
-        ), array('akID'), true);
+        $type = $this->getAttributeKeySettings();
+        if (isset($akey->type)) {
+            $data['akTextareaDisplayMode'] = $akey->type['mode'];
+            $type->setMode((string) $akey->type['mode']);
+        }
+
+        return $type;
     }
+
+    public function getAttributeKeySettingsClass()
+    {
+        return TextareaSettings::class;
+    }
+
 }

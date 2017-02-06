@@ -1,13 +1,13 @@
 <?php defined('C5_EXECUTE') or die("Access Denied."); ?>
 <?php
 if (!isset($pa)) {
-	$pa = $pk->getPermissionAccessObject();
+    $pa = $pk->getPermissionAccessObject();
 }
 $assignments = array();
 $paID = 0;
 if (is_object($pa)) {
-	$paID = $pa->getPermissionAccessID();
-	$assignments = $pa->getAccessListItems(PermissionKey::ACCESS_TYPE_ALL);
+    $paID = $pa->getPermissionAccessID();
+    $assignments = $pa->getAccessListItems(PermissionKey::ACCESS_TYPE_ALL);
 }
 
 ?>
@@ -16,40 +16,44 @@ if (is_object($pa)) {
 $str = '';
 
 if (count($assignments) > 0) {
-	for ($i = 0; $i < count($assignments); $i++) { 
-		$class = '';
-		$as = $assignments[$i];
-		$entity = $as->getAccessEntityObject();
-		$pd = $as->getPermissionDurationObject();
-		$pdTitle = '';
-		
-		if ($as->getAccessType() == PermissionKey::ACCESS_TYPE_EXCLUDE) {
-			if (is_object($pd)) {
-				$class = 'label-warning';
-				$pdTitle = 'title="' . $pd->getTextRepresentation() . '"';
-			} else {
-				$class = 'label-danger';
-			}
-		} else { 
-			if (is_object($pd)) {
-				$class = 'label-info';
-				$pdTitle = 'title="' . $pd->getTextRepresentation() . '"';
-			}
-		}
+    for ($i = 0; $i < count($assignments); ++$i) {
+        $class = '';
+        $as = $assignments[$i];
+        $entity = $as->getAccessEntityObject();
+        $pd = $as->getPermissionDurationObject();
+        $pdTitle = '';
 
-		if (!$class) {
-			$class = 'label-default';
-		}
-		$str .= '<span class="label ' . $class . '" ' . $pdTitle . '>' . $entity->getAccessEntityLabel() . '</span> ';
-	}
+        if ($as->getAccessType() == PermissionKey::ACCESS_TYPE_EXCLUDE) {
+            if (is_object($pd)) {
+                $class = 'label-warning';
+                $pdTitle = 'title="' . $pd->getTextRepresentation() . '"';
+            } else {
+                $class = 'label-danger';
+            }
+        } else {
+            if (is_object($pd)) {
+                $class = 'label-info';
+                $pdTitle = 'title="' . $pd->getTextRepresentation() . '"';
+            }
+        }
+
+        if (!$class) {
+            $class = 'label-default';
+        }
+        $str .= '<span class="label ' . $class . '" ' . $pdTitle . '>' . $entity->getAccessEntityLabel() . '</span> ';
+    }
 }
 
 ?>
-<?php if (!$str) { ?>
+<?php if (!$str) {
+    ?>
 	<span style="color: #ccc"><?php echo t('None')?></span>
-<?php } else { ?>
+<?php 
+} else {
+    ?>
 	<?php echo $str?>
-<?php } ?>
+<?php 
+} ?>
 
 <input type="hidden" name="pkID[<?php echo $pk->getPermissionKeyID()?>]" value="<?php echo $paID?>" data-pkID="<?php echo $pk->getPermissionKeyID()?>" />
 </div>

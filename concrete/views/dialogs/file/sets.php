@@ -4,21 +4,22 @@
 
     <div class="ccm-ui">
         <?php Loader::element('files/add_to_sets', array(
-            'displayFileSet' => function($fileset) use ($f) {
-                $fp = new \Permissions($fileset);
+            'displayFileSet' => function ($fileset) use ($f) {
+                $fp = \FilePermissions::getGlobal();
                 if (!$fp->canAddFiles() || !$fp->canAddFileType(strtolower($f->getExtension()))) {
                     return false;
                 } else {
                     return true;
                 }
             },
-            'getCheckbox' => function($fileset) use ($f) {
+            'getCheckbox' => function ($fileset) use ($f) {
                 $checkbox = id(new HtmlObject\Input('checkbox', 'fsID[]'))->value($fileset->getFileSetID());
                 if ($f->inFileSet($fileset)) {
                     $checkbox->checked(true);
                 }
+
                 return $checkbox;
-            }
+            },
         ));?>
     </div>
 

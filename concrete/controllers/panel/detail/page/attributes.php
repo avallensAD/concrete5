@@ -1,7 +1,8 @@
 <?php
 namespace Concrete\Controller\Panel\Detail\Page;
 
-use \Concrete\Controller\Backend\UserInterface\Page as BackendInterfacePageController;
+use Concrete\Controller\Backend\UserInterface\Page as BackendInterfacePageController;
+use Concrete\Core\Attribute\Context\AttributePanelContext;
 use Concrete\Core\Http\ResponseAssetGroup;
 use Concrete\Core\Workflow\Request\ApprovePageRequest;
 use PageEditResponse;
@@ -11,7 +12,8 @@ use Loader;
 use User;
 use Concrete\Core\Page\Collection\Version\Version;
 use CollectionAttributeKey;
-use \Concrete\Core\Attribute\View as AttributeTypeView;
+use Concrete\Core\Entity\Attribute\Key\PageKey;
+use Concrete\Core\Attribute\View as AttributeTypeView;
 
 class Attributes extends BackendInterfacePageController
 {
@@ -33,15 +35,15 @@ class Attributes extends BackendInterfacePageController
         $this->assignment = $pk->getMyAssignment();
     }
 
-    protected function getAttributeJSONRepresentation(CollectionAttributeKey $ak, $mode = 'edit')
+    protected function getAttributeJSONRepresentation(PageKey $ak, $mode = 'edit')
     {
         ob_start();
         $av = new AttributeTypeView($ak);
         if ($mode == 'edit') {
             $caValue = $this->page->getAttributeValueObject($ak);
-            $ak->render('form', $caValue);
+            $ak->render(new AttributePanelContext(), $caValue);
         } else {
-            print $av->render('form');
+            echo $av->render(new AttributePanelContext());
         }
         $html = ob_get_contents();
         ob_end_clean();
@@ -110,7 +112,9 @@ class Attributes extends BackendInterfacePageController
                 if (in_array($ak->getAttributeKeyID(), $asl->getAttributesAllowedArray())) {
                     // Is this item in the selectedAKIDs array? If so then it is being saved
                     if (in_array($ak->getAttributeKeyID(), $selected)) {
-                        $ak->saveAttributeForm($nvc);
+                        $controller = $ak->getController();
+                        $value = $controller->createAttributeValueFromRequest();
+                        $nvc->setAttribute($ak, $value);
                     } else {
                         // it is being removed
                         $nvc->clearAttribute($ak);
@@ -122,14 +126,15 @@ class Attributes extends BackendInterfacePageController
             foreach ($newAttributes as $akID) {
                 if ($akID > 0 && in_array($akID, $asl->getAttributesAllowedArray())) {
                     $ak = CollectionAttributeKey::getByID($akID);
-                    $ak->saveAttributeForm($nvc);
+                    $controller = $ak->getController();
+                    $value = $controller->createAttributeValueFromRequest();
+                    $nvc->setAttribute($ak, $value);
                 }
             }
 
             if ($this->request->request->get('sitemap')
                 && $this->permissions->canApprovePageVersions()
                 && \Config::get('concrete.misc.sitemap_approve_immediately')) {
-
                 $pkr = new ApprovePageRequest();
                 $u = new User();
                 $pkr->setRequestedPage($this->page);
@@ -149,8 +154,8 @@ class Attributes extends BackendInterfacePageController
     }
 
     /**
-	 * Retrieve attribute HTML to inject into the other view.
-	 */
+     * Retrieve attribute HTML to inject into the other view.
+     */
     public function add_attribute()
     {
         $allowed = $this->assignment->getAttributesAllowedArray();
@@ -171,5 +176,4 @@ class Attributes extends BackendInterfacePageController
             Loader::helper('ajax')->sendResult($obj);
         }
     }
-
 }

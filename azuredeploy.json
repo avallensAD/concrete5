@@ -85,8 +85,7 @@
             "[concat('Microsoft.Web/sites/', parameters('siteName'))]"
           ],
           "properties": {
-           
-            "phpVersion": "5.5"
+            "phpVersion": "5.6"
           }
         }
       ]

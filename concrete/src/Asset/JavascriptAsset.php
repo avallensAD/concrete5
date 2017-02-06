@@ -1,5 +1,4 @@
 <?php
-
 namespace Concrete\Core\Asset;
 
 use HtmlObject\Element;
@@ -61,7 +60,7 @@ class JavascriptAsset extends Asset
             $relativeDirectory = self::getRelativeOutputDirectory();
             $filename = '';
             $sourceFiles = array();
-            for ($i = 0; $i < count($assets); $i++) {
+            for ($i = 0; $i < count($assets); ++$i) {
                 $asset = $assets[$i];
                 $filename .= $asset->getAssetHashKey();
                 $sourceFiles[] = $asset->getAssetURL();
@@ -76,13 +75,13 @@ class JavascriptAsset extends Asset
                         if ($asset->assetSupportsMinification()) {
                             $contents = \JShrink\Minifier::minify($contents);
                         }
-                        $js .= $contents."\n\n";
+                        $js .= $contents.";\n\n";
                     }
                 }
                 @file_put_contents($cacheFile, $js);
             }
 
-            $asset = new JavascriptAsset();
+            $asset = new self();
             $asset->setAssetURL($relativeDirectory.'/'.$filename.'.js');
             $asset->setAssetPath($directory.'/'.$filename.'.js');
             $asset->setCombinedAssetSourceFiles($sourceFiles);

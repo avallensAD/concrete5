@@ -15,7 +15,7 @@
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the LGPL. For more information, see
  * <http://www.doctrine-project.org>.
-*/
+ */
 
 namespace Doctrine\DBAL\Migrations;
 
@@ -98,6 +98,7 @@ abstract class AbstractMigration
      */
     public function getDescription()
     {
+        return '';
     }
 
     /**
@@ -109,10 +110,11 @@ abstract class AbstractMigration
     public function warnIf($condition, $message = '')
     {
         if ($condition) {
+            $message = $message ?: 'Unknown Reason';
             $this->outputWriter->write(sprintf(
-                '    <warning>Warning during %s: %s</warning>',
+                '    <comment>Warning during %s: %s</comment>',
                 $this->version->getExecutionState(),
-                $message ?: 'Unknown Reason'
+                $message
             ));
         }
     }
@@ -166,7 +168,7 @@ abstract class AbstractMigration
     abstract public function up(Schema $schema);
     abstract public function down(Schema $schema);
 
-    protected function addSql($sql, array $params = array(), array $types = array())
+    protected function addSql($sql, array $params = [], array $types = [])
     {
         $this->version->addSql($sql, $params, $types);
     }

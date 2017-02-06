@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2016 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -65,7 +65,7 @@ abstract class HeaderWrap
         $delimiter = $header->getDelimiter();
 
         $length = strlen($value);
-        $lines  = array();
+        $lines  = [];
         $temp   = '';
         for ($i = 0; $i < $length; $i++) {
             $temp .= $value[$i];
@@ -91,5 +91,47 @@ abstract class HeaderWrap
     public static function mimeEncodeValue($value, $encoding, $lineLength = 998)
     {
         return Mime::encodeQuotedPrintableHeader($value, $encoding, $lineLength, Headers::EOL);
+    }
+
+    /**
+     * MIME-decode a value
+     *
+     * Performs quoted-printable decoding on a value.
+     *
+     * @param  string $value
+     * @return string Returns the mime encode value without the last line ending
+     */
+    public static function mimeDecodeValue($value)
+    {
+        $decodedValue = iconv_mime_decode($value, ICONV_MIME_DECODE_CONTINUE_ON_ERROR, 'UTF-8');
+
+        return $decodedValue;
+    }
+
+    /**
+     * Test if is possible apply MIME-encoding
+     *
+     * @param string $value
+     * @return bool
+     */
+    public static function canBeEncoded($value)
+    {
+        // avoid any wrapping by specifying line length long enough
+        // "test" -> 4
+        // "x-test: =?ISO-8859-1?B?dGVzdA==?=" -> 33
+        //  8       +2          +3         +3  -> 16
+        $charset = 'UTF-8';
+        $lineLength = strlen($value) * 4 + strlen($charset) + 16;
+
+        $preferences = [
+            'scheme' => 'Q',
+            'input-charset' => $charset,
+            'output-charset' => $charset,
+            'line-length' => $lineLength,
+        ];
+
+        $encoded = iconv_mime_encode('x-test', $value, $preferences);
+
+        return (false !== $encoded);
     }
 }

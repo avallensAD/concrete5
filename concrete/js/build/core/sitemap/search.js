@@ -8,7 +8,8 @@
     function ConcretePageAjaxSearch($element, options) {
         var my = this;
         options = $.extend({
-            'mode': 'menu'
+            'mode': 'menu',
+            'searchMethod': 'get'
         }, options);
 
         my.options = options;
@@ -135,7 +136,7 @@
     var ConcretePageAjaxSearchMenu = {
 
         get: function () {
-            return '<div class="ccm-popover-page-menu popover fade" data-search-page-menu="<%=item.cID%>" data-search-menu="<%=item.cID%>">' +
+            return '<div class="popover fade" data-search-page-menu="<%=item.cID%>" data-search-menu="<%=item.cID%>">' +
                 '<div class="arrow"></div><div class="popover-inner"><ul class="dropdown-menu">' +
                 '<% if (item.isTrash) { %>' +
                 '<li><a data-action="empty-trash" href="javascript:void(0)">' + ccmi18n_sitemap.emptyTrash + '</a></li>' +
@@ -158,9 +159,7 @@
                 '<% } %>' +
                 '<% if (item.canEditPageProperties) { %>' +
                 '<li><a class="dialog-launch" dialog-on-close="ConcreteSitemap.exitEditMode(<%=item.cID%>)" dialog-width="640" dialog-height="360" dialog-modal="false" dialog-title="' + ccmi18n_sitemap.seo + '" href="' + CCM_DISPATCHER_FILENAME + '/ccm/system/dialogs/page/seo?cID=<%=item.cID%>">' + ccmi18n_sitemap.seo + '</a></li>' +
-                '<% if (item.cID > 1) { %>' +
                 '<li><a class="dialog-launch" dialog-on-close="ConcreteSitemap.exitEditMode(<%=item.cID%>)" dialog-width="500" dialog-height="500" dialog-modal="false" dialog-title="' + ccmi18n_sitemap.pageLocationTitle + '" href="' + CCM_DISPATCHER_FILENAME + '/ccm/system/dialogs/page/location?cID=<%=item.cID%>">' + ccmi18n_sitemap.pageLocation + '</a></li>' +
-                '<% } %>' +
                 '<li class="divider"></li>' +
                 '<li><a class="dialog-launch" dialog-on-close="ConcreteSitemap.exitEditMode(<%=item.cID%>)" dialog-width="90%" dialog-height="70%" dialog-modal="false" dialog-title="' + ccmi18n_sitemap.pageAttributesTitle + '" href="' + CCM_DISPATCHER_FILENAME + '/ccm/system/dialogs/page/attributes?cID=<%=item.cID%>">' + ccmi18n_sitemap.pageAttributes + '</a></li>' +
                 '<% } %>' +
@@ -171,7 +170,7 @@
                 '<li><a class="dialog-launch" dialog-on-close="ConcreteSitemap.exitEditMode(<%=item.cID%>)" dialog-width="500" dialog-height="630" dialog-modal="false" dialog-title="' + ccmi18n_sitemap.setPagePermissions + '" href="' + CCM_DISPATCHER_FILENAME + '/ccm/system/panels/details/page/permissions?cID=<%=item.cID%>">' + ccmi18n_sitemap.setPagePermissions + '</a></li>' +
                 '<% } %>' +
                 '<% if (item.canEditPageDesign || item.canEditPageType) { %>' +
-                '<li><a class="dialog-launch" dialog-on-close="ConcreteSitemap.exitEditMode(<%=item.cID%>)" dialog-width="350" dialog-height="250" dialog-modal="false" dialog-title="' + ccmi18n_sitemap.pageDesign + '" href="' + CCM_DISPATCHER_FILENAME + '/ccm/system/dialogs/page/design?cID=<%=item.cID%>">' + ccmi18n_sitemap.pageDesign + '</a></li>' +
+                '<li><a class="dialog-launch" dialog-on-close="ConcreteSitemap.exitEditMode(<%=item.cID%>)" dialog-width="350" dialog-height="500" dialog-modal="false" dialog-title="' + ccmi18n_sitemap.pageDesign + '" href="' + CCM_DISPATCHER_FILENAME + '/ccm/system/dialogs/page/design?cID=<%=item.cID%>">' + ccmi18n_sitemap.pageDesign + '</a></li>' +
                 '<% } %>' +
                 '<% if (item.canViewPageVersions) { %>' +
                 '<li><a class="dialog-launch" dialog-on-close="ConcreteSitemap.exitEditMode(<%=item.cID%>)" dialog-width="640" dialog-height="340" dialog-modal="false" dialog-title="' + ccmi18n_sitemap.pageVersions + '" href="' + CCM_DISPATCHER_FILENAME + '/ccm/system/panels/page/versions?cID=<%=item.cID%>">' + ccmi18n_sitemap.pageVersions + '</a></li>' +
@@ -191,10 +190,10 @@
                 '<% if (item.canAddExternalLinks || item.canAddSubpages) { %>' +
                 	'<li class="divider"></li>' +
                     '<% if (item.canAddSubpages > 0) { %>' +
-                        '<li><a class="dialog-launch" dialog-width="350" dialog-modal="false" dialog-height="260" dialog-title="' + ccmi18n_sitemap.addPage + '" dialog-modal="false" href="' + CCM_DISPATCHER_FILENAME + '/ccm/system/dialogs/page/add?cID=<%=item.cID%>">' + ccmi18n_sitemap.addPage + '</a></li>' +
+                        '<li><a class="dialog-launch" dialog-width="350" dialog-modal="false" dialog-height="350" dialog-title="' + ccmi18n_sitemap.addPage + '" dialog-modal="false" href="' + CCM_DISPATCHER_FILENAME + '/ccm/system/dialogs/page/add?cID=<%=item.cID%>">' + ccmi18n_sitemap.addPage + '</a></li>' +
                     '<% } %>' +
                     '<% if (item.canAddExternalLinks > 0) { %>' +
-                    	'<li><a class="dialog-launch" dialog-width="350" dialog-modal="false" dialog-height="260" dialog-title="' + ccmi18n_sitemap.addExternalLink + '" dialog-modal="false" href="' + CCM_DISPATCHER_FILENAME + '/ccm/system/dialogs/page/add_external?cID=<%=item.cID%>">' + ccmi18n_sitemap.addExternalLink + '</a></li>' +
+                    	'<li><a class="dialog-launch" dialog-width="350" dialog-modal="false" dialog-height="400" dialog-title="' + ccmi18n_sitemap.addExternalLink + '" dialog-modal="false" href="' + CCM_DISPATCHER_FILENAME + '/ccm/system/dialogs/page/add_external?cID=<%=item.cID%>">' + ccmi18n_sitemap.addExternalLink + '</a></li>' +
                     '<% } %>' +
                 '<% } %>' +
                 '<% } %>' +

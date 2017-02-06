@@ -1,5 +1,4 @@
 <?php
-
 namespace Concrete\Core\View;
 
 use Concrete\Core\Http\ResponseAssetGroup;
@@ -15,6 +14,11 @@ abstract class AbstractView
     public $controller;
     protected $template;
     protected $outputAssets = array();
+
+    public function getViewTemplate()
+    {
+        return $this->template;
+    }
 
     public function addScopeItems($items)
     {
@@ -132,7 +136,6 @@ abstract class AbstractView
         }
         $return['view'] = $this;
         $return['controller'] = $this->controller;
-
         return $return;
     }
 

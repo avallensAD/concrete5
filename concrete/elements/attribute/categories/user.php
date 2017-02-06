@@ -1,12 +1,11 @@
 <?php
 if (is_object($key)) {
-	$uakProfileDisplay = $key->isAttributeKeyDisplayedOnProfile();
-	$uakProfileEdit = $key->isAttributeKeyEditableOnProfile();
-	$uakProfileEditRequired = $key->isAttributeKeyRequiredOnProfile();
-	$uakRegisterEdit = $key->isAttributeKeyEditableOnRegister();
-	$uakRegisterEditRequired = $key->isAttributeKeyRequiredOnRegister();
-	$uakMemberListDisplay = $key->isAttributeKeyDisplayedOnMemberList();
-	$uakIsActive = $key->isAttributeKeyActive();
+    $uakProfileDisplay = $key->isAttributeKeyDisplayedOnProfile();
+    $uakProfileEdit = $key->isAttributeKeyEditableOnProfile();
+    $uakProfileEditRequired = $key->isAttributeKeyRequiredOnProfile();
+    $uakRegisterEdit = $key->isAttributeKeyEditableOnRegister();
+    $uakRegisterEditRequired = $key->isAttributeKeyRequiredOnRegister();
+    $uakMemberListDisplay = $key->isAttributeKeyDisplayedOnMemberList();
 }
 ?>
 <?php $form = Loader::helper('form'); ?>

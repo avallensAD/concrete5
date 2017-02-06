@@ -11,37 +11,46 @@ defined('C5_EXECUTE') or die("Access Denied.");
 </script>
 
 <script type="text/template" class="version">
-	<tr <% if (cvIsApproved == 1) { %> class="ccm-panel-page-version-approved" <% } %>>
+	<tr <% if (cvIsApproved == 1) { %> class="ccm-panel-page-version-approved" <% } else if (cvIsScheduled == 1) { %> class="ccm-panel-page-version-scheduled" <% } %>
+	data-launch-versions-menu="ccm-panel-page-versions-version-menu-<%-cvID%>">
 		<td><input class="ccm-flat-checkbox" type="checkbox" name="cvID[]" value="<%-cvID%>" data-version-active="<%-cvIsApproved == 1%>" /></td>
 		<td><span class="ccm-panel-page-versions-version-id"><%-cvID%></span></td>
 		<td class="ccm-panel-page-versions-details">
+
+			<a href="#" class="ccm-panel-page-versions-version-info" data-toggle="version-info"><i class="fa fa-info-circle"></i></a>
+
+			<% if (cvIsApproved) { %>
+				<p><span class="label label-info"><?php echo t('Live')?></span></p>
+			<% } %>
 			<p><span class="ccm-panel-page-versions-version-timestamp"><%-cvDateVersionCreated%></span></p>
-			<p><?php echo t('Edit by')?> <%-cvAuthorUserName%></p>
 			<% if (cvComments) { %>
-				<p><small><%-cvComments%></small></p>
+				<p class="ccm-panel-page-versions-description"><%-cvComments%></p>
 			<% } %>
-			<% if (cvIsApproved == 1) { %>
-				<p><?php echo t('Approved by')?> <%-cvApproverUserName%></p>
-			<% } %>
-		</td>
-		<td>
-			<% if (cvIsApproved == 1) { %>
-				<i class="fa fa-ok" title="<?php echo t('This is the approved page version.')?>"></i>
-			<% } %>
-			<a href="#" class="ccm-panel-page-versions-version-menu" data-launch-versions-menu="ccm-panel-page-versions-version-menu-<%-cvID%>"><i class="fa fa-share"></i></a>
+			<div class="ccm-panel-page-versions-more-info">
+				<p><?php echo t('Edit by')?> <%-cvAuthorUserName%></p>
+				<% if (cvIsApproved == 1) { %>
+					<p><?php echo t('Approved by')?> <%-cvApproverUserName%></p>
+				<% } %>
+				<% if (cvIsScheduled == 1) { %>
+				<p><?php echo t('Scheduled by')?> <%-cvApproverUserName%> <?php echo tc(/*i18n: In the sentence Scheduled by USERNAME for DATE/TIME*/'ScheduledByFor', ' for ')?> <%-cvPublishDate%></p>
+				<% } %>
+			</div>
 			<div class="ccm-popover-inverse popover fade" data-menu="ccm-panel-page-versions-version-menu-<%-cvID%>">
 				<div class="popover-inner">
-				<ul class="dropdown-menu">
-					<li><% if (cvIsApproved == 1) { %><span><?php echo t('Approve')?></span><% } else { %><a href="#" data-version-menu-task="approve" data-version-id="<%-cvID%>"><?php echo t('Approve')?></a><% } %></li>
-					<li><a href="#" data-version-menu-task="duplicate" data-version-id="<%-cvID%>"><?php echo t('Duplicate')?></a></li>
-					<li class="divider"></li>
-					<% if ( ! cIsStack) { %>
-					<li><a href="#" data-version-menu-task="new-page" data-version-id="<%-cvID%>"><?php echo t('New Page')?></a></li>
-					<% } %>
-					<% if (cpCanDeletePageVersions) { %>
-						<li><% if (cvIsApproved == 1) { %><span><?php echo t('Delete')?></span><% } else { %><a href="#" data-version-menu-task="delete" data-version-id="<%-cvID%>"><?php echo t('Delete')?></a><% } %></li>
-					<% } %>
-				</ul>
+					<ul class="dropdown-menu">
+						<li><% if (cvIsApproved == 1) { %><span><?php echo t('Approve')?></span><% } else { %><a href="#" data-version-menu-task="approve" data-version-id="<%-cvID%>"><?php echo t('Approve')?></a><% } %></li>
+						<li><a href="#" data-version-menu-task="duplicate" data-version-id="<%-cvID%>"><?php echo t('Duplicate')?></a></li>
+						<li class="divider"></li>
+						<% if ( ! cIsStack) { %>
+						<li><a href="#" data-version-menu-task="new-page" data-version-id="<%-cvID%>"><?php echo t('New Page')?></a></li>
+						<% } %>
+						<% if (cpCanDeletePageVersions) { %>
+						<li class="ccm-menu-item-delete">
+							<span <% if (cvIsApproved != 1) { %>style="display:none"<% } %>><?php echo t('Delete')?></span>
+							<a <% if (cvIsApproved == 1) { %>style="display:none"<% } %> href="#" data-version-menu-task="delete" data-version-id="<%-cvID%>"><?php echo t('Delete')?></a>
+						</li>
+						<% } %>
+					</ul>
 				</div>
 			</div>
 		</td>
@@ -50,7 +59,7 @@ defined('C5_EXECUTE') or die("Access Denied.");
 
 <script type="text/template" class="footer">
 	<tr>
-		<td colspan="4">
+		<td colspan="3">
 			<ul class="pager">
 				<% if (hasPreviousPage == '1') { %>
 					<li><a href="#" data-version-navigation="<%=previousPageNum%>"><?php echo t('&larr; Newer')?></a></li>
@@ -103,6 +112,7 @@ var ConcretePageVersionList = {
 
 	handleVersionRemovalResponse: function(r) {
 		$('button[data-version-action]').addClass('disabled');
+
 		for (i = 0; i < r.versions.length; i++) {
 			var $row = $('input[type=checkbox][value=' + r.versions[i].cvID + ']').parent().parent();
 			$row.queue(function() {
@@ -111,6 +121,15 @@ var ConcretePageVersionList = {
 			}).delay(600).queue(function() {
 				$(this).remove();
 				$(this).dequeue();
+
+				var menuItems = $('li.ccm-menu-item-delete');
+				if (menuItems.length == 1) {
+					menuItems.children('span').show();
+					menuItems.children('a').hide();
+				} else {
+					menuItems.children('a').show();
+					menuItems.children('span').hide();
+				}
 			});
 		}
 	},
@@ -147,10 +166,11 @@ var ConcretePageVersionList = {
 
 	setupMenus: function() {
 		// the click proxy is kinda screwy on this
-		$('a.ccm-panel-page-versions-version-menu').each(function() {
+		$('[data-launch-versions-menu]').each(function() {
 			$(this).concreteMenu({
 				menuLauncherHoverClass: 'ccm-panel-page-versions-hover',
 				menuContainerClass: 'ccm-panel-page-versions-container',
+				enableClickProxy: false,
 				menu: 'div[data-menu=' + $(this).attr('data-launch-versions-menu') + ']'
 			});
 		});
@@ -190,8 +210,19 @@ var ConcretePageVersionList = {
 					break;
 			}
 
+
 			return false;
 		});
+
+
+		var menuItems = $('li.ccm-menu-item-delete');
+		if (menuItems.length == 1) {
+			menuItems.children('span').show();
+			menuItems.children('a').hide();
+		} else {
+			menuItems.children('a').show();
+			menuItems.children('span').hide();
+		}
 	}
 
 }
@@ -216,20 +247,7 @@ $('#ccm-panel-page-versions table tfoot').html(
 
 $(function() {
 	ConcretePageVersionList.setupMenus();
-	$('#ccm-panel-page-versions tbody').on('click', 'tr', function() {
-		var $cb = $(this).find('input[type=checkbox]');
-		if (!$cb.is(':checked')) {
-			$cb.prop('checked', true);
-		} else {
-			$cb.prop('checked', false);
-		}
-		$cb.trigger('change');
-		return false;
-	});
-	$('#ccm-panel-page-versions tbody').on('click', 'input[type=checkbox]', function(e) {
-		e.stopPropagation();
-	});
-	$('#ccm-panel-page-versions tbody').on('click', 'a.ccm-panel-page-versions-version-menu', function(e) {
+	$('#ccm-panel-page-versions tr').on('click', 'input[type=checkbox]', function(e) {
 		e.stopPropagation();
 	});
 	var $checkboxes = $('#ccm-panel-page-versions tbody input[type=checkbox][data-version-active=false]');
@@ -244,14 +262,18 @@ $(function() {
 		} else {
 			$(this).parent().parent().removeClass('ccm-panel-page-versions-version-checked');
 		}
-		var checkboxes = $('#ccm-panel-page-versions tbody input[type=checkbox]:checked');
+		var allBoxes = $('#ccm-panel-page-versions tbody input[type=checkbox]'),
+			checkboxes = allBoxes.filter(':checked'),
+			notChecked = allBoxes.not(checkboxes);
+
 		$('button[data-version-action]').addClass('disabled');
 		if (checkboxes.length > 1) {
 			$('button[data-version-action=compare]').removeClass('disabled');
 		}
-		if (checkboxes.length > 0 && !checkboxes.filter('[data-version-active=true]').length) {
+		if (checkboxes.length > 0  && notChecked.length > 0 && !checkboxes.filter('[data-version-active=true]').length) {
 			$('button[data-version-action=delete]').removeClass('disabled');
 		}
+
 		ConcretePageVersionList.previewSelectedVersions(checkboxes);
 
 	});
@@ -271,6 +293,12 @@ $(function() {
 		return false;
 	});
 
+	$('a[data-toggle=version-info]').on('click', function(e) {
+		e.preventDefault();
+		e.stopPropagation();
+		var $parent = $(this).parent();
+		$parent.find('.ccm-panel-page-versions-more-info').show().addClass('animated fadeInDown');
+	});
 
 	$('button[data-version-action=delete]').on('click', function() {
         if (!$(this).hasClass("disabled")) {
@@ -297,8 +325,8 @@ $(function() {
 	<table class="table">
 		<thead>
 			<tr>
-				<th><input class="ccm-flat-checkbox" type="checkbox" /></th>
-				<th colspan="3"><!--<button type="button" class="btn-link" data-version-action="compare" disabled><?php echo t('Compare')?></button>//--><button type="button" class="btn-link disabled" data-version-action="delete"><?php echo t('Delete')?></button></th>
+				<th colspan="2"><input type="checkbox" /></th>
+				<th><button type="button" class="btn-link disabled" data-version-action="delete"><?php echo t('Delete')?></button></th>
 			</tr>
 		</thead>
 		<tbody></tbody>

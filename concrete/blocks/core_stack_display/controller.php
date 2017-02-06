@@ -1,11 +1,13 @@
 <?php
-
 namespace Concrete\Block\CoreStackDisplay;
 
+use Concrete\Core\Statistics\UsageTracker\TrackableInterface;
+use Concrete\Core\Support\Facade\Application;
 use Stack;
 use Permissions;
 use Page;
 use Concrete\Core\Block\BlockController;
+use Concrete\Core\Multilingual\Page\Section\Section;
 
 /**
  * The controller for the stack display block. This is an internal proxy block that is inserted when a stack's contents are displayed in a page.
@@ -17,12 +19,38 @@ use Concrete\Core\Block\BlockController;
  * @copyright  Copyright (c) 2003-2012 Concrete5. (http://www.concrete5.org)
  * @license    http://www.concrete5.org/license/     MIT License
  */
-class Controller extends BlockController
+class Controller extends BlockController implements TrackableInterface
 {
     protected $btCacheBlockRecord = true;
     protected $btTable = 'btCoreStackDisplay';
     protected $btIsInternal = true;
     protected $btCacheSettingsInitialized = false;
+
+    public $stID = null;
+    protected $stIDNeutral = null;
+
+    protected function load()
+    {
+        parent::load();
+        $this->set('stIDNeutral', null);
+        $stack = Stack::getByID($this->stID);
+        if ($stack && $stack->isNeutralStack()) {
+            $detector = isset($this->app) ? $this->app->make('multilingual/detector') : \Core::make('multilingual/detector');
+            /* @var \Concrete\Core\Multilingual\Service\Detector $detector */
+            if ($detector->isEnabled()) {
+                $section = Section::getCurrentSection();
+                if ($section) {
+                    $localized = $stack->getLocalizedStack($section);
+                    if ($localized) {
+                        $this->stIDNeutral = $this->stID;
+                        $this->stID = $localized->getCollectionID();
+                        $this->set('stIDNeutral', $this->stIDNeutral);
+                        $this->set('stID', $this->stID);
+                    }
+                }
+            }
+        }
+    }
 
     public function getBlockTypeDescription()
     {
@@ -78,6 +106,8 @@ class Controller extends BlockController
 
     public function runAction($action, $parameters = array())
     {
+        parent::runAction($action, $parameters); // handles on_page_view
+
         $b = $this->findBlockForAction($action, $parameters);
         if (empty($b)) {
             return;
@@ -88,10 +118,29 @@ class Controller extends BlockController
         return $controller->runAction($action, $parameters);
     }
 
+    /**
+     * Returns the Stack instance (if found).
+     *
+     * @param bool $localized Set to true to look for a localized version of the stack (if not found return the neutral version).
+     *
+     * @return Stack|null
+     */
+    protected function getStack($localized)
+    {
+
+        if ($this->stIDNeutral === null || $localized) {
+            $result = Stack::getByID($this->stID);
+        } else {
+            $result = Stack::getByID($this->stIDNeutral);
+        }
+
+        return $result;
+    }
+
     public function findBlockForAction($method, $parameters)
     {
-        $stack = Stack::getByID($this->stID);
-        if (!is_object($stack)) {
+        $stack = $this->getStack(true);
+        if ($stack === null) {
             return null;
         }
         $blocks = $stack->getBlocks();
@@ -107,8 +156,8 @@ class Controller extends BlockController
 
     public function export(\SimpleXMLElement $blockNode)
     {
-        $stack = Stack::getByID($this->stID);
-        if (is_object($stack)) {
+        $stack = $this->getStack(false);
+        if ($stack !== null) {
             $cnode = $blockNode->addChild('stack');
             $node = dom_import_simplexml($cnode);
             $no = $node->ownerDocument;
@@ -118,8 +167,8 @@ class Controller extends BlockController
 
     public function on_page_view($page)
     {
-        $stack = Stack::getByID($this->stID);
-        if (!is_object($stack)) {
+        $stack = $this->getStack(true);
+        if ($stack === null) {
             return false;
         }
         $p = new Permissions($stack);
@@ -159,8 +208,8 @@ class Controller extends BlockController
         $btCacheBlockOutputOnPost = true;
         $btCacheBlockOutputLifetime = 0;
 
-        $stack = Stack::getByID($this->stID);
-        if (!is_object($stack)) {
+        $stack = $this->getStack(true);
+        if ($stack === null) {
             return false;
         }
 
@@ -209,4 +258,23 @@ class Controller extends BlockController
 
         return $this->btCacheBlockOutputLifetime;
     }
+
+    public function getStackID()
+    {
+        return $this->stID;
+    }
+
+    public function save($args)
+    {
+        parent::save($args);
+        $this->stID = $args['stID'];
+        Application::getFacadeApplication()->make('statistics/tracker')->track($this);
+    }
+
+    public function delete()
+    {
+        Application::getFacadeApplication()->make('statistics/tracker')->forget($this);
+        parent::delete();
+    }
+
 }

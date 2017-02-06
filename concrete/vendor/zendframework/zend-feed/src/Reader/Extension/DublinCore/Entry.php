@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -30,7 +30,7 @@ class Entry extends Extension\AbstractEntry
             return $authors[$index];
         }
 
-        return null;
+        return;
     }
 
     /**
@@ -44,7 +44,7 @@ class Entry extends Extension\AbstractEntry
             return $this->data['authors'];
         }
 
-        $authors = array();
+        $authors = [];
         $list = $this->getXpath()->evaluate($this->getXpathPrefix() . '//dc11:creator');
 
         if (!$list->length) {
@@ -60,9 +60,9 @@ class Entry extends Extension\AbstractEntry
 
         if ($list->length) {
             foreach ($list as $author) {
-                $authors[] = array(
+                $authors[] = [
                     'name' => $author->nodeValue
-                );
+                ];
             }
             $authors = new Collection\Author(
                 Reader\Reader::arrayUnique($authors)
@@ -96,11 +96,11 @@ class Entry extends Extension\AbstractEntry
         if ($list->length) {
             $categoryCollection = new Collection\Category;
             foreach ($list as $category) {
-                $categoryCollection[] = array(
+                $categoryCollection[] = [
                     'term' => $category->nodeValue,
                     'scheme' => null,
                     'label' => $category->nodeValue,
-                );
+                ];
             }
         } else {
             $categoryCollection = new Collection\Category;
@@ -109,7 +109,6 @@ class Entry extends Extension\AbstractEntry
         $this->data['categories'] = $categoryCollection;
         return $this->data['categories'];
     }
-
 
     /**
      * Get the entry content
@@ -132,7 +131,6 @@ class Entry extends Extension\AbstractEntry
             return $this->data['description'];
         }
 
-        $description = null;
         $description = $this->getXpath()->evaluate('string(' . $this->getXpathPrefix() . '/dc11:description)');
 
         if (!$description) {
@@ -159,7 +157,6 @@ class Entry extends Extension\AbstractEntry
             return $this->data['id'];
         }
 
-        $id = null;
         $id = $this->getXpath()->evaluate('string(' . $this->getXpathPrefix() . '/dc11:identifier)');
 
         if (!$id) {
@@ -182,7 +179,6 @@ class Entry extends Extension\AbstractEntry
             return $this->data['title'];
         }
 
-        $title = null;
         $title = $this->getXpath()->evaluate('string(' . $this->getXpathPrefix() . '/dc11:title)');
 
         if (!$title) {

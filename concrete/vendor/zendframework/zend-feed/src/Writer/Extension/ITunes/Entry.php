@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -23,7 +23,7 @@ class Entry
      *
      * @var array
      */
-    protected $data = array();
+    protected $data = [];
 
     /**
      * Encoding of all text values
@@ -116,7 +116,7 @@ class Entry
             . ' contain a maximum of 255 characters each');
         }
         if (!isset($this->data['authors'])) {
-            $this->data['authors'] = array();
+            $this->data['authors'] = [];
         }
         $this->data['authors'][] = $value;
         return $this;
@@ -152,7 +152,7 @@ class Entry
      */
     public function setItunesExplicit($value)
     {
-        if (!in_array($value, array('yes', 'no', 'clean'))) {
+        if (!in_array($value, ['yes', 'no', 'clean'])) {
             throw new Writer\Exception\InvalidArgumentException('invalid parameter: "explicit" may only'
             . ' be one of "yes", "no" or "clean"');
         }
@@ -239,7 +239,7 @@ class Entry
         if (!array_key_exists($point, $this->data)
             || empty($this->data[$point])
         ) {
-            return null;
+            return;
         }
         return $this->data[$point];
     }

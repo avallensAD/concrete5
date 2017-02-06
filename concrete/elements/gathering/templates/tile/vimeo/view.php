@@ -1,4 +1,4 @@
-<?php defined('C5_EXECUTE') or die("Access Denied."); 
+<?php defined('C5_EXECUTE') or die("Access Denied.");
 ?>
 Video
 <?php /*
@@ -7,5 +7,5 @@ Video
 <p><a href="http://vimeo.com/6433165">Laser Cave Prototype</a>.</p>
 </div>
 
-*/ 
+*/
 ?>

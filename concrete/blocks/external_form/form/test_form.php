@@ -1,9 +1,11 @@
 <?php
 $form = Loader::helper('form');
 defined('C5_EXECUTE') or die("Access Denied.");
-if (isset($response)) { ?>
+if (isset($response)) {
+    ?>
 	<div class="alert alert-info"><?php echo $response?></div>
-<?php } ?>
+<?php 
+} ?>
 
 
 <form method="post" action="<?php echo $view->action('test_search')?>">

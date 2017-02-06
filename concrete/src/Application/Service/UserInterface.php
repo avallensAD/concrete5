@@ -1,6 +1,8 @@
 <?php
 namespace Concrete\Core\Application\Service;
 
+use Concrete\Core\Asset\JavascriptInlineAsset;
+use Concrete\Core\Http\ResponseAssetGroup;
 use PermissionKey;
 use User as ConcreteUser;
 use Loader;
@@ -15,7 +17,7 @@ use stdClass;
  * Useful functions for generating elements on the Concrete interface.
  *
  * @subpackage Concrete
- * @package Helpers
+ * \@package Helpers
  *
  * @author Andrew Embler <andrew@concrete5.org>
  * @copyright  Copyright (c) 2003-2008 Concrete5. (http://www.concrete5.org)
@@ -119,7 +121,7 @@ class UserInterface
      * Outputs button text passed as arguments with a special Concrete wrapper for positioning
      * <code>
      *    $bh->buttons($myButton1, $myButton2, $myButton3);
-     * </code>
+     * </code>.
      *
      * @param string $buttons
      *
@@ -159,7 +161,7 @@ class UserInterface
      */
     public function showWhiteLabelMessage()
     {
-        return (Config::get('concrete.white_label.logo') || file_exists(DIR_APPLICATION . '/' . DIRNAME_IMAGES . '/logo_menu.png'));
+        return Config::get('concrete.white_label.logo') || file_exists(DIR_APPLICATION . '/' . DIRNAME_IMAGES . '/logo_menu.png');
     }
 
     /**
@@ -359,33 +361,58 @@ class UserInterface
     {
         $defaults = array(
             'type' => 'success',
-            'icon' => 'ok',
+            'icon' => 'fa fa-check-mark',
             'title' => false,
-            'message' => false,
+            'text' => false,
+            'form' => false,
+            'hide' => false,
+            'addclass' => 'ccm-notification-page-alert',
             'buttons' => array(),
         );
 
         // overwrite all the defaults with the arguments
         $arguments = array_merge($defaults, $arguments);
 
-        if ($arguments['title']) {
-            $messageText = '<h3>' . $arguments['title'] . '</h3>' . $arguments['message'];
-        } else {
-            $messageText = '<h3>' . $arguments['message'] . '</h3>';
+        $arguments['addclass'] .= ' ccm-ui';
+
+        $text = '';
+
+        if ($arguments['form']) {
+            $text .= $arguments['form'];
         }
+
+        $text .= $arguments['text'];
 
         if (count($arguments['buttons']) > 0) {
-            $messageText .= '<div class="ccm-notification-inner-buttons">';
-            foreach ($arguments['buttons'] as $button) {
-                $messageText .= $button;
+
+            $text .= '<div class="ccm-notification-inner-buttons">';
+            if (count($arguments['buttons']) > 1) {
+                $text .= '<div class="btn-group">';
             }
-            $messageText .= '</div>';
+            foreach ($arguments['buttons'] as $button) {
+                $text .= $button;
+            }
+            if (count($arguments['buttons']) > 1) {
+                $text .= '</div>';
+            }
+
+            $text .= '</div>';
         }
 
-        $content = '<div id="ccm-notification-page-alert" class="ccm-ui ccm-notification ccm-notification-' . $arguments['type'] . '">';
-        $content .= '<i class="ccm-notification-icon fa fa-' . $arguments['icon'] . '"></i><div class="ccm-notification-inner">' . $messageText . '</div>';
-        $content .= '<div class="ccm-notification-actions"><a href="#" data-dismiss-alert="page-alert">' . t('Hide') . '</a></div></div>';
+        if ($arguments['form']) {
+            $text .= '</form>';
+        }
 
+
+        $arguments['text'] = $text;
+
+        unset($arguments['buttons']);
+        $string = json_encode($arguments);
+
+
+        $content = '<script type="text/javascript">$(function() {';
+        $content .= 'new PNotify(' . $string . ');';
+        $content .= '});</script>';
         return $content;
     }
 }

@@ -1,9 +1,12 @@
 <?php defined('C5_EXECUTE') or die("Access Denied.");
 $form = Loader::helper('form');
+$token = Core::make('token');
 ?>
 <h4><?php echo t('Installed Rating Types')?></h4>
-<?php if (count($ratingTypes) > 0) { ?>
+<?php if (count($ratingTypes) > 0) {
+    ?>
     <form action="<?php echo $view->action('save')?>" method="post">
+        <?php $token->output('conversation_points') ?>
         <table class="table">
             <thead>
             <tr>
@@ -12,12 +15,16 @@ $form = Loader::helper('form');
             </tr>
             </thead>
             <tbody>
-            <?php foreach ($ratingTypes as $ratingType) { ?>
+            <?php foreach ($ratingTypes as $ratingType) {
+    ?>
                 <tr>
-                    <td><?php echo $ratingType->getConversationRatingTypeDisplayName();?></td>
+                    <td><?php echo $ratingType->getConversationRatingTypeDisplayName();
+    ?></td>
                     <td><?php echo $form->number('rtPoints_' . $ratingType->getConversationRatingTypeID(), $ratingType->cnvRatingTypeCommunityPoints, array('style' => 'width: 100px'))?></td>
                 </tr>
-            <?php } ?>
+            <?php 
+}
+    ?>
             </tbody>
         </table>
         <div class="ccm-dashboard-form-actions-wrapper">
@@ -26,6 +33,9 @@ $form = Loader::helper('form');
             </div>
         </div>
     </form>
-<?php } else { ?>
+<?php 
+} else {
+    ?>
     <p><?php echo t('There are no Community Points Rating Types installed.')?></p>
-<?php } ?>
+<?php 
+} ?>

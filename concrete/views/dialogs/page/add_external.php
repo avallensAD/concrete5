@@ -5,7 +5,7 @@
 
         <div class="form-group">
             <label class="control-label"><?php echo t('Name')?></label>
-            <input type="text" name="name" value="<?php echo h($name)?>" class="form-control" />
+            <input type="text" name="name" value="<?php echo h($name)?>" class="form-control" autofocus />
         </div>
 
         <div class="form-group">
@@ -15,7 +15,9 @@
 
         <div class="form-group">
             <div class="checkbox">
-                <label><input type="checkbox" <?php if ($openInNewWindow) { ?>checked<?php } ?> name="openInNewWindow" value="1"  />
+                <label><input type="checkbox" <?php if ($openInNewWindow) {
+    ?>checked<?php 
+} ?> name="openInNewWindow" value="1"  />
                     <?php echo t('Open Link in New Window')?></label>
         </div>
 

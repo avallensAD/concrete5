@@ -2,21 +2,20 @@
 namespace Concrete\Core\Page\Type\Composer\Control;
 
 use Concrete\Core\Package\PackageList;
-use Loader;
-use \Concrete\Core\Foundation\Object;
 use Controller;
 use Package;
 use Block;
 use BlockType;
 use Environment;
-use Page;
+use Concrete\Core\Page\Page;
 use Area;
 use PageTemplate;
-use \Concrete\Core\Page\Type\Composer\FormLayoutSet as PageTypeComposerFormLayoutSet;
+use Concrete\Core\Page\Type\Composer\FormLayoutSet as PageTypeComposerFormLayoutSet;
+use Concrete\Core\Support\Facade\Application;
+use Concrete\Core\View\View;
 
 class BlockControl extends Control
 {
-
     protected $btID;
     protected $ptComposerControlTypeHandle = 'block';
     protected $bt = false;
@@ -51,41 +50,50 @@ class BlockControl extends Control
         $b->deleteBlock();
     }
 
+    public function onPageDraftCreate(Page $c)
+    {
+        return $this->publishToPage($c, [], []);
+    }
+
     public function getPageTypeComposerControlBlockObject(Page $c)
     {
-        $db = Loader::db();
+        $app = Application::getFacadeApplication();
+        $db = $app->make('database')->connection();
         if (!is_object($this->b)) {
             $setControl = $this->getPageTypeComposerFormLayoutSetControlObject();
-            $r = $db->GetRow(
-                $q = 'select cdb.bID, cdb.arHandle from PageTypeComposerOutputBlocks cdb inner join CollectionVersionBlocks cvb on (cdb.bID = cvb.bID and cvb.cID = cdb.cID and cvb.cvID = ?) where cdb.ptComposerFormLayoutSetControlID = ? and cdb.cID = ?',
-                array(
+            $r = $db->fetchAssoc(
+                $q = 'select cdb.bID, cdb.arHandle from PageTypeComposerOutputBlocks cdb inner join CollectionVersionBlocks cvb on (cdb.bID = cvb.bID and cvb.cID = cdb.cID and cvb.cvID = ?) where cdb.ptComposerFormLayoutSetControlID = ? and cvb.cID = ? and cvb.cvID = ?',
+                [
                     $c->getVersionID(),
                     $setControl->getPageTypeComposerFormLayoutSetControlID(),
-                    $c->getCollectionID()
-                )
+                    $c->getCollectionID(),
+                    $c->getVersionID(),
+                ]
             );
-            if (!$r['bID']) {
+            if (!$r) {
                 // this is the first run. so we look for the proxy block.
                 $pt = PageTemplate::getByID($c->getPageTemplateID());
                 $outputControl = $setControl->getPageTypeComposerOutputControlObject($pt);
                 if (is_object($outputControl)) {
                     $cm = $c->getPageTypeObject();
                     $mc = $cm->getPageTypePageTemplateDefaultPageObject($pt);
-                    $r = $db->GetRow(
+                    $r = $db->fetchAssoc(
                         'select bco.bID, cvb.arHandle from btCorePageTypeComposerControlOutput bco inner join CollectionVersionBlocks cvb on cvb.bID = bco.bID where ptComposerOutputControlID = ? and cvb.cID = ?',
-                        array(
+                        [
                             $outputControl->getPageTypeComposerOutputControlID(),
-                            $mc->getCollectionID()
-                        )
+                            $mc->getCollectionID(),
+                        ]
                     );
                 }
             }
-            if ($r['bID']) {
+            if ($r) {
                 $b = Block::getByID($r['bID'], $c, $r['arHandle']);
                 $this->setPageTypeComposerControlBlockObject($b);
+
                 return $this->b;
             }
         }
+
         return $this->b;
     }
 
@@ -99,6 +107,7 @@ class BlockControl extends Control
         if (!is_object($this->bt)) {
             $this->bt = BlockType::getByID($this->btID);
         }
+
         return $this->bt;
     }
 
@@ -106,6 +115,7 @@ class BlockControl extends Control
     {
         if (is_object($this->b)) {
             $controller = $this->b->getController();
+
             return $controller->getPageTypeComposerControlPageNameValue();
         }
     }
@@ -117,6 +127,7 @@ class BlockControl extends Control
         if (method_exists($controller, 'getPageTypeComposerControlPageNameValue')) {
             return true;
         }
+
         return false;
     }
 
@@ -128,9 +139,11 @@ class BlockControl extends Control
             $bx = $this->getPageTypeComposerControlBlockObject($this->page);
             if (is_object($bx)) {
                 $controller = $bx->getController();
+
                 return $controller->isPageTypeComposerControlValueEmpty();
             }
         }
+
         return false;
     }
 
@@ -141,6 +154,7 @@ class BlockControl extends Control
         if (method_exists($controller, 'validate_composer')) {
             return true;
         }
+
         return false;
     }
 
@@ -151,12 +165,12 @@ class BlockControl extends Control
         $controller->setupAndRun('composer');
     }
 
-
     public function getPageTypeComposerControlCustomTemplates()
     {
         $bt = $this->getBlockTypeObject();
-        $txt = Loader::helper('text');
-        $templates = array();
+        $app = Application::getFacadeApplication();
+        $txt = $app->make('helper/text');
+        $templates = [];
         if (is_object($bt)) {
             $blocktemplates = $bt->getBlockTypeComposerTemplates();
             if (is_array($blocktemplates)) {
@@ -170,6 +184,7 @@ class BlockControl extends Control
                 }
             }
         }
+
         return $templates;
     }
 
@@ -178,6 +193,7 @@ class BlockControl extends Control
         $layoutSetControl = parent::addToPageTypeComposerFormLayoutSet($set, $import);
         $pagetype = $set->getPageTypeObject();
         $pagetype->rescanPageTypeComposerOutputControlObjects();
+
         return $layoutSetControl;
     }
 
@@ -187,6 +203,7 @@ class BlockControl extends Control
             $this->controller = $obj->getController();
             $this->controller->setupAndRun('composer');
         }
+
         return $this->controller;
     }
 
@@ -197,16 +214,17 @@ class BlockControl extends Control
             if ($this->page) {
                 // we HAVE a page, but we don't have a block object, which means something has gone wrong.
                 // we've lost the association. So we abort.
-                Loader::element('page_types/composer/controls/invalid_block');
+                View::element('page_types/composer/controls/invalid_block');
+
                 return;
             }
             $obj = $this->getBlockTypeObject();
         }
 
         $this->getController($obj);
-
+        $app = Application::getFacadeApplication();
         $env = Environment::get();
-        $form = Loader::helper('form');
+        $form = $app->make('helper/form');
         $set = $this->getPageTypeComposerFormLayoutSetControlObject()->getPageTypeComposerFormLayoutSetObject();
 
         if ($customTemplate) {
@@ -226,7 +244,6 @@ class BlockControl extends Control
                         $template = DIRNAME_BLOCK_TEMPLATES_COMPOSER . '/' . $customTemplate;
                         break;
                     }
-
                 }
             }
         }
@@ -235,7 +252,7 @@ class BlockControl extends Control
             $template = FILENAME_BLOCK_COMPOSER;
         }
 
-        $this->inc($template, array('control' => $this, 'obj' => $obj, 'description' => $description));
+        $this->inc($template, ['control' => $this, 'obj' => $obj, 'description' => $description]);
     }
 
     public function action($task)
@@ -243,25 +260,28 @@ class BlockControl extends Control
         $obj = $this->getPageTypeComposerControlDraftValue();
         if (!is_object($obj)) {
             // we don't have a page, an area, or ANYTHING YET.
-            $arguments = array('/ccm/system/block/action/add_composer',
+            $arguments = ['/ccm/system/block/action/add_composer',
                 $this->getPageTypeComposerFormLayoutSetControlObject()->getPageTypeComposerFormLayoutSetControlID(),
-                $task
-            );
-            return call_user_func_array(array('\URL', 'to'), $arguments);
+                $task,
+            ];
+
+            return call_user_func_array(['\URL', 'to'], $arguments);
         } else {
             $area = $obj->getBlockAreaObject();
             $c = $area->getAreaCollectionObject();
-            $arguments = array('/ccm/system/block/action/edit_composer',
+            $arguments = [
+                '/ccm/system/block/action/edit_composer',
                 $c->getCollectionID(),
                 urlencode($area->getAreaHandle()),
                 $this->getPageTypeComposerFormLayoutSetControlObject()->getPageTypeComposerFormLayoutSetControlID(),
-                $task
-            );
-            return call_user_func_array(array('\URL', 'to'), $arguments);
+                $task,
+            ];
+
+            return call_user_func_array(['\URL', 'to'], $arguments);
         }
     }
 
-    public function inc($file, $args = array())
+    public function inc($file, $args = [])
     {
         extract($args);
         if (!isset($obj)) {
@@ -277,7 +297,6 @@ class BlockControl extends Control
         extract($controller->getHelperObjects());
         $label = $this->getPageTypeComposerFormLayoutSetControlObject()->getPageTypeComposerControlDisplayLabel();
         $env = Environment::get();
-
 
         $pkg = false;
         if ($obj->getPackageID() > 0) {
@@ -298,9 +317,7 @@ class BlockControl extends Control
                 if (file_exists($include)) {
                     include $include;
                 }
-
             }
-
         }
     }
 
@@ -325,14 +342,15 @@ class BlockControl extends Control
 
         // delete the block that this set control has placed on this version, because
         // we are going to replace it with a new one.
-        $db = Loader::db();
-        $q = 'select cvb.arHandle, cdb.bID, cdb.cbDisplayOrder from PageTypeComposerOutputBlocks cdb inner join CollectionVersionBlocks cvb on (cdb.bID = cvb.bID and cvb.cID = cdb.cID and cvb.cvID = ?) where cdb.ptComposerFormLayoutSetControlID = ? and cdb.cID = ?';
-        $v = array($c->getVersionID(), $setControl->getPageTypeComposerFormLayoutSetControlID(), $c->getCollectionID());
-        $row = $db->GetRow($q, $v);
-        if ($row['bID'] && $row['arHandle']) {
-            $db->Execute(
-                'delete from PageTypeComposerOutputBlocks where ptComposerFormLayoutSetControlID = ? and cID = ?',
-                array($setControl->getPageTypeComposerFormLayoutSetControlID(), $c->getCollectionID())
+        $app = Application::getFacadeApplication();
+        $db = $app->make('database')->connection();
+        $q = 'select cvb.arHandle, cdb.bID, cvb.cvID, cdb.cbDisplayOrder from PageTypeComposerOutputBlocks cdb inner join CollectionVersionBlocks cvb on (cdb.bID = cvb.bID and cvb.cID = cdb.cID and cvb.cvID = ?) where cdb.ptComposerFormLayoutSetControlID = ? and cvb.cID = ? and cvb.cvID = ?';
+        $v = [$c->getVersionID(), $setControl->getPageTypeComposerFormLayoutSetControlID(), $c->getCollectionID(), $c->getVersionID()];
+        $row = $db->fetchAssoc($q, $v);
+        if ($row && $row['bID'] && $row['arHandle']) {
+            $db->executeQuery(
+                'delete from PageTypeComposerOutputBlocks where ptComposerFormLayoutSetControlID = ? and cID = ? and cvID = ?',
+                [$setControl->getPageTypeComposerFormLayoutSetControlID(), $c->getCollectionID(), $c->getVersionID()]
             );
         }
 
@@ -359,17 +377,23 @@ class BlockControl extends Control
 
     public function recordPageTypeComposerOutputBlock(\Concrete\Core\Block\Block $block)
     {
-        $db = Loader::db();
+        $app = Application::getFacadeApplication();
+        $db = $app->make('database')->connection();
         $setControl = $this->getPageTypeComposerFormLayoutSetControlObject();
-        $db->Execute(
-            'insert into PageTypeComposerOutputBlocks (cID, arHandle, ptComposerFormLayoutSetControlID, cbDisplayOrder, bID) values (?, ?, ?, ?, ?)',
-            array(
-                $block->getBlockCollectionID(),
+        $oc = $block->getBlockCollectionObject();
+        $ocID = $oc->getCollectionID();
+        $ovID = $oc->getVersionID();
+
+        $db->executeQuery(
+            'insert into PageTypeComposerOutputBlocks (cID, cvID, arHandle, ptComposerFormLayoutSetControlID, cbDisplayOrder, bID) values (?, ?, ?, ?, ?, ?)',
+            [
+                $ocID,
+                $ovID,
                 $block->getAreaHandle(),
                 $setControl->getPageTypeComposerFormLayoutSetControlID(),
                 $block->getBlockDisplayOrder(),
-                $block->getBlockID()
-            )
+                $block->getBlockID(),
+            ]
         );
     }
 
@@ -386,6 +410,4 @@ class BlockControl extends Control
             }
         }
     }
-
-
 }

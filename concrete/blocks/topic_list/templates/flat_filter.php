@@ -9,18 +9,31 @@ if (!isset($selectedTopicID)) {
 if (is_object($tree)) {
     $node = $tree->getRootTreeNodeObject();
     if (is_object($node)) {
-        $node->populateDirectChildrenOnly(); ?>
+        $node->populateDirectChildrenOnly();
+        ?>
         <ol class="breadcrumb">
             <li><a href="<?php echo $view->controller->getTopicLink()?>"
-                <?php if (!$selectedTopicID) { ?>class="ccm-block-topic-list-topic-selected active"<?php } ?>><?php echo t('All')?></a></li>
+                <?php if (!$selectedTopicID) {
+    ?>class="ccm-block-topic-list-topic-selected active"<?php 
+}
+        ?>><?php echo t('All')?></a></li>
 
-        <?php foreach($node->getChildNodes() as $child) { ?>
+        <?php foreach ($node->getChildNodes() as $child) {
+    ?>
             <li><a href="<?php echo $view->controller->getTopicLink($child)?>"
-                    <?php if (isset($selectedTopicID) && $selectedTopicID == $child->getTreeNodeID()) { ?>
+                    <?php if (isset($selectedTopicID) && $selectedTopicID == $child->getTreeNodeID()) {
+    ?>
                         class="ccm-block-topic-list-topic-selected active"
-                    <?php } ?> ><?php echo $child->getTreeNodeDisplayName()?></a></li>
-        <?php } ?>
+                    <?php 
+}
+    ?> ><?php echo $child->getTreeNodeDisplayName()?></a></li>
+        <?php 
+}
+        ?>
         </ol>
-    <?php } ?>
+    <?php 
+    }
+    ?>
     </div>
-<?php } ?>
+<?php 
+} ?>

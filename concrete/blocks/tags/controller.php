@@ -1,15 +1,13 @@
 <?php
 namespace Concrete\Block\Tags;
 
-use Concrete\Attribute\Select\Option;
-use Loader;
-use \Concrete\Core\Block\BlockController;
+use Concrete\Core\Entity\Attribute\Value\Value\SelectValueOption;
+use Concrete\Core\Block\BlockController;
 use CollectionAttributeKey;
 use Page;
 
 class Controller extends BlockController
 {
-
     protected $btTable = 'btTags';
     protected $btInterfaceWidth = "450";
     protected $btInterfaceHeight = "439";
@@ -28,7 +26,7 @@ class Controller extends BlockController
     public $helpers = array('navigation');
 
     /**
-     * Used for localization. If we want to localize the name/description we have to include this
+     * Used for localization. If we want to localize the name/description we have to include this.
      */
     public function getBlockTypeDescription()
     {
@@ -53,6 +51,7 @@ class Controller extends BlockController
     protected function loadAttribute()
     {
         $ak = CollectionAttributeKey::getByHandle($this->attributeHandle);
+
         return $ak;
     }
 
@@ -73,15 +72,15 @@ class Controller extends BlockController
             $controller = $type->getController();
             $controller->setAttributeKey($ak);
             $items = $controller->getOptions();
-            $options = new \Concrete\Attribute\Select\OptionList();
-            if ($this->cloudCount > 0 && $items instanceof \Concrete\Attribute\Select\OptionList && $items->count()) {
+            $options = array();
+            if ($this->cloudCount > 0 && count($items) > 0) {
                 $i = 1;
                 foreach ($items as $item) {
-                    $options->add($item);
+                    $options[] = $item;
                     if ($i >= $this->cloudCount) {
                         break;
                     }
-                    $i++;
+                    ++$i;
                 }
             } else {
                 $options = $items;
@@ -90,7 +89,10 @@ class Controller extends BlockController
             $c = Page::getCurrentPage();
             $av = $c->getAttributeValueObject($ak);
             $controller = $ak->getController();
-            $options = $c->getAttribute($ak->getAttributeKeyHandle());
+            $attributeValue = $c->getAttribute($ak->getAttributeKeyHandle());
+            if (is_object($attributeValue)) {
+                $options = $attributeValue->getSelectedOptions();
+            }
         }
 
         if ($this->targetCID > 0) {
@@ -120,7 +122,9 @@ class Controller extends BlockController
             // as there is nothing to attach it to
             if (!$this->isValidStack($c)) {
                 $nvc = $c->getVersionToModify();
-                $ak->saveAttributeForm($nvc);
+                $controller = $ak->getController();
+                $value = $controller->createAttributeValueFromRequest();
+                $nvc->setAttribute($ak, $value);
                 $nvc->refreshCache();
             }
         }
@@ -129,14 +133,14 @@ class Controller extends BlockController
         parent::save($args);
     }
 
-    public function getTagLink(Option $option = null)
+    public function getTagLink(SelectValueOption $option = null)
     {
         $target = $this->get('target');
         if (!is_object($target)) {
             $target = \Page::getCurrentPage();
         }
         if ($option) {
-            return \URL::page($target, 'tag', strtolower($option->getSelectAttributeOptionDisplayValue()));
+            return \URL::page($target, 'tag', mb_strtolower($option->getSelectAttributeOptionDisplayValue()));
         } else {
             return \URL::page($target);
         }

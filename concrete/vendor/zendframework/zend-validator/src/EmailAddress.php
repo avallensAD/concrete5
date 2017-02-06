@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -21,10 +21,11 @@ class EmailAddress extends AbstractValidator
     const INVALID_LOCAL_PART = 'emailAddressInvalidLocalPart';
     const LENGTH_EXCEEDED    = 'emailAddressLengthExceeded';
 
+    // @codingStandardsIgnoreStart
     /**
      * @var array
      */
-    protected $messageTemplates = array(
+    protected $messageTemplates = [
         self::INVALID            => "Invalid type given. String expected",
         self::INVALID_FORMAT     => "The input is not a valid email address. Use the basic format local-part@hostname",
         self::INVALID_HOSTNAME   => "'%hostname%' is not a valid hostname for the email address",
@@ -34,15 +35,16 @@ class EmailAddress extends AbstractValidator
         self::QUOTED_STRING      => "'%localPart%' can not be matched against quoted-string format",
         self::INVALID_LOCAL_PART => "'%localPart%' is not a valid local part for the email address",
         self::LENGTH_EXCEEDED    => "The input exceeds the allowed length",
-    );
+    ];
+    // @codingStandardsIgnoreEnd
 
     /**
      * @var array
      */
-    protected $messageVariables = array(
+    protected $messageVariables = [
         'hostname'  => 'hostname',
         'localPart' => 'localPart'
-    );
+    ];
 
     /**
      * @var string
@@ -59,18 +61,19 @@ class EmailAddress extends AbstractValidator
      *
      * @var array
      */
-    protected $mxRecord;
+    protected $mxRecord = [];
 
     /**
      * Internal options array
      */
-    protected $options = array(
+    protected $options = [
         'useMxCheck'        => false,
         'useDeepMxCheck'    => false,
         'useDomainCheck'    => true,
         'allow'             => Hostname::ALLOW_DNS,
+        'strict'            => true,
         'hostnameValidator' => null,
-    );
+    ];
 
     /**
      * Instantiates hostname validator for local use
@@ -78,12 +81,13 @@ class EmailAddress extends AbstractValidator
      * The following additional option keys are supported:
      * 'hostnameValidator' => A hostname validator, see Zend\Validator\Hostname
      * 'allow'             => Options for the hostname validator, see Zend\Validator\Hostname::ALLOW_*
+     * 'strict'            => Whether to adhere to strictest requirements in the spec
      * 'useMxCheck'        => If MX check should be enabled, boolean
      * 'useDeepMxCheck'    => If a deep MX check should be done, boolean
      *
      * @param array|\Traversable $options OPTIONAL
      */
-    public function __construct($options = array())
+    public function __construct($options = [])
     {
         if (!is_array($options)) {
             $options = func_get_args();
@@ -290,7 +294,7 @@ class EmailAddress extends AbstractValidator
         if (!preg_match('/^([0-9]{1,3}\.){3}[0-9]{1,3}$/', $host)) {
             $host = gethostbynamel($host);
         } else {
-            $host = array($host);
+            $host = [$host];
         }
 
         if (empty($host)) {
@@ -298,7 +302,8 @@ class EmailAddress extends AbstractValidator
         }
 
         foreach ($host as $server) {
-                // Search for 0.0.0.0/8, 10.0.0.0/8, 127.0.0.0/8
+            // @codingStandardsIgnoreStart
+            // Search for 0.0.0.0/8, 10.0.0.0/8, 127.0.0.0/8
             if (!preg_match('/^(0|10|127)(\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))){3}$/', $server) &&
                 // Search for 100.64.0.0/10
                 !preg_match('/^100\.(6[0-4]|[7-9][0-9]|1[0-1][0-9]|12[0-7])(\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))){2}$/', $server) &&
@@ -315,6 +320,7 @@ class EmailAddress extends AbstractValidator
             ) {
                 return false;
             }
+            // @codingStandardsIgnoreEnd
         }
 
         return true;
@@ -334,7 +340,7 @@ class EmailAddress extends AbstractValidator
         // atext: ALPHA / DIGIT / and "!", "#", "$", "%", "&", "'", "*",
         //        "+", "-", "/", "=", "?", "^", "_", "`", "{", "|", "}", "~"
         $atext = 'a-zA-Z0-9\x21\x23\x24\x25\x26\x27\x2a\x2b\x2d\x2f\x3d\x3f\x5e\x5f\x60\x7b\x7c\x7d\x7e';
-        if (preg_match('/^[' . $atext . ']+(\x2e+[' . $atext . ']+)*$/', $this->localPart)) {
+        if (preg_match('/^[' . $atext . ']+(\x2e+[' . $atext . ']+)*$/', $this->idnToAscii($this->localPart))) {
             $result = true;
         } else {
             // Try quoted string format (RFC 5321 Chapter 4.1.2)
@@ -371,13 +377,13 @@ class EmailAddress extends AbstractValidator
      */
     protected function validateMXRecords()
     {
-        $mxHosts = array();
-        $weight  = array();
-        $result = getmxrr($this->hostname, $mxHosts, $weight);
+        $mxHosts = [];
+        $weight  = [];
+        $result = getmxrr($this->idnToAscii($this->hostname), $mxHosts, $weight);
         if (!empty($mxHosts) && !empty($weight)) {
-            $this->mxRecord = array_combine($mxHosts, $weight);
+            $this->mxRecord = array_combine($mxHosts, $weight) ?: [];
         } else {
-            $this->mxRecord = $mxHosts;
+            $this->mxRecord = [];
         }
 
         arsort($this->mxRecord);
@@ -457,9 +463,12 @@ class EmailAddress extends AbstractValidator
      */
     protected function splitEmailParts($value)
     {
+        $value = is_string($value) ? $value : '';
+
         // Split email address up and disallow '..'
-        if ((strpos($value, '..') !== false) or
-            (!preg_match('/^(.+)@([^@]+)$/', $value, $matches))) {
+        if (strpos($value, '..') !== false
+            || ! preg_match('/^(.+)@([^@]+)$/', $value, $matches)
+        ) {
             return false;
         }
 
@@ -488,15 +497,15 @@ class EmailAddress extends AbstractValidator
         }
 
         $length  = true;
-        $this->setValue($value);
+        $this->setValue($this->idnToUtf8($value));
 
         // Split email address up and disallow '..'
-        if (!$this->splitEmailParts($value)) {
+        if (!$this->splitEmailParts($this->getValue())) {
             $this->error(self::INVALID_FORMAT);
             return false;
         }
 
-        if ((strlen($this->localPart) > 64) || (strlen($this->hostname) > 255)) {
+        if ($this->getOption('strict') && (strlen($this->localPart) > 64) || (strlen($this->hostname) > 255)) {
             $length = false;
             $this->error(self::LENGTH_EXCEEDED);
         }
@@ -516,5 +525,37 @@ class EmailAddress extends AbstractValidator
         }
 
         return false;
+    }
+
+    /**
+     * Safely convert UTF-8 encoded domain name to ASCII
+     * @param string $email  the UTF-8 encoded email
+     * @return string
+     */
+    protected function idnToAscii($email)
+    {
+        if (extension_loaded('intl')) {
+            return (idn_to_ascii($email) ?: $email);
+        }
+        return $email;
+    }
+
+    /**
+     * Safely convert ASCII encoded domain name to UTF-8
+     * @param string $email the ASCII encoded email
+     * @return string
+     */
+    protected function idnToUtf8($email)
+    {
+        if (extension_loaded('intl')) {
+            // The documentation does not clarify what kind of failure
+            // can happen in idn_to_utf8. One can assume if the source
+            // is not IDN encoded, it would fail, but it usually returns
+            // the source string in those cases.
+            // But not when the source string is long enough.
+            // Thus we default to source string ourselves.
+            return idn_to_utf8($email) ?: $email;
+        }
+        return $email;
     }
 }

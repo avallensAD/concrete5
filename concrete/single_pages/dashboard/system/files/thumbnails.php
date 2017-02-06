@@ -4,7 +4,8 @@
     || $this->controller->getTask() == 'do_add'
     || $this->controller->getTask() == 'edit'
     || $this->controller->getTask() == 'update'
-    || $this->controller->getTask() == 'delete') { ?>
+    || $this->controller->getTask() == 'delete') {
+    ?>
 
     <?php
     if (is_object($type)) {
@@ -15,29 +16,35 @@
         $ftTypeIsRequired = $type->isRequired();
         $method = 'update';
 
-        if (!$ftTypeIsRequired) { ?>
+        if (!$ftTypeIsRequired) {
+            ?>
 
             <div class="ccm-dashboard-header-buttons">
                 <form method="post" action="<?php echo $this->action('delete')?>">
                     <input type="hidden" name="ftTypeID" value="<?php echo $type->getID()?>" />
-                    <?php echo Loader::helper('validation/token')->output('delete');?>
+                    <?php echo Loader::helper('validation/token')->output('delete');
+            ?>
                     <button type="button" class="btn btn-danger" data-action="delete-type"><?php echo t('Delete Type')?></button>
                 </form>
             </div>
 
         <?php
-        }
 
+        }
     } else {
         $method = 'do_add';
     }
     ?>
 
     <form method="post" action="<?php echo $view->action($method)?>" id="ccm-attribute-key-form">
-        <?php echo Loader::helper('validation/token')->output($method);?>
-        <?php if (is_object($type)) { ?>
+        <?php echo Loader::helper('validation/token')->output($method);
+    ?>
+        <?php if (is_object($type)) {
+    ?>
             <input type="hidden" name="ftTypeID" value="<?php echo $type->getID()?>" />
-        <?php } ?>
+        <?php 
+}
+    ?>
         <fieldset>
             <div class="form-group">
                 <?php echo $form->label('ftTypeHandle', t('Handle'))?>
@@ -69,11 +76,16 @@
         <div class="ccm-dashboard-form-actions-wrapper">
             <div class="ccm-dashboard-form-actions">
                 <a href="<?php echo URL::page($c)?>" class="btn pull-left btn-default"><?php echo t('Back')?></a>
-                <?php if (is_object($type)) { ?>
+                <?php if (is_object($type)) {
+    ?>
                     <button type="submit" class="btn btn-primary pull-right"><?php echo t('Save')?></button>
-                <?php } else { ?>
+                <?php 
+} else {
+    ?>
                     <button type="submit" class="btn btn-primary pull-right"><?php echo t('Add')?></button>
-                <?php } ?>
+                <?php 
+}
+    ?>
             </div>
         </div>
     </form>
@@ -89,7 +101,9 @@
         })
     </script>
 
-<?php } else { ?>
+<?php 
+} else {
+    ?>
 
     <div class="ccm-dashboard-header-buttons">
         <a href="<?php echo $view->action('add')?>" class="btn btn-primary"><?php echo t("Add Type")?></a>
@@ -106,7 +120,8 @@
     </tr>
     </thead>
     <tbody>
-    <?php foreach($types as $type) { ?>
+    <?php foreach ($types as $type) {
+    ?>
     <tr>
         <td><a href="<?php echo $view->action('edit', $type->getID())?>"><?php echo $type->getHandle()?></a></td>
         <td><?php echo $type->getDisplayName()?></td>
@@ -114,7 +129,10 @@
         <td><?php echo ($type->getHeight()) ? $type->getHeight() : '<span class="text-muted">' . t('Automatic') . '</span>' ?></td>
         <td><?php echo ($type->isRequired()) ? t('Yes') : t('No')?></td>
     </tr>
-    <?php } ?>
+    <?php 
+}
+    ?>
     </tbody>
     </table>
-<?php } ?>
+<?php 
+} ?>

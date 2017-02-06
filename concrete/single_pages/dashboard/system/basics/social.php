@@ -5,22 +5,22 @@
     || $controller->getTask() == 'edit'
     || $controller->getTask() == 'edit_link'
     || $controller->getTask() == 'delete_link') {
-
     $url = '';
     $ssHandle = '';
     $action = $view->action('add_link');
-    $token = 'add_link';
+    $tokenString = 'add_link';
     $buttonText = t('Add');
     if (is_object($link)) {
         $url = $link->getURL();
         $ssHandle = $link->getServiceHandle();
         $action = $view->action('edit_link', $link->getID());
-        $token = 'edit_link';
+        $tokenString = 'edit_link';
         $buttonText = t('Save');
     }
     ?>
 
-    <?php if (is_object($link)) { ?>
+    <?php if (is_object($link)) {
+    ?>
         <div class="ccm-dashboard-header-buttons">
             <button data-dialog="delete-link" class="btn btn-danger"><?php echo t("Delete Link")?></button>
         </div>
@@ -39,7 +39,9 @@
         </div>
     </div>
 
-    <?php } ?>
+    <?php 
+}
+    ?>
 
     <script type="text/javascript">
         $(function() {
@@ -56,7 +58,7 @@
     </script>
 
     <form method="post" class="form-horizontal" action="<?php echo $action?>">
-        <?php echo $this->controller->token->output($token)?>
+        <?php echo $this->controller->token->output($tokenString)?>
 
         <div class="form-group">
             <?php echo $form->label('ssHandle', t('Service'), array('class' => 'col-md-2'))?>
@@ -80,7 +82,9 @@
         </div>
 
     </form>
-<?php } else { ?>
+<?php 
+} else {
+    ?>
 
 
     <div class="ccm-dashboard-header-buttons">
@@ -88,23 +92,30 @@
     </div>
 
 
-    <?php if (count($links) > 0) { ?>
-        <div class="col-md-8">
+    <?php if (count($links) > 0) {
+    ?>
         <table class="table table-striped">
-        <?php foreach($links as $link) {
-            $service = $link->getServiceObject(); ?>
+        <?php foreach ($links as $link) {
+    $service = $link->getServiceObject();
+    ?>
         <tr>
             <td style="width: 48px"><?php echo $service->getServiceIconHTML()?></td>
             <td><a href="<?php echo $view->action('edit', $link->getID())?>"><?php echo $service->getDisplayName() ?></a></td>
             <td><?php echo h($link->getURL()) ?></td>
         </tr>
-        <?php } ?>
+        <?php 
+}
+    ?>
         </table>
-        </div>
 
-    <?php } else { ?>
+    <?php 
+} else {
+    ?>
         <p><?php echo t("You have not added any social links.")?></p>
-    <?php } ?>
+    <?php 
+}
+    ?>
 
 
-<?php } ?>
+<?php 
+} ?>

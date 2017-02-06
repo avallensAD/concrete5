@@ -8,27 +8,37 @@ $jh = Core::make('helper/json');
         <ul class="nav navbar-nav">
             <li class="navbar-form" style="padding-left: 0px">
                 <select  name="topicTreeIDSelect" id="topicTreeIDSelect" class="form-control input-sm">
-                    <?php foreach($trees as $stree) {?>
-                        <option value="<?php echo $stree->getTreeID()?>" <?php if ($tree->getTreeID() == $stree->getTreeID()) { ?>selected<?php } ?>><?php echo $stree->getTreeDisplayName()?></option>
-                    <?php } ?>
+                    <?php foreach ($trees as $stree) {
+    ?>
+                        <option value="<?php echo $stree->getTreeID()?>" <?php if ($tree->getTreeID() == $stree->getTreeID()) {
+    ?>selected<?php 
+}
+    ?>><?php echo $stree->getTreeDisplayName()?></option>
+                    <?php 
+} ?>
                 </select>
             </li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
             <li class="navbar-form">
-            <?php if (PermissionKey::getByHandle('remove_topic_tree')->validate() && is_object($tree)) { ?>
+            <?php if (PermissionKey::getByHandle('remove_topic_tree')->validate() && is_object($tree)) {
+    ?>
                 <button type="button" data-dialog="delete-topic-tree" class="btn btn-danger btn-sm"><?php echo t('Delete Topic Tree')?></button>
-            <?php } ?>
-            <?php if (PermissionKey::getByHandle('add_topic_tree')->validate()) { ?>
+            <?php 
+} ?>
+            <?php if (PermissionKey::getByHandle('add_topic_tree')->validate()) {
+    ?>
                 <button onclick="window.location.href='<?php echo $view->url('/dashboard/system/attributes/topics/add')?>'" class="btn btn-default btn-sm"><?php echo t('Add Topic Tree')?></button>
-            <?php } ?>
+            <?php 
+} ?>
             </li>
         </ul>
     </div>
 </nav>
 
-<?php if (is_object($tree)) { ?>
-	<div class="topic-tree" data-topic-tree="<?php echo $tree->getTreeID()?>">
+<?php if (is_object($tree)) {
+    ?>
+	<div data-tree="<?php echo $tree->getTreeID()?>">
 	</div>
 
 	<script type="text/javascript">
@@ -37,7 +47,7 @@ $jh = Core::make('helper/json');
 			window.location.href = '<?php echo $view->url('/dashboard/system/attributes/topics', 'view')?>' + $(this).val();
 		});
 		
-		$('[data-topic-tree]').ccmtopicstree({
+		$('[data-tree]').concreteTree({
 			'treeID': '<?php echo $tree->getTreeID()?>'
 		});
 
@@ -69,4 +79,5 @@ $jh = Core::make('helper/json');
         </div>
     </div>
 
-<?php } ?>
+<?php 
+} ?>

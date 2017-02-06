@@ -1,8 +1,6 @@
 <?php
 namespace Concrete\Core\Search\Column;
 
-use Loader;
-
 class AttributeKeyColumn extends Column
 {
     protected $attributeKey = false;
@@ -23,7 +21,7 @@ class AttributeKeyColumn extends Column
         if (is_object($this->attributeKey)) {
             $vo = $obj->getAttributeValueObject($this->attributeKey);
             if (is_object($vo)) {
-                return $vo->getValue('display');
+                return $vo->getDisplayValue();
             }
         }
     }

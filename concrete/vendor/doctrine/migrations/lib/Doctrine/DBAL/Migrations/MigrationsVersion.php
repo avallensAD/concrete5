@@ -21,9 +21,9 @@ namespace Doctrine\DBAL\Migrations;
 
 class MigrationsVersion
 {
-    private static $version = 'v1.0.0-alpha3';
+    private static $version = 'v1.4.0';
 
-    public static function VERSION(){
+    public static function VERSION() {
         $gitversion = '@git-version@';
 
         if (self::isACustomPharBuild($gitversion)) {
@@ -40,6 +40,6 @@ class MigrationsVersion
      * in a modified (not tagged) phar version.
      */
     private static function isACustomPharBuild($gitversion) {
-        return $gitversion == '@' . 'git-version@';
+        return $gitversion !== '@' . 'git-version@';
     }
 }

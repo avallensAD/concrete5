@@ -4,7 +4,8 @@ $h = Loader::helper('concrete/dashboard');
 $ih = Loader::helper('concrete/ui');
 $form = Loader::helper('form');
 $view = View::getInstance();
-if ($canUpgrade) { ?>
+if ($canUpgrade) {
+    ?>
 
     <div class="ccm-dashboard-header-buttons">
         <a href="<?php echo $view->action('check_for_updates') ?>" class="btn btn-primary">
@@ -13,7 +14,8 @@ if ($canUpgrade) { ?>
     </div>
 
 
-   <?php if (is_object($update)) { ?>
+   <?php if (is_object($update)) {
+    ?>
 
         <div class="ccm-dashboard-update-details-wrapper">
 
@@ -55,23 +57,31 @@ if ($canUpgrade) { ?>
                     <a href="<?php echo URL::to('/dashboard/extend/update')?>" class="btn btn-default pull-right btn-xs "><?php echo t('Update Add-Ons')?></a>
                     <h3><?php echo t('Add-On Compatibility')?></h3>
                     <?php $list = \Package::getInstalledList();
-                    $ci = Core::make('helper/concrete/urls');
-                    if (count($list) == 0) { ?>
+    $ci = Core::make('helper/concrete/urls');
+    if (count($list) == 0) {
+        ?>
                         <p><?php echo t('No add-ons installed.')?></p>
 
-                    <?php }
-                    foreach($list as $pkg) { ?>
+                    <?php 
+    }
+    foreach ($list as $pkg) {
+        ?>
 
                         <div class="media" data-addon="<?php echo $pkg->getPackageHandle()?>">
-                            <div class="pull-left"><img style="width: 49px" src="<?php echo $ci->getPackageIconURL($pkg); ?>" class"media-object" /></div>
+                            <div class="pull-left"><img style="width: 49px" src="<?php echo $ci->getPackageIconURL($pkg);
+        ?>" class"media-object" /></div>
                             <div class="media-body">
                                 <i class="fa fa-question-circle text-muted pull-right"></i>
-                                <h4 class="media-heading"><?php echo $pkg->getPackageName(); ?> <span class="badge badge-info" style="margin-right: 10px"><?php echo tc('AddonVersion', 'v.%s', $pkg->getPackageVersion()); ?></span></h4>
+                                <h4 class="media-heading"><?php echo $pkg->getPackageName();
+        ?> <span class="badge badge-info" style="margin-right: 10px"><?php echo tc('AddonVersion', 'v.%s', $pkg->getPackageVersion());
+        ?></span></h4>
                                 <div class="ccm-dashboard-update-detail-status-text"></div>
                             </div>
                         </div>
 
-                    <?php } ?>
+                    <?php 
+    }
+    ?>
 
                     <div class="spacer-row-5"></div>
 
@@ -215,10 +225,13 @@ if ($canUpgrade) { ?>
         </script>
 
 
-    <?php } else { ?>
+    <?php 
+} else {
+    ?>
 
 
-        <?php if ($downloadableUpgradeAvailable) { ?>
+        <?php if ($downloadableUpgradeAvailable) {
+    ?>
 
             <h2><?php echo t('Available Update for Download') ?></h2>
             <form method="post" action="<?php echo $view->action('download_update') ?>" id="ccm-download-update-form">
@@ -247,12 +260,12 @@ if ($canUpgrade) { ?>
 
         <?php
 
-            }
-        ?>
+}
+    ?>
 
             <h2><?php echo t('Apply Downloaded Update') ?></h2>
         <?php if (count($updates)) {
-            ?>
+    ?>
             <div class="alert alert-warning">
                 <i class="fa fa-warning"></i> <?php echo t(
                     'Make sure you <a href="%s">backup your database</a> before updating.',
@@ -260,15 +273,15 @@ if ($canUpgrade) { ?>
             </div>
             <?php
             $ih = Loader::helper('concrete/ui');
-            ?>
+    ?>
 
             <p><?php echo t('Several updates are available. Please choose the desired update from the list below.') ?></p>
             <span class="label"><?php echo t('Current Version') ?> <?php echo config::get('concrete.version') ?></span>
             <form method="post" class="form" action="<?php echo $view->action('start') ?>" id="ccm-update-form">
                 <?php
                 $checked = true;
-                foreach ($updates as $upd) {
-                    ?>
+    foreach ($updates as $upd) {
+        ?>
                     <div class="radio">
                         <label>
                             <input type="radio" name="updateVersion"
@@ -278,8 +291,8 @@ if ($canUpgrade) { ?>
                     </div>
                     <?php
                     $checked = false;
-                }
-                ?>
+    }
+    ?>
                 <div class="ccm-dashboard-form-actions-wrapper">
                     <div class="ccm-dashboard-form-actions">
                         <?php echo $ih->submit(t('Update'), false, 'right', 'btn-primary') ?>
@@ -289,12 +302,21 @@ if ($canUpgrade) { ?>
             </div>
             <div class="clearfix">&nbsp;</div>
         <?php
-        } else { ?>
+
+} else {
+    ?>
             <p><?php echo t('No updates are ready to be installed.')?></p>
 
-        <?php } ?>
-    <?php } ?>
+        <?php 
+}
+    ?>
+    <?php 
+}
+    ?>
 
-<?php } else { ?>
+<?php 
+} else {
+    ?>
     <p><?php echo t('You do not have permission to upgrade this installation of concrete5.')?></p>
-<?php } ?>
+<?php 
+} ?>

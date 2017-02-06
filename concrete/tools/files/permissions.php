@@ -5,11 +5,13 @@ use \Concrete\Core\File\StorageLocation\StorageLocation as FileStorageLocation;
 
 $u = new User();
 $form = Loader::helper('form');
-$ih = Loader::helper('concrete/ui'); 
-$f = File::getByID($_REQUEST['fID']);
+$ih = Loader::helper('concrete/ui');
+$fileID = $_REQUEST['fID'];
+$f = File::getByID($fileID);
+$token = Core::make('token');
 $cp = new Permissions($f);
 if (!$cp->canAdmin()) {
-	die(t("Access Denied."));
+    die(t("Access Denied."));
 }
 $form = Loader::helper('form');
 
@@ -17,29 +19,32 @@ $r = new FileEditResponse();
 $r->setFile($f);
 
 if ($_POST['task'] == 'set_password') {
-	$f->setPassword($_POST['fPassword']);
-	$r->setMessage(t('File password saved successfully.'));
-	$r->outputJSON();
+	if (!$token->validate('set_password_' . $fileID)) {
+		die(t('Invalid CSRF Token.'));
+	}
+    $f->setPassword($_POST['fPassword']);
+    $r->setMessage(t('File password saved successfully.'));
+    $r->outputJSON();
 }
 
-
-
 if ($_POST['task'] == 'set_location') {
+	if (!$token->validate('set_location_' . $fileID)) {
+		die(t('Invalid CSRF Token.'));
+	}
     $fsl = FileStorageLocation::getByID($_POST['fslID']);
     if (is_object($fsl)) {
         try {
             $f->setFileStorageLocation($fsl);
-        } catch(\Exception $e) {
-            $json = new \Concrete\Core\Application\EditResponse;
-            $err = new \Concrete\Core\Error\Error;
+        } catch (\Exception $e) {
+            $json = new \Concrete\Core\Application\EditResponse();
+            $err = Core::make('error');
             $err->add($e->getMessage());
             $json->setError($err);
             $json->outputJSON();
         }
     }
-	$r->setMessage(t('File storage location saved successfully.'));
-	$r->outputJSON();
-
+    $r->setMessage(t('File storage location saved successfully.'));
+    $r->outputJSON();
 }
 
 ?>
@@ -47,25 +52,34 @@ if ($_POST['task'] == 'set_location') {
 <div class="ccm-ui" id="ccm-file-permissions-dialog-wrapper">
 
 <ul class="nav nav-tabs" id="ccm-file-permissions-tabs">
-	<?php if (Config::get('concrete.permissions.model') != 'simple') { ?>
+	<?php if (Config::get('concrete.permissions.model') != 'simple') {
+    ?>
 		<li class="active"><a href="javascript:void(0)" id="ccm-file-permissions-advanced"><?php echo t('Permissions')?></a></li>
-	<?php } ?>
-	<li <?php if (Config::get('concrete.permissions.model') == 'simple') { ?> class="active" <?php } ?>><a href="javascript:void(0)" id="ccm-file-password"><?php echo t('Protect with Password')?></a></li>
+	<?php
+} ?>
+	<li <?php if (Config::get('concrete.permissions.model') == 'simple') {
+    ?> class="active" <?php
+} ?>><a href="javascript:void(0)" id="ccm-file-password"><?php echo t('Protect with Password')?></a></li>
 	<li><a href="javascript:void(0)" id="ccm-file-storage"><?php echo t('Storage Location')?></a></li>
 </ul>
 
 <div class="clearfix"></div>
 
-<?php if (Config::get('concrete.permissions.model') != 'simple') { ?>
+<?php if (Config::get('concrete.permissions.model') != 'simple') {
+    ?>
 
 <div id="ccm-file-permissions-advanced-tab">
 
-	<?php Loader::element('permission/lists/file', array('f' => $f)); ?>
+	<?php Loader::element('permission/lists/file', array('f' => $f));
+    ?>
 
 </div>
-<?php } ?>
+<?php
+} ?>
 
-<div id="ccm-file-password-tab" <?php if (Config::get('concrete.permissions.model') != 'simple') { ?> style="display: none" <?php } ?>>
+<div id="ccm-file-password-tab" <?php if (Config::get('concrete.permissions.model') != 'simple') {
+    ?> style="display: none" <?php
+} ?>>
 <br/>
 
 <h4><?php echo t('Requires Password to Access')?></h4>
@@ -73,6 +87,9 @@ if ($_POST['task'] == 'set_location') {
 <p><?php echo t('Leave the following form field blank in order to allow everyone to download this file.')?></p>
 
 <form method="post" data-dialog-form="file-password" action="<?php echo Loader::helper('concrete/urls')->getToolsURL('files/permissions')?>">
+	<?php
+	$token->output('set_password_' . $f->getFileID());
+	?>
 <?php echo $form->hidden('task', 'set_password')?>
 <?php echo $form->hidden('fID', $f->getFileID())?>
 <?php echo $form->text('fPassword', $f->getPassword(), array('style' => 'width: 250px'))?>
@@ -97,13 +114,18 @@ if ($_POST['task'] == 'set_location') {
 <form method="post" data-dialog-form="file-storage" action="<?php echo Loader::helper('concrete/urls')->getToolsURL('files/permissions')?>">
 <div class="help-block"><p><?php echo t('All versions of a file will be moved to the selected location.')?></p></div>
 
+	<?php
+	$token->output('set_location_' . $f->getFileID());
+	?>
 <?php echo $form->hidden('task', 'set_location')?>
 <?php echo $form->hidden('fID', $f->getFileID())?>
 <?php
 $locations = FileStorageLocation::getList();
-foreach($locations as $fsl) { ?>
+foreach ($locations as $fsl) {
+    ?>
     <div class="radio"><label><?php echo $form->radio('fslID', $fsl->getID(), $f->getStorageLocationID() == $fsl->getID()) ?> <?php echo $fsl->getDisplayName()?></label></div>
-<?php } ?>
+<?php
+} ?>
 </form>
 
 <div id="ccm-file-storage-buttons" style="display: none">
@@ -119,7 +141,7 @@ foreach($locations as $fsl) { ?>
 </div>
 
 <script type="text/javascript">
-	
+
 $("#ccm-file-permissions-tabs a").click(function() {
 	$("li.active").removeClass('active');
 	$("#" + ccm_fpActiveTab + "-tab").hide();
@@ -145,14 +167,18 @@ ccm_filePermissionsSetupButtons = function() {
 var ccm_fpActiveTab;
 
 $(function() {
-<?php if (Config::get('concrete.permissions.model') == 'simple') { ?>
+<?php if (Config::get('concrete.permissions.model') == 'simple') {
+    ?>
 	ccm_fpActiveTab = "ccm-file-password";
-<?php } else { ?>
+<?php
+} else {
+    ?>
 	ccm_fpActiveTab = "ccm-file-permissions-advanced";
-<?php } ?>
+<?php
+} ?>
 
 	ccm_filePermissionsSetupButtons();
 	//$('form[data-dialog-form=file-storage],form[data-dialog-form=file-password]').concreteAjaxForm();
 });
-	
+
 </script>

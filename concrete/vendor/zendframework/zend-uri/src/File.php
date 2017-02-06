@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -16,7 +16,7 @@ namespace Zend\Uri;
  */
 class File extends Uri
 {
-    protected static $validSchemes = array('file');
+    protected static $validSchemes = ['file'];
 
     /**
      * Check if the URI is a valid File URI
@@ -88,7 +88,7 @@ class File extends Uri
         $url = new static('file:');
 
         // Convert directory separators
-        $path = str_replace(array('/', '\\'), array('%2F', '/'), $path);
+        $path = str_replace(['/', '\\'], ['%2F', '/'], $path);
 
         // Is this an absolute path?
         if (preg_match('|^([a-zA-Z]:)?/|', $path)) {

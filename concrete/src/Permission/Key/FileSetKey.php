@@ -1,5 +1,11 @@
 <?php
 namespace Concrete\Core\Permission\Key;
-class FileSetKey extends Key {
-	protected $permissionObjectToCheck;
+
+/**
+ * @deprecated
+ * Only here to keep errors from happening on upgrade
+ */
+class FileSetKey extends Key
+{
+
 }

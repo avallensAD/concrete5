@@ -4,25 +4,31 @@ $items = $list->getPage();
 $paginator = $list->getPagination();
 
 if (!is_object($c)) {
-  $c = Page::getCurrentPage();
+    $c = Page::getCurrentPage();
 }
 
 $pt = $c->getCollectionThemeObject();
 $agp = new Permissions($gathering);
 if ($showTileControls && $agp->canEditGatheringItems()) {
-  $showTileControls = true;
+    $showTileControls = true;
 } else {
-  $showTileControls = false;
+    $showTileControls = false;
 }
 
 ?>
 
 <div class="ccm-gathering-wrapper">
 
-<div data-gathering-id="<?php echo $gathering->getGatheringID()?>" data-gathering-current-page="1" class="<?php if ($showTileControls) { ?>ccm-gathering-edit<?php } else { ?>ccm-gathering-view<?php } ?> ccm-gathering-grid">
-    <?php foreach($items as $item) { ?>
+<div data-gathering-id="<?php echo $gathering->getGatheringID()?>" data-gathering-current-page="1" class="<?php if ($showTileControls) {
+    ?>ccm-gathering-edit<?php 
+} else {
+    ?>ccm-gathering-view<?php 
+} ?> ccm-gathering-grid">
+    <?php foreach ($items as $item) {
+    ?>
       <?php echo Loader::element('gathering/tile', array('item' => $item, 'showTileControls' => $showTileControls))?>
-    <?php } ?>
+    <?php 
+} ?>
 </div>
 
 <div class="ccm-gathering-load-more">
@@ -49,7 +55,8 @@ $(function() {
 </script>
 
 <style type="text/css">
-<?php for ($i = 1; $i <= 8; $i++) { ?>
+<?php for ($i = 1; $i <= 8; ++$i) {
+    ?>
   div.w<?php echo $i?> {
     width: <?php echo (($i * $pt->getThemeGatheringGridItemWidth()) + ($pt->getThemeGatheringGridItemMargin() * ($i - 1)))?>px;
   }
@@ -57,5 +64,6 @@ $(function() {
   div.h<?php echo $i?> {
     height: <?php echo (($i * $pt->getThemeGatheringGridItemHeight()) + ($pt->getThemeGatheringGridItemMargin() * ($i - 1)))?>px;
   }
-<?php } ?>
+<?php 
+} ?>
 </style>

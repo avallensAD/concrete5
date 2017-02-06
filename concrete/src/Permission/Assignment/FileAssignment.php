@@ -1,83 +1,16 @@
 <?php
-
 namespace Concrete\Core\Permission\Assignment;
 
 use Concrete\Core\File\Set\Set;
-use PermissionAccess;
+use Concrete\Core\Permission\Key\Key;
+use Concrete\Core\Permission\Access\Access;
 use FileSet;
-use Concrete\Core\File\File;
+use Concrete\Core\Entity\File\File;
 use Database;
 
-class FileAssignment extends Assignment
+class FileAssignment extends TreeNodeAssignment
 {
     protected $permissionObjectToCheck;
-
-    protected $inheritedPermissions = array(
-        'view_file' => 'view_file_set_file',
-        'view_file_in_file_manager' => 'search_file_set',
-        'edit_file_properties' => 'edit_file_set_file_properties',
-        'edit_file_contents' => 'edit_file_set_file_contents',
-        'copy_file' => 'copy_file_set_files',
-        'edit_file_permissions' => 'edit_file_set_permissions',
-        'delete_file' => 'delete_file_set_files',
-    );
-
-    public function getPermissionAccessObject()
-    {
-        $db = Database::connection();
-        if ($this->permissionObjectToCheck instanceof File) {
-            $r = $db->GetCol(
-                'select paID from FilePermissionAssignments where fID = ? and pkID = ?',
-                array(
-                    $this->permissionObject->getFileID(),
-                    $this->pk->getPermissionKeyID(),
-                )
-            );
-        } elseif (is_array($this->permissionObjectToCheck)) { // sets
-            $sets = array();
-            foreach ($this->permissionObjectToCheck as $fs) {
-                $sets[] = $fs->getFileSetID();
-            }
-            $inheritedPKID = $db->GetOne('select pkID from PermissionKeys where pkHandle = ?', array($this->inheritedPermissions[$this->pk->getPermissionKeyHandle()]));
-            $r = $db->GetCol(
-                'select distinct paID from FileSetPermissionAssignments where fsID in (' . implode(',', $sets) . ') and pkID = ? ',
-                array(
-                    $inheritedPKID,
-                )
-            );
-        } elseif ($this->permissionObjectToCheck instanceof Set && isset($this->inheritedPermissions[$this->pk->getPermissionKeyHandle()])) {
-            $inheritedPKID = $db->GetOne('select pkID from PermissionKeys where pkHandle = ?', array($this->inheritedPermissions[$this->pk->getPermissionKeyHandle()]));
-            $r = $db->GetCol(
-                'select distinct paID from FileSetPermissionAssignments where fsID = ? and pkID = ?',
-                array(
-                    $this->permissionObjectToCheck->getFileSetID(),
-                    $inheritedPKID,
-                )
-            );
-        } else {
-            return false;
-        }
-
-        if (count($r) == 1) {
-            $permID = $r[0];
-        }
-        if (count($r) > 1) {
-            $permID = $r;
-        }
-
-        if (is_array($permID)) {
-            foreach ($permID as $paID) {
-                $pa = PermissionAccess::getByID($paID, $this->pk);
-                if (is_object($pa)) {
-                    $perms[] = $pa;
-                }
-            }
-
-            return PermissionAccess::createByMerge($perms);
-        } else {
-            return PermissionAccess::getByID($permID, $this->pk);
-        }
-    }
 
     /**
      * @param File $f
@@ -86,24 +19,51 @@ class FileAssignment extends Assignment
     {
         $this->permissionObject = $f;
 
-        if ($f->overrideFileSetPermissions()) {
+        if ($f->overrideFileFolderPermissions()) {
             $this->permissionObjectToCheck = $f;
         } else {
-            $sets = $f->getFileSets();
-            $permsets = array();
-            foreach ($sets as $fs) {
-                if ($fs->overrideGlobalPermissions()) {
-                    $permsets[] = $fs;
-                }
-            }
-            if (count($permsets) > 0) {
-                $this->permissionObjectToCheck = $permsets;
-            } else {
-                $fs = FileSet::getGlobal();
-                $this->permissionObjectToCheck = $fs;
-            }
+            $this->permissionObjectToCheck = $f->getFileFolderObject();
         }
     }
+
+
+    protected $inheritedPermissions = array(
+        'view_file' => 'view_file_folder_file',
+        'view_file_in_file_manager' => 'search_file_folder',
+        'edit_file_properties' => 'edit_file_folder_file_properties',
+        'edit_file_contents' => 'edit_file_folder_file_contents',
+        'copy_file' => 'copy_file_folder_files',
+        'edit_file_permissions' => 'edit_file_folder_permissions',
+        'delete_file' => 'delete_file_folder_files',
+    );
+
+    public function getPermissionAccessObject()
+    {
+        $db = Database::connection();
+        $r = null;
+        if ($this->permissionObjectToCheck instanceof File) {
+            $r = $db->GetOne(
+                'select paID from FilePermissionAssignments where fID = ? and pkID = ?',
+                array(
+                    $this->permissionObject->getFileID(),
+                    $this->pk->getPermissionKeyID(),
+                )
+            );
+        } else if (isset($this->inheritedPermissions[$this->pk->getPermissionKeyHandle()])) {
+            $inheritedPKID = $db->GetOne('select pkID from PermissionKeys where pkHandle = ?', array($this->inheritedPermissions[$this->pk->getPermissionKeyHandle()]));
+            $r = $db->GetOne(
+                'select paID from TreeNodePermissionAssignments where treeNodeID = ? and pkID = ?',
+                array(
+                    $this->permissionObjectToCheck->getTreeNodePermissionsNodeID(),
+                    $inheritedPKID,
+                )
+            );
+        }
+        if ($r) {
+            return Access::getByID($r, $this->pk, false);
+        }
+    }
+
 
     public function clearPermissionAssignment()
     {
@@ -111,7 +71,7 @@ class FileAssignment extends Assignment
         $db->Execute('update FilePermissionAssignments set paID = 0 where pkID = ? and fID = ?', array($this->pk->getPermissionKeyID(), $this->permissionObject->getFileID()));
     }
 
-    public function assignPermissionAccess(PermissionAccess $pa)
+    public function assignPermissionAccess(Access $pa)
     {
         $db = Database::connection();
         $db->Replace('FilePermissionAssignments', array('fID' => $this->getPermissionObject()->getFileID(), 'paID' => $pa->getPermissionAccessID(), 'pkID' => $this->pk->getPermissionKeyID()), array('fID', 'pkID'), true);
@@ -120,6 +80,7 @@ class FileAssignment extends Assignment
 
     public function getPermissionKeyToolsURL($task = false)
     {
-        return parent::getPermissionKeyToolsURL($task) . '&fID=' . $this->getPermissionObject()->getFileID();
+        return Assignment::getPermissionKeyToolsURL($task) . '&fID=' . $this->getPermissionObject()->getFileID();
     }
+
 }

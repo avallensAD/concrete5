@@ -8,20 +8,24 @@
     <fieldset>
         <legend><?php echo t('Permissions for This Page Type')?></legend>
         <?php Loader::element('permission/lists/page_type', array(
-            'pagetype' => $pagetype
+            'pagetype' => $pagetype,
         ))?>
     </fieldset>
 
     <fieldset>
         <legend><?php echo t('Permissions for All Pages Created Of This Type')?></legend>
-        <?php if (Config::get('concrete.permissions.model') == 'advanced') { ?>
+        <?php if (Config::get('concrete.permissions.model') == 'advanced') {
+    ?>
             <?php Loader::element('permission/lists/page', array(
                 'page' => $defaultPage,
-                'editPermissions' => true
+                'editPermissions' => true,
             ))?>
-        <?php } else { ?>
+        <?php 
+} else {
+    ?>
             <div class="alert alert-info"><?php echo t('You must <a href="%s">enable advanced permissions</a> to set permissions for pages created of a certain type.', URL::to('/dashboard/system/permissions/advanced'))?></div>
-        <?php } ?>
+        <?php 
+} ?>
     </fieldset>
     <div class="ccm-dashboard-form-actions-wrapper">
         <div class="ccm-dashboard-form-actions">

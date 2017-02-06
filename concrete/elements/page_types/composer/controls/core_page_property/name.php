@@ -4,11 +4,11 @@ defined('C5_EXECUTE') or die("Access Denied.");
 
 <div class="form-group">
 	<label class="control-label"><?php echo $label?></label>
-	<?php if($description): ?>
+	<?php if ($description): ?>
 	<i class="fa fa-question-circle launch-tooltip" title="" data-original-title="<?php echo $description?>"></i>
 	<?php endif; ?>
 	<div data-composer-field="name">
-		<?php echo $form->text($this->field('name'), $control->getPageTypeComposerControlDraftValue())?>
+		<?php echo $form->text($this->field('name'), $control->getPageTypeComposerControlDraftValue(), ['autofocus' => 'autofocus'])?>
 	</div>
 </div>
 

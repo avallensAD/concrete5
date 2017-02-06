@@ -2,20 +2,18 @@
 namespace Concrete\Controller\SinglePage\Dashboard\Conversations;
 
 use Concrete\Core\Application\EditResponse;
-use \Concrete\Core\Page\Controller\DashboardPageController;
+use Concrete\Core\Page\Controller\DashboardPageController;
 use Loader;
 use stdClass;
-use Page;
 use UserInfo;
 use Core;
-use \Concrete\Core\Conversation\FlagType\FlagType as ConversationFlagType;
-use \Concrete\Core\Conversation\FlagType\FlagTypeList as ConversationFlagTypeList;
-use \Concrete\Core\Conversation\Message\Message as ConversationMessage;
-use \Concrete\Core\Conversation\Message\MessageList as ConversationMessageList;
+use Concrete\Core\Conversation\FlagType\FlagType as ConversationFlagType;
+use Concrete\Core\Conversation\FlagType\FlagTypeList as ConversationFlagTypeList;
+use Concrete\Core\Conversation\Message\Message as ConversationMessage;
+use Concrete\Core\Conversation\Message\MessageList as ConversationMessageList;
 
 class Messages extends DashboardPageController
 {
-
     /**
      * Returns default message filter for search interface. We default to all, UNLESS we have at least one access
      * entity that publishes its messages and has them be unapproved. If that's the case, then we default to unapproved.
@@ -31,6 +29,7 @@ class Messages extends DashboardPageController
         if ($count > 0) {
             $filter = 'unapproved';
         }
+
         return $filter;
     }
 
@@ -39,7 +38,7 @@ class Messages extends DashboardPageController
         $ml = new ConversationMessageList();
         $ml->setItemsPerPage(20);
         $cmpFilterTypes = array(
-            'all' => t('** Show All'),
+            'all' => t('Show All'),
             'unapproved' => t('Unapproved'),
             'approved' => t('Approved'),
             'deleted' => t('Deleted'),
@@ -50,10 +49,6 @@ class Messages extends DashboardPageController
                 $flagtype->getConversationFlagTypeHandle()
             );
         }
-        $cmpSortTypes = array(
-            'date_desc' => t('Recent First'),
-            'date_asc' => t('Earliest First')
-        );
 
         if ($_REQUEST['cmpMessageKeywords']) {
             $ml->filterByKeywords($_REQUEST['cmpMessageKeywords']);
@@ -90,16 +85,12 @@ class Messages extends DashboardPageController
                 break;
 
         }
-        if ($_REQUEST['cmpMessageSort'] == 'date_asc') {
-            $ml->sortByDateAscending();
-        } else {
-            $ml->sortByDateDescending();
-        }
+
+        $ml->sortByDateDescending();
 
         $this->set('list', $ml);
         $this->set('messages', $ml->getPage());
         $this->set('cmpFilterTypes', $cmpFilterTypes);
-        $this->set('cmpSortTypes', $cmpSortTypes);
         $this->set('cmpMessageFilter', $cmpMessageFilter);
     }
 

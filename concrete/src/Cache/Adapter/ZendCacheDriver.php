@@ -1,5 +1,4 @@
 <?php
-
 namespace Concrete\Core\Cache\Adapter;
 
 use Concrete\Core\Cache\Cache;
@@ -12,18 +11,18 @@ use Zend\Cache\Storage\FlushableInterface;
 /**
  * Class ZendCacheDriver
  * Adapter class to hook Zend's cache into Concrete5's cache.
- * 
+ *
  * By passing this class into various Zend classes, it tells Zend use it for storing and retrieving
  * cache values. Values are passed through here and onto Concrete5's caching layer which uses the
  * Stash library. Allows us to use many of the helpful Zend classes without having to maintain
  * a separate cache configuration.
- * 
+ *
  * Currently used by:
- * 
+ *
  *     - Concrete\Core\Feed\FeedService
  *     - Concrete\Core\Localization\Localization
  *
- * @package Concrete\Core\Cache\Adapter
+ * \@package Concrete\Core\Cache\Adapter
  */
 class ZendCacheDriver extends AbstractAdapter implements StorageInterface, FlushableInterface
 {
@@ -55,10 +54,12 @@ class ZendCacheDriver extends AbstractAdapter implements StorageInterface, Flush
      * @param  string $normalizedKey
      * @param  bool $success
      * @param  mixed $casToken
+     *
      * @return mixed Data on success, null on failure
+     *
      * @throws Exception\ExceptionInterface
      */
-    protected function internalGetItem(& $normalizedKey, & $success = null, & $casToken = null)
+    protected function internalGetItem(&$normalizedKey, &$success = null, &$casToken = null)
     {
         /** @var Cache $cache  */
         $cache = Core::make($this->cacheName);
@@ -79,26 +80,34 @@ class ZendCacheDriver extends AbstractAdapter implements StorageInterface, Flush
      *
      * @param  string $normalizedKey
      * @param  mixed $value
+     *
      * @return bool
+     *
      * @throws Exception\ExceptionInterface
      */
-    protected function internalSetItem(& $normalizedKey, & $value)
+    protected function internalSetItem(&$normalizedKey, &$value)
     {
         /** @var Cache $cache  */
         $cache = Core::make($this->cacheName);
         $item = $cache->getItem('zend/'.$normalizedKey);
 
-        return $item->set($value, $this->cacheLifetime);
+        if ($result = $item->set($value, $this->cacheLifetime)) {
+            $item->save();
+        }
+
+        return $result;
     }
 
     /**
      * Internal method to remove an item.
      *
      * @param  string $normalizedKey
+     *
      * @return bool
+     *
      * @throws Exception\ExceptionInterface
      */
-    protected function internalRemoveItem(& $normalizedKey)
+    protected function internalRemoveItem(&$normalizedKey)
     {
         /** @var Cache $cache  */
         $cache = Core::make($this->cacheName);
@@ -108,7 +117,7 @@ class ZendCacheDriver extends AbstractAdapter implements StorageInterface, Flush
     }
 
     /**
-     * Flush the whole storage
+     * Flush the whole storage.
      *
      * @return bool
      */

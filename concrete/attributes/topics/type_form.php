@@ -1,18 +1,22 @@
-<?php if (is_object($tree)) { ?>
+<?php if (is_object($tree)) {
+    ?>
 
     <script type="text/javascript">
         $(function() {
-            $('.tree-view-template').ccmtopicstree({  // run first time around to get default tree if new.
-                'treeID': <?php echo $tree->getTreeID(); ?>,
+            $('.tree-view-template').concreteTree({  // run first time around to get default tree if new.
+                'treeID': <?php echo $tree->getTreeID();
+    ?>,
                 'chooseNodeInForm': true,
-                'noDrag' : true,
                 //'selectMode': 2,
-                <?php if($parentNode) { ?>
+                <?php if ($parentNode) {
+    ?>
                  'selectNodesByKey': [<?php echo $parentNode ?>],
-                 <?php } ?>
-                'onSelect' : function(select, node) {
-                     if (select) {
-                        $('input[name=akTopicParentNodeID]').val(node.data.key);
+                 <?php 
+}
+    ?>
+                'onSelect' : function(nodes) {
+                     if (nodes.length) {
+                        $('input[name=akTopicParentNodeID]').val(nodes[0]);
                      } else {
                         $('input[name=akTopicParentNodeID]').val('');
                      }
@@ -24,18 +28,19 @@
                 $('input[name="akTopicTreeID"]').val($(this).find(':selected').val());
                 $('.tree-view-template').remove();
                 $('.tree-view-container').append(treeViewTemplate);
-                var toolsURL = '<?php echo Loader::helper('concrete/urls')->getToolsURL('tree/load'); ?>';
+                var toolsURL = '<?php echo Loader::helper('concrete/urls')->getToolsURL('tree/load');
+    ?>';
                 var chosenTree = $(this).val();
-                $('.tree-view-template').ccmtopicstree({
+                $('.tree-view-template').concreteTree({
                     'treeID': chosenTree,
                     'chooseNodeInForm': true,
-                    'onSelect' : function(select, node) {
-                         if (select) {
-                            $('input[name=akTopicParentNodeID]').val(node.data.key);
-                         } else {
+                    'onSelect' : function(nodes) {
+                        if (nodes.length) {
+                            $('input[name=akTopicParentNodeID]').val(nodes[0]);
+                        } else {
                             $('input[name=akTopicParentNodeID]').val('');
-                         }
-                     }
+                        }
+                    }
                 });
             });
         });
@@ -45,9 +50,15 @@
     <div class="clearfix"></div>
         <div class="form-group">
         <select class="form-control" name="topicTreeIDSelect">
-            <?php foreach($trees as $stree) { ?>
-                <option value="<?php echo $stree->getTreeID()?>" <?php if ($tree->getTreeID() == $stree->getTreeID()) { ?>selected<?php } ?>><?php echo $stree->getTreeDisplayName()?></option>
-            <?php } ?>
+            <?php foreach ($trees as $stree) {
+    ?>
+                <option value="<?php echo $stree->getTreeID()?>" <?php if ($tree->getTreeID() == $stree->getTreeID()) {
+    ?>selected<?php 
+}
+    ?>><?php echo $stree->getTreeDisplayName()?></option>
+            <?php 
+}
+    ?>
         </select>
         </div>
     <div class="tree-view-container">
@@ -56,13 +67,17 @@
         </div>
     </div>
     <input type="hidden" name="akTopicParentNodeID" value="<?php echo $parentNode ?>">
-    <input type="hidden" name="akTopicTreeID" value="<?php echo $tree->getTreeID(); ?>">
+    <input type="hidden" name="akTopicTreeID" value="<?php echo $tree->getTreeID();
+    ?>">
     </fieldset>
 
-<?php } else { ?>
+<?php 
+} else {
+    ?>
 
     <div class="alert alert-danger"><?php echo t('You have not created a topic tree.
 You must create a topic tree from the <a href="%s">Topics Page</a>
 before you can use this attribute type.', URL::to('/dashboard/system/attributes/topics'))?></div>
 
-<?php } ?>
+<?php 
+} ?>

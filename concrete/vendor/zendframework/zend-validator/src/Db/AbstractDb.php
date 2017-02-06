@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -11,6 +11,8 @@ namespace Zend\Validator\Db;
 
 use Traversable;
 use Zend\Db\Adapter\Adapter as DbAdapter;
+use Zend\Db\Adapter\AdapterAwareInterface;
+use Zend\Db\Adapter\AdapterAwareTrait;
 use Zend\Db\Sql\Select;
 use Zend\Db\Sql\Sql;
 use Zend\Db\Sql\TableIdentifier;
@@ -21,8 +23,10 @@ use Zend\Validator\Exception;
 /**
  * Class for Database record validation
  */
-abstract class AbstractDb extends AbstractValidator
+abstract class AbstractDb extends AbstractValidator implements AdapterAwareInterface
 {
+    use AdapterAwareTrait;
+
     /**
      * Error constants
      */
@@ -32,10 +36,10 @@ abstract class AbstractDb extends AbstractValidator
     /**
      * @var array Message templates
      */
-    protected $messageTemplates = array(
+    protected $messageTemplates = [
         self::ERROR_NO_RECORD_FOUND => "No record matching the input was found",
         self::ERROR_RECORD_FOUND    => "A record matching the input was found",
-    );
+    ];
 
     /**
      * Select object to use. can be set, or will be auto-generated
@@ -63,13 +67,6 @@ abstract class AbstractDb extends AbstractValidator
      * @var mixed
      */
     protected $exclude = null;
-
-    /**
-     * Database adapter to use. If null isValid() will throw an exception
-     *
-     * @var \Zend\Db\Adapter\Adapter
-     */
-    protected $adapter = null;
 
     /**
      * Provides basic configuration for use with Zend\Validator\Db Validators
@@ -166,8 +163,7 @@ abstract class AbstractDb extends AbstractValidator
      */
     public function setAdapter(DbAdapter $adapter)
     {
-        $this->adapter = $adapter;
-        return $this;
+        return $this->setDbAdapter($adapter);
     }
 
     /**
@@ -189,6 +185,7 @@ abstract class AbstractDb extends AbstractValidator
     public function setExclude($exclude)
     {
         $this->exclude = $exclude;
+        $this->select  = null;
         return $this;
     }
 
@@ -210,7 +207,8 @@ abstract class AbstractDb extends AbstractValidator
      */
     public function setField($field)
     {
-        $this->field = (string) $field;
+        $this->field  = (string) $field;
+        $this->select = null;
         return $this;
     }
 
@@ -232,7 +230,8 @@ abstract class AbstractDb extends AbstractValidator
      */
     public function setTable($table)
     {
-        $this->table = (string) $table;
+        $this->table  = (string) $table;
+        $this->select = null;
         return $this;
     }
 
@@ -255,6 +254,7 @@ abstract class AbstractDb extends AbstractValidator
     public function setSchema($schema)
     {
         $this->schema = $schema;
+        $this->select = null;
         return $this;
     }
 
@@ -287,7 +287,7 @@ abstract class AbstractDb extends AbstractValidator
         // Build select object
         $select          = new Select();
         $tableIdentifier = new TableIdentifier($this->table, $this->schema);
-        $select->from($tableIdentifier)->columns(array($this->field));
+        $select->from($tableIdentifier)->columns([$this->field]);
         $select->where->equalTo($this->field, null);
 
         if ($this->exclude !== null) {

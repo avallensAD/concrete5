@@ -55,10 +55,14 @@ function ConcretePanel(options) {
 
     this.onPanelLoad = function (element) {
         var $link = $('a[data-launch-panel=' + this.getIdentifier() + ']');
+        var hasTooltip = $link.hasClass('launch-tooltip');
 
         this.setupSubPanels();
         this.setupPanelDetails();
         $link.removeClass().addClass('ccm-launch-panel-active');
+        if (hasTooltip) {
+            $link.addClass('launch-tooltip');
+        }
         Concrete.event.publish('PanelLoad', {panel: this, element: element});
     };
 
@@ -159,7 +163,7 @@ function ConcretePanel(options) {
         });
 
         var myButtons = [
-            {'class': 'btn pull-left btn-link', 'type': 'button', 'data-panel-confirmation-action': 'cancel', 'text': ccmi18n.cancel}
+            {'class': 'btn pull-left btn-sm btn-link', 'type': 'button', 'data-panel-confirmation-action': 'cancel', 'text': ccmi18n.cancel}
         ];
         for (var i = 0; i < buttons.length; i++) {
             myButtons.push(buttons[i]);
@@ -265,7 +269,7 @@ function ConcretePanel(options) {
         }).appendTo(document.body);
 
         var $content = $('<div />', {
-            class: 'ccm-panel-detail-content'
+            class: 'ccm-ui ccm-panel-detail-content'
         }).appendTo($detail);
 
         $('div.ccm-page')
@@ -291,7 +295,13 @@ function ConcretePanel(options) {
         };
 
         if (options.url) {
-            $content.load(options.url + '?cID=' + CCM_CID + options.data, function () {
+            var url = options.url + '?cID=' + CCM_CID, data = null;
+            if ($.isPlainObject(options.data)) {
+                data = options.data;
+            } else {
+                url += options.data;
+            }
+            $content.load(url, data, function () {
                 jQuery.fn.dialog.hideLoader();
                 $content.find('.launch-tooltip').tooltip({'container': '#ccm-tooltip-holder'});
                 $content.find('a[data-help-notification-toggle]').concreteHelpLauncher();

@@ -1,7 +1,5 @@
 <?php defined('C5_EXECUTE') or die("Access Denied.");
 
-use Concrete\Core\File\Exception\InvalidDimensionException;
-use Concrete\Core\File\StorageLocation as FileStorageLocation;
 $token = \Core::make('token');
 $dh = Core::make('helper/date'); /* @var $dh \Concrete\Core\Localization\Service\Date */
 ?>
@@ -16,27 +14,33 @@ $dh = Core::make('helper/date'); /* @var $dh \Concrete\Core\Localization\Service
     $tabs[] = array('statistics', t('Statistics'));
 
     if (!$previewMode) {
-        print Loader::helper('concrete/ui')->tabs($tabs);
+        echo Loader::helper('concrete/ui')->tabs($tabs);
     }
     ?>
 
-    <?php if (!$previewMode) { ?>
+    <?php if (!$previewMode) {
+    ?>
     <div class="ccm-tab-content" id="ccm-tab-content-details" data-container="editable-fields">
-        <?php } else { ?>
+        <?php
+} else {
+    ?>
         <div class="container">
-            <?php } ?>
+            <?php
+} ?>
 
             <section>
 
-                <?php if (!$previewMode && $fp->canEditFileContents()) { ?>
+                <?php if (!$previewMode && $fp->canEditFileContents()) {
+    ?>
                     <a href="#" class="btn pull-right btn-default btn-xs" data-action="rescan"><?php echo t('Rescan') ?></a>
-                <?php } ?>
+                <?php
+} ?>
 
                 <h4><?php echo t('Basic Properties') ?></h4>
 
                 <?php if ($previewMode) {
-                    $mode = 'preview';
-                } ?>
+    $mode = 'preview';
+} ?>
                 <?php Loader::element('files/properties', array('fv' => $fv, 'mode' => $mode))?>
 
             </section>
@@ -44,7 +48,8 @@ $dh = Core::make('helper/date'); /* @var $dh \Concrete\Core\Localization\Service
             <?php
             $attribs = FileAttributeKey::getList();
 
-            if (count($attribs) > 0) { ?>
+            if (count($attribs) > 0) {
+                ?>
 
                 <section>
 
@@ -53,19 +58,21 @@ $dh = Core::make('helper/date'); /* @var $dh \Concrete\Core\Localization\Service
                     <?php Loader::element(
                         'attribute/editable_list',
                         array(
-                            'attributes'           => $attribs,
-                            'object'               => $f,
-                            'saveAction'           => $controller->action('update_attribute'),
-                            'clearAction'          => $controller->action('clear_attribute'),
+                            'attributes' => $attribs,
+                            'object' => $fv,
+                            'saveAction' => $controller->action('update_attribute'),
+                            'clearAction' => $controller->action('clear_attribute'),
                             'permissionsArguments' => $fp->canEditFileProperties(),
-                            'permissionsCallback'  => function ($ak, $permissionsArguments) {
+                            'permissionsCallback' => function ($ak, $permissionsArguments) {
                                 return $permissionsArguments;
-                            }
-                        )); ?>
+                            },
+                        ));
+                ?>
 
                 </section>
 
-            <?php } ?>
+            <?php
+            } ?>
 
             <section>
 
@@ -79,7 +86,8 @@ $dh = Core::make('helper/date'); /* @var $dh \Concrete\Core\Localization\Service
 
         </div>
 
-        <?php if (!$previewMode) { ?>
+        <?php if (!$previewMode) {
+    ?>
 
             <div class="ccm-tab-content" id="ccm-tab-content-versions">
 
@@ -93,18 +101,28 @@ $dh = Core::make('helper/date'); /* @var $dh \Concrete\Core\Localization\Service
                         <th><?php echo t('Comments') ?></th>
                         <th><?php echo t('Creator') ?></th>
                         <th><?php echo t('Added On') ?></th>
-                        <?php if ($fp->canEditFileContents()) { ?>
+                        <?php if ($fp->canEditFileContents()) {
+    ?>
                             <th>&nbsp;</th>
-                        <?php } ?>
+                        <?php
+}
+    ?>
                     </tr>
                     <?php
                     $versions = $f->getVersionList();
-                    foreach ($versions as $fvv) { ?>
-                        <tr <?php if ($fvv->getFileVersionID() == $fv->getFileVersionID()) { ?> class="success" <?php } ?>
+    foreach ($versions as $fvv) {
+        ?>
+                        <tr <?php if ($fvv->getFileVersionID() == $fv->getFileVersionID()) {
+    ?> class="success" <?php
+}
+        ?>
                             data-file-version-id="<?php echo $fvv->getFileVersionID() ?>">
                             <td style="text-align: center">
                                 <input type="radio" name="fvID" value="<?php echo $fvv->getFileVersionID() ?>"
-                                       <?php if ($fvv->getFileVersionID() == $fv->getFileVersionID()) { ?>checked<?php } ?> />
+                                       <?php if ($fvv->getFileVersionID() == $fv->getFileVersionID()) {
+    ?>checked<?php
+}
+        ?> />
                             </td>
                             <td width="100">
                                 <div style="width: 150px; word-wrap: break-word">
@@ -123,31 +141,36 @@ $dh = Core::make('helper/date'); /* @var $dh \Concrete\Core\Localization\Service
                             </td>
                             <td><?php
                                 $comments = $fvv->getVersionLogComments();
-                                if (count($comments) > 0) {
-                                    print t('Updated ');
+        if (count($comments) > 0) {
+            echo t('Updated ');
 
-                                    for ($i = 0; $i < count($comments); $i++) {
-                                        print $comments[$i];
-                                        if (count($comments) > ($i + 1)) {
-                                            print ', ';
-                                        }
-                                    }
+            for ($i = 0; $i < count($comments); ++$i) {
+                echo $comments[$i];
+                if (count($comments) > ($i + 1)) {
+                    echo ', ';
+                }
+            }
 
-                                    print '.';
-                                }
-                                ?>
+            echo '.';
+        }
+        ?>
                             </td>
                             <td><?php echo $fvv->getAuthorName() ?></td>
                             <td><?php echo $dh->formatDateTime($fvv->getDateAdded(), true) ?></td>
-                            <?php if ($fp->canEditFileContents()) { ?>
+                            <?php if ($fp->canEditFileContents()) {
+    ?>
                                 <td><a data-action="delete-version"
                                        data-file-version-id="<?php echo $fvv->getFileVersionID() ?>"
                                        data-token="<?php echo $token->generate('version/delete/' . $fvv->getFileID() . "/" . $fvv->getFileVersionId()) ?>"
                                        href="javascript:void(0)"><i class="fa fa-trash-o"></i></a></td>
-                            <?php } ?>
+                            <?php
+}
+        ?>
                         </tr>
 
-                    <?php } ?>
+                    <?php
+    }
+    ?>
 
                 </table>
 
@@ -157,7 +180,7 @@ $dh = Core::make('helper/date'); /* @var $dh \Concrete\Core\Localization\Service
 
                 <?php
                 $downloadStatistics = $f->getDownloadStatistics();
-                ?>
+    ?>
 
                 <section>
                     <h4><?php echo t('Total Downloads') ?></h4>
@@ -176,12 +199,12 @@ $dh = Core::make('helper/date'); /* @var $dh \Concrete\Core\Localization\Service
                         <?php
 
                         $downloadStatsCounter = 0;
-                        foreach ($downloadStatistics as $download) {
-                            $downloadStatsCounter++;
-                            if ($downloadStatsCounter > 20) {
-                                break;
-                            }
-                            ?>
+    foreach ($downloadStatistics as $download) {
+        ++$downloadStatsCounter;
+        if ($downloadStatsCounter > 20) {
+            break;
+        }
+        ?>
                             <tr>
                                 <td>
                                     <?php
@@ -201,11 +224,14 @@ $dh = Core::make('helper/date'); /* @var $dh \Concrete\Core\Localization\Service
                                 <td><?php echo $dh->formatDateTime($download['timestamp'], true) ?></td>
                                 <td><?php echo intval($download['fvID']) ?></td>
                             </tr>
-                        <?php } ?>
+                        <?php
+    }
+    ?>
                     </table>
                 </section>
             </div>
-        <?php } ?>
+        <?php
+} ?>
 
     </div>
     <style type="text/css">
@@ -320,9 +346,11 @@ $dh = Core::make('helper/date'); /* @var $dh \Concrete\Core\Localization\Service
 
         }
 
-        <?php if (!$previewMode) { ?>
+        <?php if (!$previewMode) {
+    ?>
         $(function () {
             var dialog = new ConcreteFilePropertiesDialog();
         });
-        <?php } ?>
+        <?php
+} ?>
     </script>

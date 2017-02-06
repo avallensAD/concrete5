@@ -9,12 +9,16 @@
 	<?php echo Loader::helper('validation/token')->output('save_permissions')?>
 	<div class="ccm-pane-body">
 	<?php
-	$tp = new TaskPermission();
-	if ($tp->canAccessTaskPermissions()) { ?>	
+    $tp = new TaskPermission();
+    if ($tp->canAccessTaskPermissions()) {
+        ?>	
 		<?php Loader::element('permission/lists/conversation', array('conversation' => null))?>
-	<?php } else { ?>
+	<?php 
+    } else {
+        ?>
 		<p><?php echo t('You cannot access conversation permissions.')?></p>
-	<?php } ?>
+	<?php 
+    } ?>
 	</div>
 	<div class="ccm-dashboard-form-actions-wrapper">
         <div class="ccm-dashboard-form-actions">

@@ -2,21 +2,21 @@
 defined('C5_EXECUTE') or die("Access Denied.");
 ?>
 
-<div data-search-pages="<?php echo $timestamp?>" class="ccm-ui">
-<?php Loader::element('pages/search', array('controller' => $searchController))?>
+<div data-search="pages" class="ccm-ui">
+
+	<?php
+	$header->render();
+	?>
+
+	<?php Loader::element('pages/search', array('result' => $result))?>
+
 </div>
 
 <script type="text/javascript">
-$(function() {
-	$('div[data-search-pages=<?php echo $timestamp?>]').concretePageAjaxSearch({
-		result: <?php echo $result?>,
-		mode: 'choose'
+	$(function() {
+		$('div[data-search=pages]').concretePageAjaxSearch({
+			result: <?php echo json_encode($result->getJSONObject())?>,
+			mode: 'choose'
+		});
 	});
-});
 </script>
-
-<style type="text/css">
-	div[data-search=pages].ccm-ui form.ccm-search-fields {
-		margin-left: 0px;
-	}
-</style>

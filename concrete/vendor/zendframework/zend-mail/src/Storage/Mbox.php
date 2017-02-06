@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2016 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -44,6 +44,13 @@ class Mbox extends AbstractStorage
     protected $messageClass = '\Zend\Mail\Storage\Message\File';
 
     /**
+     * end of Line for messages
+     *
+     * @var string|null
+     */
+    protected $messageEOL;
+
+    /**
      * Count messages all messages in current box
      *
      * @return int number of messages
@@ -53,7 +60,6 @@ class Mbox extends AbstractStorage
     {
         return count($this->positions);
     }
-
 
     /**
      * Get a list of messages with number and size
@@ -68,14 +74,13 @@ class Mbox extends AbstractStorage
             return $pos['end'] - $pos['start'];
         }
 
-        $result = array();
+        $result = [];
         foreach ($this->positions as $num => $pos) {
             $result[$num + 1] = $pos['end'] - $pos['start'];
         }
 
         return $result;
     }
-
 
     /**
      * Get positions for mail message or throw exception if id is invalid
@@ -93,7 +98,6 @@ class Mbox extends AbstractStorage
         return $this->positions[$id - 1];
     }
 
-
     /**
      * Fetch a message
      *
@@ -108,8 +112,18 @@ class Mbox extends AbstractStorage
             || is_subclass_of($this->messageClass, '\Zend\Mail\Storage\Message\File')) {
             // TODO top/body lines
             $messagePos = $this->getPos($id);
-            return new $this->messageClass(array('file' => $this->fh, 'startPos' => $messagePos['start'],
-                                                  'endPos' => $messagePos['end']));
+
+            $messageClassParams = [
+                'file' => $this->fh,
+                'startPos' => $messagePos['start'],
+                'endPos' => $messagePos['end']
+            ];
+
+            if (isset($this->messageEOL)) {
+                $messageClassParams['EOL'] = $this->messageEOL;
+            }
+
+            return new $this->messageClass($messageClassParams);
         }
 
         $bodyLines = 0; // TODO: need a way to change that
@@ -123,7 +137,7 @@ class Mbox extends AbstractStorage
             }
         }
 
-        return new $this->messageClass(array('handler' => $this, 'id' => $id, 'headers' => $message));
+        return new $this->messageClass(['handler' => $this, 'id' => $id, 'headers' => $message]);
     }
 
     /*
@@ -184,6 +198,10 @@ class Mbox extends AbstractStorage
             throw new Exception\InvalidArgumentException('no valid filename given in params');
         }
 
+        if (isset($params->messageEOL)) {
+            $this->messageEOL = (string) $params->messageEOL;
+        }
+
         $this->openMboxFile($params->filename);
         $this->has['top']      = true;
         $this->has['uniqueid'] = false;
@@ -213,7 +231,7 @@ class Mbox extends AbstractStorage
 
         $result = false;
 
-        $line = fgets($file);
+        $line = fgets($file) ?: '';
         if (strpos($line, 'From ') === 0) {
             $result = true;
         }
@@ -256,7 +274,7 @@ class Mbox extends AbstractStorage
             throw new Exception\InvalidArgumentException('file is not a valid mbox format', 0, $error);
         }
 
-        $messagePos = array('start' => ftell($this->fh), 'separator' => 0, 'end' => 0);
+        $messagePos = ['start' => ftell($this->fh), 'separator' => 0, 'end' => 0];
         while (($line = fgets($this->fh)) !== false) {
             if (strpos($line, 'From ') === 0) {
                 $messagePos['end'] = ftell($this->fh) - strlen($line) - 2; // + newline
@@ -264,7 +282,7 @@ class Mbox extends AbstractStorage
                     $messagePos['separator'] = $messagePos['end'];
                 }
                 $this->positions[] = $messagePos;
-                $messagePos = array('start' => ftell($this->fh), 'separator' => 0, 'end' => 0);
+                $messagePos = ['start' => ftell($this->fh), 'separator' => 0, 'end' => 0];
             }
             if (!$messagePos['separator'] && !trim($line)) {
                 $messagePos['separator'] = ftell($this->fh);
@@ -288,7 +306,7 @@ class Mbox extends AbstractStorage
         ErrorHandler::start(E_WARNING);
         fclose($this->fh);
         ErrorHandler::stop();
-        $this->positions = array();
+        $this->positions = [];
     }
 
 
@@ -363,7 +381,7 @@ class Mbox extends AbstractStorage
      */
     public function __sleep()
     {
-        return array('filename', 'positions', 'filemtime');
+        return ['filename', 'positions', 'filemtime'];
     }
 
     /**

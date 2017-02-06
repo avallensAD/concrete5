@@ -7,15 +7,15 @@ use Permissions;
 
 class PageSelector
 {
-
     /**
      * Creates form fields and JavaScript page chooser for choosing a page. For use with inclusion in blocks.
      * <code>
      *     $dh->selectPage('pageID', '1'); // prints out the home page and makes it selectable.
-     * </code>
+     * </code>.
      *
      * @param $fieldName
      * @param bool|int $cID
+     *
      * @return string
      */
     public function selectPage($fieldName, $cID = false)
@@ -48,11 +48,14 @@ class PageSelector
         });
         </script>
 EOL;
+
         return $html;
     }
 
     public function quickSelect($key, $cID = false, $args = array())
     {
+        $v = \View::getInstance();
+        $v->requireAsset('selectize');
         $selectedCID = 0;
         if (isset($_REQUEST[$key])) {
             $selectedCID = $_REQUEST[$key];
@@ -76,36 +79,37 @@ EOL;
         $html = "
 		<script type=\"text/javascript\">
 		$(function () {
-			$('#ccm-quick-page-selector-label-" . $key . "').autocomplete({
-				select: function(e, ui) {
-					$('#ccm-quick-page-selector-label-" . $key . "').val(ui.item.label);
-					$('#ccm-quick-page-selector-value-" . $key . "').val(ui.item.value);
-					return false;
-				},
-				open: function(e, ui) {
-					//$('#ccm-quick-page-selector-label-" . $key . "').val('');
-					$('#ccm-quick-page-selector-value-" . $key . "').val('');
-				},
-				focus: function(e, ui) {
-					$('#ccm-quick-page-selector-label-" . $key . "').val(ui.item.label);
-					return false;
-				},
-				source: '" . REL_DIR_FILES_TOOLS_REQUIRED . "/pages/autocomplete?key=" . $key . "&token=" . $token . "'
-			});
-			$('#ccm-quick-page-selector-label-" . $key . "').keydown(function(e) {
-				if (e.keyCode == 13) {
-					e.preventDefault();
-				}
-			}).change(function(e) {
-				if ($('#ccm-quick-page-selector-label-" . $key . "').val() == '') {
-					$('#ccm-quick-page-selector-value-" . $key . "').val('');
-				}
-			});
-			$('#ccm-quick-page-selector-label-" . $key . "').autocomplete('widget').addClass('ccm-page-selector-autocomplete');
+			$('#ccm-quick-page-selector-" . $key . " input').unbind().selectize({
+                valueField: 'value',
+                labelField: 'label',
+                searchField: ['label'],";
+
+        if ($selectedCID) {
+            $html .= "options: [{'label': '" . h($cName) . "', 'value': " . intval($selectedCID) . "}],
+				items: [" . intval($selectedCID) . "],";
+        }
+
+        $html .= "maxItems: 1,
+                load: function(query, callback) {
+                    if (!query.length) return callback();
+                    $.ajax({
+                        url: '" . REL_DIR_FILES_TOOLS_REQUIRED . "/pages/autocomplete?key=" . $key . "&token=" . $token . "&term=' + encodeURIComponent(query),
+                        type: 'GET',
+						dataType: 'json',
+                        error: function() {
+                            callback();
+                        },
+                        success: function(res) {
+                            callback(res);
+                        }
+                    });
+                }
+		    });
 		} );
 		</script>";
-        $html .= '<input type="hidden" id="ccm-quick-page-selector-value-' . $key . '" name="' . $key . '" value="' . $selectedCID . '" /><span class="ccm-quick-page-selector">
-		<input type="text" class="ccm-input-text" name="ccm-quick-page-selector-label-' . $key . '" id="ccm-quick-page-selector-label-' . $key . '" value="' . $cName . '" /></span>';
+        $form = \Core::make("helper/form");
+        $html .= '<span id="ccm-quick-page-selector-' . $key . '">'.$form->hidden($key, '', $args).'</span>';
+
         return $html;
     }
 
@@ -117,16 +121,16 @@ EOL;
         $identifier = new \Concrete\Core\Utility\Service\Identifier();
         $identifier = $identifier->getString(32);
 
-        $args = new \stdClass;
+        $args = new \stdClass();
         $selected = array();
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (isset($_POST[$field]) && is_array($_POST[$field])) {
-                foreach($_POST[$field] as $value) {
+                foreach ($_POST[$field] as $value) {
                     $selected[] = intval($value);
                 }
             }
         } else {
-            foreach($pages as $cID) {
+            foreach ($pages as $cID) {
                 $selected[] = is_object($cID) ? $cID->getCollectionID() : $cID;
             }
         }
@@ -150,6 +154,7 @@ EOL;
         });
         </script>
 EOL;
+
         return $html;
     }
 
@@ -161,14 +166,14 @@ EOL;
         $identifier = new \Concrete\Core\Utility\Service\Identifier();
         $identifier = $identifier->getString(32);
 
-        $args = new \stdClass;
+        $args = new \stdClass();
         $selected = 0;
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (isset($_POST[$field])) {
                 $selected = intval($_POST[$field]);
             }
-        } else if ($page) {
+        } elseif ($page) {
             $selected = is_object($page) ? $page->getCollectionID() : $page;
         }
         $args->identifier = $identifier;
@@ -189,8 +194,7 @@ EOL;
         });
         </script>
 EOL;
+
         return $html;
     }
-
-
 }

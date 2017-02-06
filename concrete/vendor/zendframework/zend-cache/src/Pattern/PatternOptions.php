@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2016 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -46,14 +46,14 @@ class PatternOptions extends AbstractOptions
      * - ClassCache
      * @var array
      */
-    protected $classCacheMethods = array();
+    protected $classCacheMethods = [];
 
     /**
      * Used by:
      * - ClassCache
      * @var array
      */
-    protected $classNonCacheMethods = array();
+    protected $classNonCacheMethods = [];
 
     /**
      * Used by:
@@ -109,7 +109,7 @@ class PatternOptions extends AbstractOptions
      * - ObjectCache
      * @var array
      */
-    protected $objectCacheMethods = array();
+    protected $objectCacheMethods = [];
 
     /**
      * Used by:
@@ -123,7 +123,7 @@ class PatternOptions extends AbstractOptions
      * - ObjectCache
      * @var array
      */
-    protected $objectNonCacheMethods = array('__tostring');
+    protected $objectNonCacheMethods = ['__tostring'];
 
     /**
      * Used by:
@@ -375,7 +375,7 @@ class PatternOptions extends AbstractOptions
             }
 
             // normalize
-            $umask = $umask & 0777;
+            $umask = $umask & ~0002;
         }
 
         $this->umask = $umask;
@@ -497,9 +497,9 @@ class PatternOptions extends AbstractOptions
     public function setObject($object)
     {
         if (!is_object($object)) {
-            throw new Exception\InvalidArgumentException(sprintf(
-                '%s expects an object; received "%s"', __METHOD__, gettype($object)
-            ));
+            throw new Exception\InvalidArgumentException(
+                sprintf('%s expects an object; received "%s"', __METHOD__, gettype($object))
+            );
         }
         $this->object = $object;
         return $this;
@@ -574,7 +574,7 @@ class PatternOptions extends AbstractOptions
      * Used by:
      * - ObjectCache
      *
-     * @param  mixed $objectKey
+     * @param  null|string $objectKey The object key or NULL to use the objects class name
      * @return PatternOptions
      */
     public function setObjectKey($objectKey)
@@ -593,11 +593,11 @@ class PatternOptions extends AbstractOptions
      * Used by:
      * - ObjectCache
      *
-     * @return mixed
+     * @return string
      */
     public function getObjectKey()
     {
-        if (!$this->objectKey) {
+        if ($this->objectKey === null) {
             return get_class($this->getObject());
         }
         return $this->objectKey;
@@ -730,7 +730,7 @@ class PatternOptions extends AbstractOptions
     protected function normalizeObjectMethods(array $methods)
     {
         $methods   = $this->recursiveStrtolower($methods);
-        $intersect = array_intersect(array('__set', '__get', '__unset', '__isset'), $methods);
+        $intersect = array_intersect(['__set', '__get', '__unset', '__isset'], $methods);
         if (!empty($intersect)) {
             throw new Exception\InvalidArgumentException(
                 "Magic properties are handled by option 'cache_magic_properties'"

@@ -18,54 +18,66 @@ defined('C5_EXECUTE') or die("Access Denied.");
 <section class="ccm-ui">
 	<form method="post" action="<?php echo $controller->action('submit')?>" data-dialog-form="attributes" data-panel-detail-form="attributes"  data-action-after-save="reload">
 
-        <?php if (isset($sitemap) && $sitemap) { ?>
+        <?php if (isset($sitemap) && $sitemap) {
+    ?>
             <input type="hidden" name="sitemap" value="1" />
-        <?php } ?>
+        <?php
+} ?>
 
 		<span class="ccm-detail-page-attributes-id"><?php echo t('Page ID: %s', $c->getCollectionID())?></span>
 
 		<?php echo Loader::helper('concrete/ui/help')->display('panel', '/page/attributes')?>
-		<?php if ($assignment->allowEditName()) { ?>
+		<?php if ($assignment->allowEditName()) {
+    ?>
 		<div class="form-group">
 			<label for="cName" class="control-label"><?php echo t('Name')?></label>
 			<div>
-			<input type="text" class="form-control" id="cName" name="cName" value="<?php echo htmlentities( $c->getCollectionName(), ENT_QUOTES, APP_CHARSET) ?>" />
+			<input type="text" class="form-control" id="cName" name="cName" value="<?php echo htmlentities($c->getCollectionName(), ENT_QUOTES, APP_CHARSET) ?>" />
 			</div>
 		</div>
-		<?php } ?>
+		<?php
+} ?>
 
-		<?php if ($assignment->allowEditDateTime()) { ?>
+		<?php if ($assignment->allowEditDateTime()) {
+    ?>
 		<div class="form-group">
 			<label for="cName" class="control-label"><?php echo t('Created Time')?></label>
 			<div>
-				<?php print $dt->datetime('cDatePublic', $c->getCollectionDatePublic()); ?>
+				<?php echo $dt->datetime('cDatePublic', $c->getCollectionDatePublic());
+    ?>
 			</div>
 		</div>
-		<?php } ?>
+		<?php
+} ?>
 
-		<?php if ($assignment->allowEditUserID()) { ?>
+		<?php if ($assignment->allowEditUserID()) {
+    ?>
 		<div class="form-group">
 			<label for="cName" class="control-label"><?php echo t('Author')?></label>
 			<div>
-			<?php 
-			print $uh->selectUser('uID', $c->getCollectionUserID());
-			?>
+			<?php
+            echo $uh->selectUser('uID', $c->getCollectionUserID());
+    ?>
 			</div>
 		</div>
-		<?php } ?>
-		
+		<?php
+} ?>
 
-		<?php if ($assignment->allowEditDescription()) { ?>
+
+		<?php if ($assignment->allowEditDescription()) {
+    ?>
 		<div class="form-group">
 			<label for="cDescription" class="control-label"><?php echo t('Description')?></label>
 			<div>
 				<textarea id="cDescription" name="cDescription" class="form-control" rows="8"><?php echo $c->getCollectionDescription()?></textarea>
 			</div>
 		</div>
-		<?php } ?>
+		<?php
+} ?>
 
 	</form>
 	<div class="ccm-panel-detail-form-actions dialog-buttons">
+        <button class="pull-left btn btn-default" type="button" data-dialog-action="cancel" data-panel-detail-action="cancel"><?php echo t('Cancel')?></button>
 		<button class="pull-right btn btn-success" type="button" data-dialog-action="submit" data-panel-detail-action="submit"><?php echo t('Save Changes')?></button>
 	</div>
 
@@ -89,6 +101,14 @@ ConcretePageAttributesDetail = {
 			ConcreteMenuPageAttributes.deselectAttributeKey(akID);
 			$(this).dequeue();
 		}).delay(400).queue(function() {
+			if (typeof CKEDITOR != 'undefined') {
+				for (name in CKEDITOR.instances) {
+					var instance = CKEDITOR.instances[name];
+					if ($.contains($(this).get(0), instance.container.$)) {
+						instance.destroy(true);
+					}
+				}
+			}
 			$(this).remove();
 			$(this).dequeue();
 		});

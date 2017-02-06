@@ -16,11 +16,12 @@ $view = View::getInstance();
                     displayNodePagination: true,
                     cParentID: '<?php echo $nodeID?>',
                     displaySingleLevel: true,
+                    persist: false,
                     onDisplaySingleLevel: function (node) {
                         if (window && window.history && window.history.pushState) {
                             window.history.pushState({
-                                key: node.data.key
-                            }, 'title', my_url + '/-/' + node.data.key);
+                                key: node.data.cID
+                            }, 'title', my_url + '/-/' + node.data.cID);
                         }
                     }
                 });
@@ -47,22 +48,21 @@ $view = View::getInstance();
     false); ?>
     <div class="ccm-pane-body">
 
-        <?php if ($dh->canRead()) { ?>
+        <?php if ($dh->canRead()) {
+    ?>
 
             <div id="ccm-flat-sitemap-container" data-sitemap="container"></div>
 
-        <?php } else { ?>
+        <?php 
+} else {
+    ?>
             <p><?php echo t('You do not have access to the dashboard sitemap.') ?></p>
-        <?php } ?>
+        <?php 
+} ?>
 
     </div>
     <div class="ccm-pane-footer" id="ccm-explore-paging-footer">
 
     </div>
 
-    <script type="text/javascript">
-        $(function () {
-            $('#ccm-explore-paging-footer').html($('li.ccm-sitemap-explore-paging').html());
-        });
-    </script>
 <?php echo Loader::helper('concrete/dashboard')->getDashboardPaneFooterWrapper(false);

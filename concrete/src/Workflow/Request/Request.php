@@ -1,19 +1,22 @@
 <?php
-
 namespace Concrete\Core\Workflow\Request;
 
 use Concrete\Core\Foundation\Object;
+use Concrete\Core\User\UserInfo;
+use Symfony\Component\EventDispatcher\GenericEvent;
 use Workflow;
 use Concrete\Core\Workflow\EmptyWorkflow;
 use Database;
 use Concrete\Core\Workflow\Progress\Progress as WorkflowProgress;
 use PermissionKey;
+use Events;
 
 abstract class Request extends Object
 {
     protected $currentWP;
     protected $uID;
     protected $wrStatusNum = 0;
+    protected $wrID = null;
 
     public function __construct($pk)
     {
@@ -60,6 +63,11 @@ abstract class Request extends Object
         return $this->uID;
     }
 
+    public function getRequesterUserObject()
+    {
+        return UserInfo::getByID($this->uID);
+    }
+
     public static function getByID($wrID)
     {
         $db = Database::connection();
@@ -104,7 +112,7 @@ abstract class Request extends Object
         }
 
         if (!$pk->canPermissionKeyTriggerWorkflow()) {
-            throw new Exception(t('This permission key cannot start a workflow.'));
+            throw new \Exception(t('This permission key cannot start a workflow.'));
         }
 
         $pa = $pk->getPermissionAccessObject();
@@ -114,15 +122,27 @@ abstract class Request extends Object
             $workflows = $pa->getWorkflows();
             foreach ($workflows as $wf) {
                 if ($wf->validateTrigger($this)) {
-                    $this->addWorkflowProgress($wf);
+                    $wp = $this->addWorkflowProgress($wf);
                     ++$workflowsStarted;
+
+                    $event = new GenericEvent();
+                    $event->setArgument('progress', $wp);
+                    Events::dispatch('workflow_triggered', $event);
                 }
             }
+        }
+
+        if (isset($wp)) {
+            return $wp->getWorkflowProgressResponseObject();
         }
 
         if ($workflowsStarted == 0) {
             $defaultWorkflow = new EmptyWorkflow();
             $wp = $this->addWorkflowProgress($defaultWorkflow);
+
+            $event = new GenericEvent();
+            $event->setArgument('progress', $wp);
+            Events::dispatch('workflow_triggered', $event);
 
             return $wp->getWorkflowProgressResponseObject();
         }
@@ -166,4 +186,12 @@ abstract class Request extends Object
             }
         }
     }
+
+    public function getRequesterComment()
+    {
+        return false;
+    }
+
+    abstract public function getRequestIconElement();
+
 }

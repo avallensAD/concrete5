@@ -8,24 +8,23 @@
     <input name="url" class="form-control" placeholder="<?php echo h(t('Feed URL')) ?>" value="<?php echo h($rssObj->url) ?>" type="text" required="required" />
 </div>
 <div class="form-group">
-    <label for="title">
+    <label for="title" class="control-label">
         <?php echo t('Feed Title') ?>
-        <span class="help-block" style="font-weight: normal;display: inline">(<?php echo t('Optional') ?>)</span>
     </label>
     <input name="title" class="form-control" placeholder="<?php echo h(t('Feed Title')) ?>" value="<?php echo h($rssObj->title) ?>"/>
 </div>
 <div class="form-group">
-    <?php echo $form->label('dateFormat', t('Date Format')) ?>
+    <?php echo $form->label('standardDateFormat', t('Date Format')) ?>
     <?php
     $dateFormats = $rssObj->getDefaultDateTimeFormats();
     $dateFormats[':custom:'] = t('Custom date/time format');
     $standardDateFormat = $rssObj->dateFormat;
     $customDateFormat = '';
-    if(!$standardDateFormat) {
+    if (!$standardDateFormat) {
         reset($dateFormats);
         $standardDateFormat = key($dateFormats);
     }
-    if(!array_key_exists($standardDateFormat, $dateFormats)) {
+    if (!array_key_exists($standardDateFormat, $dateFormats)) {
         $customDateFormat = $standardDateFormat;
         $standardDateFormat = ':custom:';
     }
@@ -53,7 +52,7 @@ $(document).ready(function() {
 <div class="form-group">
     <div class="checkbox">
         <label>
-            <input type="checkbox" value="1" name="showSummary"<?php echo (!!$rssObj->showSummary ? ' checked' : '') ?> />
+            <input type="checkbox" value="1" name="showSummary"<?php echo ((bool) $rssObj->showSummary ? ' checked' : '') ?> />
             <?php echo t('Include Summary') ?>
         </label>
     </div>
@@ -62,7 +61,7 @@ $(document).ready(function() {
     <div class="checkbox">
         <label>
             <input type="checkbox" value="1"
-               name="launchInNewWindow"<?php echo (!!$rssObj->launchInNewWindow ? ' checked' : '') ?> />
+               name="launchInNewWindow"<?php echo ((bool) $rssObj->launchInNewWindow ? ' checked' : '') ?> />
             <?php echo t('Open links in a new window') ?>
         </label>
     </div>

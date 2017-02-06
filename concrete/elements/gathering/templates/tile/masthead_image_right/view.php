@@ -1,7 +1,7 @@
 <?php defined('C5_EXECUTE') or die("Access Denied."); ?>
 <?php
 if (is_array($image)) {
-	$image = $image[0];
+    $image = $image[0];
 }
 
 ?>

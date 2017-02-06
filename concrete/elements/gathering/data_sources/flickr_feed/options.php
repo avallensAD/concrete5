@@ -1,7 +1,7 @@
 <?php defined('C5_EXECUTE') or die("Access Denied."); ?>
 <?php
-if (is_object($configuration)) { 
-	$flickrFeedTags = $configuration->getFlickrFeedTags();
+if (is_object($configuration)) {
+    $flickrFeedTags = $configuration->getFlickrFeedTags();
 }
 ?>
 <div class="control-group">

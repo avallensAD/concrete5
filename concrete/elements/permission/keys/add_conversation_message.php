@@ -4,13 +4,14 @@
 $included = $permissionAccess->getAccessListItems();
 $form = Loader::helper('form');
 
-if (count($included) > 0) { ?>
+if (count($included) > 0) {
+    ?>
 
 	<h3><?php echo t('New Message Approval')?></h3>
 
-	<?php foreach($included as $assignment) {
-		$entity = $assignment->getAccessEntityObject();
-	?>
+	<?php foreach ($included as $assignment) {
+    $entity = $assignment->getAccessEntityObject();
+    ?>
 
 
 <div class="form-group">
@@ -18,8 +19,10 @@ if (count($included) > 0) { ?>
 	<?php echo $form->select('addMessageApproval[' . $entity->getAccessEntityID() . ']', array('A' => t('Approved'), 'U' => t('Pending')), $assignment->getNewConversationMessageApprovalStatus())?>
 </div>
 
-<?php }
-
-} else {  ?>
+<?php 
+}
+} else {
+    ?>
 	<p><?php echo t('No access entities selected.')?></p>
-<?php } ?>
+<?php 
+} ?>

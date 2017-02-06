@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -28,20 +28,20 @@ class Size extends AbstractValidator
     /**
      * @var array Error message templates
      */
-    protected $messageTemplates = array(
+    protected $messageTemplates = [
         self::TOO_BIG   => "Maximum allowed size for file is '%max%' but '%size%' detected",
         self::TOO_SMALL => "Minimum expected size for file is '%min%' but '%size%' detected",
         self::NOT_FOUND => "File is not readable or does not exist",
-    );
+    ];
 
     /**
      * @var array Error message template variables
      */
-    protected $messageVariables = array(
-        'min'  => array('options' => 'min'),
-        'max'  => array('options' => 'max'),
+    protected $messageVariables = [
+        'min'  => ['options' => 'min'],
+        'max'  => ['options' => 'max'],
         'size' => 'size',
-    );
+    ];
 
     /**
      * Detected size
@@ -55,16 +55,16 @@ class Size extends AbstractValidator
      *
      * @var array
      */
-    protected $options = array(
+    protected $options = [
         'min'           => null, // Minimum file size, if null there is no minimum
         'max'           => null, // Maximum file size, if null there is no maximum
         'useByteString' => true, // Use byte string?
-    );
+    ];
 
     /**
      * Sets validator options
      *
-     * If $options is a integer, it will be used as maximum file size
+     * If $options is an integer, it will be used as maximum file size
      * As Array is accepts the following keys:
      * 'min': Minimum file size
      * 'max': Maximum file size
@@ -75,7 +75,7 @@ class Size extends AbstractValidator
     public function __construct($options = null)
     {
         if (is_string($options) || is_numeric($options)) {
-            $options = array('max' => $options);
+            $options = ['max' => $options];
         }
 
         if (1 < func_num_args()) {
@@ -131,7 +131,7 @@ class Size extends AbstractValidator
     /**
      * Sets the minimum file size
      *
-     * File size can be an integer or an byte string
+     * File size can be an integer or a byte string
      * This includes 'B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'
      * For example: 2000, 2MB, 0.2GB
      *
@@ -141,7 +141,7 @@ class Size extends AbstractValidator
      */
     public function setMin($min)
     {
-        if (!is_string($min) and !is_numeric($min)) {
+        if (! is_string($min) && ! is_numeric($min)) {
             throw new Exception\InvalidArgumentException('Invalid options to validator provided');
         }
 
@@ -149,8 +149,8 @@ class Size extends AbstractValidator
         $max = $this->getMax(true);
         if (($max !== null) && ($min > $max)) {
             throw new Exception\InvalidArgumentException(
-                'The minimum must be less than or equal to the maximum file'
-                ." size, but $min > $max");
+                "The minimum must be less than or equal to the maximum file size, but $min > $max"
+            );
         }
 
         $this->options['min'] = $min;
@@ -176,7 +176,7 @@ class Size extends AbstractValidator
     /**
      * Sets the maximum file size
      *
-     * File size can be an integer or an byte string
+     * File size can be an integer or a byte string
      * This includes 'B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'
      * For example: 2000, 2MB, 0.2GB
      *
@@ -186,7 +186,7 @@ class Size extends AbstractValidator
      */
     public function setMax($max)
     {
-        if (!is_string($max) && !is_numeric($max)) {
+        if (! is_string($max) && ! is_numeric($max)) {
             throw new Exception\InvalidArgumentException('Invalid options to validator provided');
         }
 
@@ -194,8 +194,8 @@ class Size extends AbstractValidator
         $min = $this->getMin(true);
         if (($min !== null) && ($max < $min)) {
             throw new Exception\InvalidArgumentException(
-                'The maximum must be greater than or equal to the minimum file'
-                 ." size, but $max < $min");
+                "The maximum must be greater than or equal to the minimum file size, but $max < $min"
+            );
         }
 
         $this->options['max'] = $max;
@@ -307,7 +307,7 @@ class Size extends AbstractValidator
      */
     protected function toByteString($size)
     {
-        $sizes = array('B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
+        $sizes = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
         for ($i=0; $size >= 1024 && $i < 9; $i++) {
             $size /= 1024;
         }
@@ -365,6 +365,4 @@ class Size extends AbstractValidator
 
         return $value;
     }
-
-
 }

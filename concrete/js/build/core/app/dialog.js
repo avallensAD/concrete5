@@ -3,7 +3,9 @@
  */
 $.widget("concrete.dialog", $.ui.dialog, {
     _allowInteraction: function(event) {
-        return !!$( event.target).closest('.ccm-interaction-dialog').length || this._super(event);
+        return !!$(event.target).closest('.ccm-interaction-dialog').length
+            || !!$(event.target).closest(".cke_dialog").length
+            || this._super(event);
     }
 });
 
@@ -26,6 +28,7 @@ jQuery.fn.dialog = function() {
             var height =$(this).attr('dialog-height');
             var title = $(this).attr('dialog-title');
             var onOpen = $(this).attr('dialog-on-open');
+            var dialogClass = $(this).attr('dialog-class');
             var onDestroy = $(this).attr('dialog-on-destroy');
             /*
              * no longer necessary. we auto detect
@@ -41,6 +44,7 @@ jQuery.fn.dialog = function() {
                 title: title,
                 onOpen: onOpen,
                 onDestroy: onDestroy,
+                dialogClass: dialogClass,
                 onClose: onClose,
                 onDirectClose: onDirectClose
             }
@@ -110,6 +114,7 @@ jQuery.fn.dialog.open = function(options) {
         'escapeClose': true,
         'width': w,
         'height': h,
+        'dialogClass': 'ccm-ui',
         'resizable': true,
 
         'create': function() {
@@ -126,9 +131,12 @@ jQuery.fn.dialog.open = function(options) {
             var overlays = $('.ui-widget-overlay').length;
             $('.ui-widget-overlay').each(function(i, obj) {
                 if ((i + 1) < overlays) {
-                    $(this).css('opacity', 0);
+                    $(this).removeClass('animated fadeIn').css('opacity', 0);
                 }
             });
+            if (overlays == 1) {
+                $('.ui-widget-overlay').addClass('animated fadeIn');
+            }
 
             jQuery.fn.dialog.activateDialogContents($dialog);
 
@@ -219,21 +227,32 @@ jQuery.fn.dialog.open = function(options) {
 
 jQuery.fn.dialog.activateDialogContents = function($dialog) {
     // handle buttons
+
     $dialog.find('button[data-dialog-action=cancel]').on('click', function() {
         jQuery.fn.dialog.closeTop();
     });
-    $('[data-dialog-form]').concreteAjaxForm();
+    $dialog.find('[data-dialog-form]').each(function() {
+        var $form = $(this),
+            options = {};
+        if ($(this).attr("data-dialog-form-processing") == 'progressive') {
+            options.progressiveOperation = true;
+            options.progressiveOperationElement = 'div[data-dialog-form-element=progress-bar]';
+        }
+        $(this).concreteAjaxForm(options);
+    });
+
 
     $dialog.find('button[data-dialog-action=submit]').on('click', function() {
-        $('[data-dialog-form]').submit();
+        $dialog.find('[data-dialog-form]').submit();
     });
 
     if ($dialog.find('.dialog-buttons').length > 0) {
         $dialog.jqdialog('option', 'buttons', [{}]);
         $dialog.parent().find(".ui-dialog-buttonset").remove();
         $dialog.parent().find(".ui-dialog-buttonpane").html('');
-        $dialog.find('.dialog-buttons').removeClass().appendTo($dialog.parent().find('.ui-dialog-buttonpane').addClass("ccm-ui"));
+        $dialog.find('.dialog-buttons').eq(0).removeClass().appendTo($dialog.parent().find('.ui-dialog-buttonpane').addClass("ccm-ui"));
     }
+
 
     // make dialogs
     $dialog.find('.dialog-launch').dialog();
@@ -256,7 +275,8 @@ jQuery.fn.dialog.activateDialogContents = function($dialog) {
         }
         var button = $('<button class="ui-dialog-titlebar-help ccm-menu-help-trigger"><i class="fa fa-info-circle"></i></button>'),
             container = $('#ccm-tooltip-holder');
-        $dialog.parent().find('.ui-dialog-titlebar').addClass('ccm-ui').append(button);
+        $dialog.parent().find('.ui-dialog-titlebar').append(button);
+
         button.popover({
             content: function() {
                 return helpContent;
@@ -300,13 +320,12 @@ jQuery.fn.dialog.replaceTop = function(html) {
 }
 
 jQuery.fn.dialog.showLoader = function(text) {
-    $('body').addClass('ccm-loading');
+    NProgress.start();
 }
 
 jQuery.fn.dialog.hideLoader = function() {
-    $('body').removeClass('ccm-loading');
+    NProgress.done();
 }
-
 
 jQuery.fn.dialog.closeTop = function() {
     $dialog = jQuery.fn.dialog.getTop();
@@ -316,4 +335,6 @@ jQuery.fn.dialog.closeTop = function() {
 jQuery.fn.dialog.closeAll = function() {
     $($(".ui-dialog-content").get().reverse()).jqdialog('close');
 }
+
+$.ui.dialog.prototype._focusTabbable = $.noop;
 

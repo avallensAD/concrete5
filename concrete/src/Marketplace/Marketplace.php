@@ -3,7 +3,7 @@ namespace Concrete\Core\Marketplace;
 
 use Config;
 use Core;
-use Package;
+use Concrete\Core\Support\Facade\Package;
 use TaskPermission;
 use URL;
 
@@ -69,11 +69,12 @@ class Marketplace
         $fh = Core::make('helper/file');
         $file .= '?csiURL=' . urlencode(Core::getApplicationURL()) . "&csiVersion=" . APP_VERSION;
         $pkg = $fh->getContents($file, Config::get('concrete.marketplace.request_timeout'));
+        $error = \Core::make('error');
         if (empty($pkg)) {
-            return Package::E_PACKAGE_DOWNLOAD;
+            $error->add(t('An error occurred while downloading the package.'));
         }
-        if ($pkg == Package::E_PACKAGE_INVALID_APP_VERSION) {
-            return Package::E_PACKAGE_INVALID_APP_VERSION;
+        if ($pkg == \Package::E_PACKAGE_INVALID_APP_VERSION) {
+            $error->add(t('This package isn\'t currently available for this version of concrete5 . Please contact the maintainer of this package for assistance.'));
         }
 
         $file = time();
@@ -84,7 +85,11 @@ class Marketplace
             fwrite($fp, $pkg);
             fclose($fp);
         } else {
-            return Package::E_PACKAGE_SAVE;
+            $error->add(t('concrete5 was not able to save the package after download.'));
+        }
+
+        if ($error->has()) {
+            return $error;
         }
 
         return $file;
@@ -95,13 +100,19 @@ class Marketplace
      */
     public static function checkPackageUpdates()
     {
+        $em = \ORM::entityManager();
         $items = self::getAvailableMarketplaceItems(false);
         foreach ($items as $i) {
             $p = Package::getByHandle($i->getHandle());
             if (is_object($p)) {
-                $p->updateAvailableVersionNumber($i->getVersion());
+                /**
+                 * @var $p \Concrete\Core\Entity\Package
+                 */
+                $p->setPackageAvailableVersion($i->getVersion());
+                $em->persist($p);
             }
         }
+        $em->flush();
     }
 
     public function getAvailableMarketplaceItems($filterInstalled = true)
@@ -182,7 +193,7 @@ class Marketplace
                 if (!$completeURL) {
                     $completeURL = URL::to('/dashboard/extend/connect', 'connect_complete');
                     $completeURL = $completeURL->setQuery(array(
-                        'ccm_token' => Core::make('token')->generate('marketplace/connect')
+                        'ccm_token' => Core::make('token')->generate('marketplace/connect'),
                     ));
                 }
                 $csReferrer = urlencode($completeURL);
@@ -215,7 +226,7 @@ class Marketplace
                 }
                 $url = $frameURL . Config::get('concrete.urls.paths.marketplace.connect') . '/-/' . $connectMethod;
                 $url = $url . '?ts=' . time() . '&csiBaseURL=' . $csiBaseURL . '&csiURL=' . $csiURL . '&csToken=' . $csToken . '&csReferrer=' . $csReferrer . '&csName=' . htmlspecialchars(
-                        Config::get('concrete.site'),
+                        \Core::make('site')->getSite()->getSiteName(),
                         ENT_QUOTES,
                         APP_CHARSET);
             } else {

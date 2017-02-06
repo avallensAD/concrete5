@@ -11,9 +11,9 @@
     'object' => $defaultPage,
     'saveAction' => $view->action('update_attribute', $pagetype->getPageTypeID()),
     'clearAction' => $view->action('clear_attribute', $pagetype->getPageTypeID()),
-    'permissionsCallback' => function($ak) {
+    'permissionsCallback' => function ($ak) {
         return true;
-    }
+    },
 ));?>
 
 </div>

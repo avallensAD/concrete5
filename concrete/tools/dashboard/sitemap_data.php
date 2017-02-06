@@ -25,13 +25,13 @@ if (isset($_REQUEST['task']) && $_REQUEST['task'] == 'save_sitemap_display_mode'
 }
 */
 
-if ($_REQUEST['displayNodePagination']) {
+if (isset($_REQUEST['displayNodePagination']) && $_REQUEST['displayNodePagination']) {
     $dh->setDisplayNodePagination(true);
 } else {
     $dh->setDisplayNodePagination(false);
 }
 
-if ($_GET['includeSystemPages']) {
+if (isset($_GET['includeSystemPages']) && $_GET['includeSystemPages']) {
     $dh->setIncludeSystemPages(true);
 } else {
     $dh->setIncludeSystemPages(false);
@@ -43,11 +43,12 @@ if (isset($_REQUEST['displaySingleLevel']) && $_REQUEST['displaySingleLevel']) {
     $parent = Page::getByID($c->getCollectionParentID());
     if (is_object($parent) && !$parent->isError()) {
         $n = $dh->getNode($parent->getCollectionID());
-        $n->iconHTML = '<i class="fa fa-angle-double-up"></i>';
-        $n->icon = true;
+        $n->icon = 'fa fa-angle-double-up';
+        $n->expanded = true;
         $n->displaySingleLevel = true;
 
         $p = $dh->getNode($cParentID);
+        $p->expanded = true;
         $p->children = $dh->getSubNodes($cParentID);
         $n->children = array($p);
     } else {
@@ -55,6 +56,9 @@ if (isset($_REQUEST['displaySingleLevel']) && $_REQUEST['displaySingleLevel']) {
         $n->children = $dh->getSubNodes($cParentID);
     }
     $nodes[] = $n;
+    echo json_encode([
+        'children' => $nodes,
+    ]);
 } else {
     if (isset($_COOKIE['ConcreteSitemap-expand'])) {
         $openNodeArray = explode(',', str_replace('_', '', $_COOKIE['ConcreteSitemap-expand']));
@@ -62,6 +66,26 @@ if (isset($_REQUEST['displaySingleLevel']) && $_REQUEST['displaySingleLevel']) {
             $dh->setExpandedNodes($openNodeArray);
         }
     }
-    $nodes = $dh->getSubNodes($cParentID);
+    if ($cParentID || (isset($_REQUEST['reloadNode']) && $_REQUEST['reloadNode'])) {
+        $nodes = $dh->getSubNodes($cParentID);
+        echo json_encode($nodes);
+    } else {
+        $service = \Core::make('site');
+        if (isset($_REQUEST['siteTreeID']) && $_REQUEST['siteTreeID'] > 0) {
+            $tree = $service->getSiteTreeByID($_REQUEST['siteTreeID']);
+        } else {
+            $tree = $service->getActiveSiteForEditing()->getSiteTreeObject();
+        }
+        $nodes = $dh->getSubNodes($tree);
+        $locales = null;
+        if ($tree instanceof \Concrete\Core\Entity\Site\SiteTree) {
+            $locales = $tree->getLocaleCollection();
+        }
+
+        echo json_encode([
+            'children' => $nodes,
+            'locales' => $locales
+        ]);
+    }
 }
-print Core::make('helper/json')->encode($nodes);
+

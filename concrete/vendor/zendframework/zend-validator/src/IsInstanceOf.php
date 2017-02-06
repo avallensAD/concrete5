@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 namespace Zend\Validator;
@@ -19,18 +19,18 @@ class IsInstanceOf extends AbstractValidator
      *
      * @var array
      */
-    protected $messageTemplates = array(
+    protected $messageTemplates = [
         self::NOT_INSTANCE_OF => "The input is not an instance of '%className%'",
-    );
+    ];
 
     /**
      * Additional variables available for validation failure messages
      *
      * @var array
      */
-    protected $messageVariables = array(
+    protected $messageVariables = [
         'className' => 'className'
-    );
+    ];
 
     /**
      * Class name
@@ -55,7 +55,7 @@ class IsInstanceOf extends AbstractValidator
         if (!is_array($options)) {
             $options = func_get_args();
 
-            $tmpOptions = array();
+            $tmpOptions = [];
             $tmpOptions['className'] = array_shift($options);
 
             $options = $tmpOptions;

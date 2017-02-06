@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -13,7 +13,7 @@ use Traversable;
 use Zend\Stdlib\ArrayUtils;
 
 /**
- * Validator which checks if the file already exists in the directory
+ * Validator which checks if the file is an image
  */
 class IsImage extends MimeType
 {
@@ -27,22 +27,21 @@ class IsImage extends MimeType
     /**
      * @var array Error message templates
      */
-    protected $messageTemplates = array(
+    protected $messageTemplates = [
         self::FALSE_TYPE   => "File is no image, '%type%' detected",
         self::NOT_DETECTED => "The mimetype could not be detected from the file",
         self::NOT_READABLE => "File is not readable or does not exist",
-    );
+    ];
 
     /**
      * Sets validator options
      *
      * @param array|Traversable|string $options
      */
-    public function __construct($options = array())
+    public function __construct($options = [])
     {
-        // http://de.wikipedia.org/wiki/Liste_von_Dateiendungen
-        // http://www.iana.org/assignments/media-types/image/
-        $default = array(
+        // http://www.iana.org/assignments/media-types/media-types.xhtml#image
+        $default = [
             'application/cdf',
             'application/dicom',
             'application/fractals',
@@ -98,14 +97,14 @@ class IsImage extends MimeType
             'image/x-unknown',
             'image/x-windows-bmp',
             'image/x-xpmi',
-        );
+        ];
 
         if ($options instanceof Traversable) {
             $options = ArrayUtils::iteratorToArray($options);
         }
 
         if ($options === null) {
-            $options = array();
+            $options = [];
         }
 
         parent::__construct($options);

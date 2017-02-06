@@ -22,8 +22,15 @@ class ViewRenderer
         if (!$this->routeCollectionFunction) {
             $urlHelper = Core::make('helper/url');;
             $list = $this->pagination->getItemListObject();
+            // Note: We had been using the URL library per a pull request by someone, but it
+            // was breaking pagination in the sitemap flat view so that has been reverted.
             $this->routeCollectionFunction = function ($page) use ($list, $urlHelper) {
-                $url = $urlHelper->setVariable($list->getQueryPaginationPageParameter(), $page);
+                $args = array(
+                    $list->getQueryPaginationPageParameter() => $page,
+                    $list->getQuerySortColumnParameter() => $list->getActiveSortColumn(),
+                    $list->getQuerySortDirectionParameter() => $list->getActiveSortDirection(),
+                );
+                $url = $urlHelper->setVariable($args);
                 return h($url);
             };
         }

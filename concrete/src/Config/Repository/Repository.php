@@ -3,10 +3,10 @@ namespace Concrete\Core\Config\Repository;
 
 use Concrete\Core\Config\LoaderInterface;
 use Concrete\Core\Config\SaverInterface;
+use Concrete\Core\Support\Facade\Config;
 
 class Repository extends \Illuminate\Config\Repository
 {
-
     /**
      * @var SaverInterface
      */
@@ -31,7 +31,7 @@ class Repository extends \Illuminate\Config\Repository
     }
 
     /**
-     * Clear specific key
+     * Clear specific key.
      *
      * @param string $key
      */
@@ -41,10 +41,11 @@ class Repository extends \Illuminate\Config\Repository
     }
 
     /**
-     * Save a key
+     * Save a key.
      *
      * @param $key
      * @param $value
+     *
      * @return bool
      */
     public function save($key, $value)
@@ -58,6 +59,7 @@ class Repository extends \Illuminate\Config\Repository
 
             return true;
         }
+
         return false;
     }
 
@@ -67,18 +69,18 @@ class Repository extends \Illuminate\Config\Repository
      * @param  string $package
      * @param  string $hint
      * @param  string $namespace
-     * @return void
      */
-    public function package($package, $hint, $namespace = null)
+    public function package($package, $hint = null, $namespace = null)
     {
         $namespace = $this->getPackageNamespace($package, $namespace);
-
+        $hint = $hint ? $hint : $package->getPackagePath() . '/' . DIRNAME_CONFIG;
         $this->packages[] = $namespace;
         $this->addNamespace($namespace, $hint);
     }
 
     protected function getPackageNamespace($package, $namespace)
     {
+        $package = is_object($package) ? $package->getPackageHandle() : $package;
         return $namespace ?: $package;
     }
 
@@ -87,7 +89,8 @@ class Repository extends \Illuminate\Config\Repository
         $this->items = array();
     }
 
-    public function clearNamespace($namespace) {
+    public function clearNamespace($namespace)
+    {
         $this->loader->clearNamespace($namespace);
     }
 
@@ -100,7 +103,7 @@ class Repository extends \Illuminate\Config\Repository
     }
 
     /**
-     * Set the saver instance
+     * Set the saver instance.
      *
      * @param \Concrete\Core\Config\SaverInterface $saver
      */
@@ -122,5 +125,4 @@ class Repository extends \Illuminate\Config\Repository
 
         return array_merge(array($namespace), $groupAndItem);
     }
-
 }

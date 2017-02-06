@@ -1,5 +1,4 @@
 <?php
-
 namespace Concrete\Core\Permission\Access;
 
 use Concrete\Core\Permission\Duration as PermissionDuration;
@@ -114,7 +113,7 @@ class EditPagePropertiesPageAccess extends PageAccess
         }
     }
 
-    public function getAccessListItems($accessType = PagePermissionKey::ACCESS_TYPE_INCLUDE, $filterEntities = array())
+    public function getAccessListItems($accessType = PagePermissionKey::ACCESS_TYPE_INCLUDE, $filterEntities = array(), $checkCache = true)
     {
         $db = Database::connection();
         $list = parent::getAccessListItems($accessType, $filterEntities);

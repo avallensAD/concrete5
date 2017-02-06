@@ -14,7 +14,7 @@
         my.$element = $element;
         my.options = options;
         my._chooseTemplate = _.template(my.chooseTemplate, {'options': my.options});
-        my._loadingTemplate = _.template(my.loadingTemplate, {'options': my.options});
+        my._loadingTemplate = _.template(my.loadingTemplate);
         my._pageLoadedTemplate = _.template(my.pageLoadedTemplate);
         my._pageMenuTemplate = _.template(ConcretePageAjaxSearchMenu.get());
 
@@ -34,18 +34,18 @@
     ConcretePageSelector.prototype = {
 
 
-        chooseTemplate: '<div class="ccm-page-selector">' +
+        chooseTemplate: '<div class="ccm-item-selector">' +
             '<input type="hidden" name="<%=options.inputName%>" value="0" /><a href="#" data-page-selector-link="choose"><%=options.chooseText%></a></div>',
-        loadingTemplate: '<div class="ccm-page-selector"><div class="ccm-page-selector-choose"><i class="fa fa-spin fa-spinner"></i> <%=options.loadingText%></div></div>',
-        pageLoadedTemplate: '<div class="ccm-page-selector"><div class="ccm-page-selector-page-selected">' +
+        loadingTemplate: '<div class="ccm-item-selector"><div class="ccm-item-selector-choose"><input type="hidden" name="<%=options.inputName%>" value="<%=cID%>"><i class="fa fa-spin fa-spinner"></i> <%=options.loadingText%></div></div>',
+        pageLoadedTemplate: '<div class="ccm-item-selector"><div class="ccm-item-selector-item-selected">' +
             '<input type="hidden" name="<%=inputName%>" value="<%=page.cID%>" />' +
-            '<a data-page-selector-action="clear" href="#" class="ccm-page-selector-clear"><i class="fa fa-close"></i></a>' +
-            '<div class="ccm-page-selector-page-selected-title"><%=page.name%></div>' +
+            '<a data-page-selector-action="clear" href="#" class="ccm-item-selector-clear"><i class="fa fa-close"></i></a>' +
+            '<div class="ccm-item-selector-item-selected-title"><%=page.name%></div>' +
             '</div></div>',
 
         loadPage: function(cID) {
             var my = this;
-            my.$element.html(my._loadingTemplate);
+            my.$element.html(my._loadingTemplate({'options': my.options, 'cID': cID}));
             ConcretePageAjaxSearch.getPageDetails(cID, function(r) {
                 var page = r.pages[0];
                 my.$element.html(my._pageLoadedTemplate({'inputName': my.options.inputName, 'page': page}));

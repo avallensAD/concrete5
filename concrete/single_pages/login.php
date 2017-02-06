@@ -20,9 +20,12 @@ if (isset($authType) && $authType) {
 if (!isset($authTypeElement)) {
     $authTypeElement = null;
 }
+if (!isset($authTypeParams)) {
+    $authTypeParams = null;
+}
 $image = date('Ymd') . '.jpg';
 
-/** @var Key[] $required_attributes */
+/* @var Key[] $required_attributes */
 
 $attribute_mode = (isset($required_attributes) && count($required_attributes));
 ?>
@@ -40,7 +43,8 @@ $attribute_mode = (isset($required_attributes) && count($required_attributes));
                     <i class="fa fa-question"></i>
                     <span><?php echo t('Attributes') ?></span>
                 <?php
-                } else if (count($activeAuths) > 1) {
+
+                } elseif (count($activeAuths) > 1) {
                     ?>
                     <select class="form-control col-xs-12">
                         <?php
@@ -50,18 +54,22 @@ $attribute_mode = (isset($required_attributes) && count($required_attributes));
                                 <?php echo $auth->getAuthenticationTypeName() ?>
                             </option>
                         <?php
+
                         }
-                        ?>
+                    ?>
                     </select>
 
                     <?php
+
                 }
                 ?>
                 <label>&nbsp;</label>
             </div>
         </div>
         <div class="row login-row">
-            <div <?php if (count($activeAuths) < 2) { ?>style="display: none" <?php } ?> class="types col-sm-4 hidden-xs">
+            <div <?php if (count($activeAuths) < 2) {
+    ?>style="display: none" <?php 
+} ?> class="types col-sm-4 hidden-xs">
                 <ul class="auth-types">
                     <?php
                     if ($attribute_mode) {
@@ -71,6 +79,7 @@ $attribute_mode = (isset($required_attributes) && count($required_attributes));
                             <span><?php echo t('Attributes') ?></span>
                         </li>
                         <?php
+
                     } else {
                         /** @var AuthenticationType[] $activeAuths */
                         foreach ($activeAuths as $auth) {
@@ -80,12 +89,17 @@ $attribute_mode = (isset($required_attributes) && count($required_attributes));
                                 <span><?php echo $auth->getAuthenticationTypeName() ?></span>
                             </li>
                         <?php
+
                         }
                     }
                     ?>
                 </ul>
             </div>
-            <div class="controls <?php if (count($activeAuths) < 2) { ?>col-sm-12<?php } else { ?>col-sm-8<?php } ?> col-xs-12">
+            <div class="controls <?php if (count($activeAuths) < 2) {
+    ?>col-sm-12<?php 
+} else {
+    ?>col-sm-8<?php 
+} ?> col-xs-12">
                 <?php
                 if ($attribute_mode) {
                     $attribute_helper = new Concrete\Core\Form\Service\Widget\Attribute();
@@ -99,7 +113,7 @@ $attribute_mode = (isset($required_attributes) && count($required_attributes));
                                 foreach ($required_attributes as $key) {
                                     echo $attribute_helper->display($key, true);
                                 }
-                                ?>
+                    ?>
                             </div>
                             <div class="form-group">
                                 <button class="btn btn-primary pull-right"><?php echo t('Submit') ?></button>
@@ -108,9 +122,9 @@ $attribute_mode = (isset($required_attributes) && count($required_attributes));
                         </div>
                     </form>
                     <?php
+
                 } else {
                     /** @var AuthenticationType[] $activeAuths */
-
                     foreach ($activeAuths as $auth) {
                         ?>
                         <div data-handle="<?php echo $auth->getAuthenticationTypeHandle() ?>"
@@ -118,6 +132,7 @@ $attribute_mode = (isset($required_attributes) && count($required_attributes));
                             <?php $auth->renderForm($authTypeElement ?: 'form', $authTypeParams ?: array()) ?>
                         </div>
                     <?php
+
                     }
                 }
                 ?>
@@ -214,6 +229,7 @@ $attribute_mode = (isset($required_attributes) && count($required_attributes));
                 $("ul.auth-types > li[data-handle='<?php echo $lastAuthType->getAuthenticationTypeHandle() ?>']")
                     .trigger("click");
                 <?php
+
             }
             ?>
         })(jQuery);

@@ -1,5 +1,4 @@
 <?php
-
 namespace Concrete\Controller\SinglePage\Dashboard\System\Multilingual;
 
 use Concrete\Controller\Panel\Multilingual;
@@ -7,16 +6,16 @@ use Concrete\Core\Foundation\Queue\Queue;
 use Concrete\Core\Multilingual\Page\Section\Processor\MultilingualProcessorTarget;
 use Concrete\Core\Multilingual\Page\Section\Processor\Processor;
 use Concrete\Core\Multilingual\Page\Section\Section;
-use \Concrete\Core\Page\Controller\DashboardPageController;
+use Concrete\Core\Page\Controller\DashboardPageController;
+use Concrete\Core\Page\Controller\DashboardSitePageController;
 
 defined('C5_EXECUTE') or die("Access Denied.");
 
-class Copy extends DashboardPageController
+class Copy extends DashboardSitePageController
 {
-
     public function view()
     {
-        $this->set('pages', Section::getList());
+        $this->set('locales', $this->getSite()->getLocales());
     }
 
     public function tree_copied()
@@ -41,52 +40,20 @@ class Copy extends DashboardPageController
                 $target = new MultilingualProcessorTarget($section);
                 $processor = new Processor($target);
                 if ($_POST['process']) {
-                    foreach($processor->receive() as $task) {
+                    foreach ($processor->receive() as $task) {
                         $processor->execute($task);
                     }
-                    $obj = new \stdClass;
+                    $obj = new \stdClass();
                     $obj->totalItems = $processor->getTotalTasks();
-                    print json_encode($obj);
+                    echo json_encode($obj);
                     exit;
                 } else {
                     $processor->process();
                 }
                 $totalItems = $processor->getTotalTasks();
                 \View::element('progress_bar', array('totalItems' => $totalItems, 'totalItemsSummary' => t2("%d task", "%d tasks", $totalItems)));
-                /*
-                                $q = Queue::get('rescan_multilingual_section');
-                                if ($_POST['process']) {
-                                    $obj = new \stdClass;
-                                    $messages = $q->receive(\Config::get('concrete.limits.copy_pages'));
-                                    foreach($messages as $key => $p) {
-                                        // delete the page here
-                                        $page = unserialize($p->body);
-                                        $oc = \Page::getByID($page['cID']);
-
-
-                                        $q->deleteMessage($p);
-                                    }
-
-                                    $obj->totalItems = $q->count();
-                                    print json_encode($obj);
-                                    if ($q->count() == 0) {
-                                        $q->deleteQueue('rescan_multilingual_section');
-                                    }
-                                    exit;
-
-                                } else if ($q->count() == 0) {
-                                    $oc = Section::getByID($_REQUEST['locale']);
-                                    if (is_object($oc) && !$oc->isError()) {
-                                        $oc->queueForDeletionRequest($q, false);
-                                    }
-                                }
-                                $totalItems = $q->count();
-                                \View::element('progress_bar', array('totalItems' => $totalItems, 'totalItemsSummary' => t2("%d page", "%d pages", $totalItems)));
-                                */
-
                 exit;
             }
         }
     }
-
 }

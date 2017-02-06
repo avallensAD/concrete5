@@ -1,5 +1,4 @@
 <?php
-
 namespace Concrete\Core\StyleCustomizer;
 
 use Config;
@@ -38,8 +37,8 @@ class Stylesheet
         $parser = new \Less_Parser(
             array(
                 'cache_dir' => Config::get('concrete.cache.directory'),
-                'compress' => !!Config::get('concrete.theme.compress_preprocessor_output'),
-                'sourceMap' => !Config::get('concrete.theme.compress_preprocessor_output') && !!Config::get('concrete.theme.generate_less_sourcemap'),
+                'compress' => (bool) Config::get('concrete.theme.compress_preprocessor_output'),
+                'sourceMap' => !Config::get('concrete.theme.compress_preprocessor_output') && (bool) Config::get('concrete.theme.generate_less_sourcemap'),
             )
         );
         $parser = $parser->parseFile($this->file, $this->sourceUriRoot);
@@ -67,7 +66,10 @@ class Stylesheet
 
     public function clearOutputFile()
     {
-        @unlink($this->getOutputPath());
+        $filename = $this->getOutputPath();
+        if (file_exists($filename)) {
+            @unlink($filename);
+        }
     }
 
     public function outputFileExists()

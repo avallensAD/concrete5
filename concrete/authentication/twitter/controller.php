@@ -4,6 +4,7 @@ namespace Concrete\Authentication\Twitter;
 defined('C5_EXECUTE') or die('Access Denied');
 
 use Concrete\Core\Authentication\Type\OAuth\OAuth1a\GenericOauth1aTypeController;
+use Concrete\Core\Authentication\Type\Twitter\Factory\TwitterServiceFactory;
 use Concrete\Core\Validation\CSRF\Token;
 use OAuth\Common\Exception\Exception;
 use OAuth\OAuth1\Service\Twitter;
@@ -65,8 +66,11 @@ class Controller extends GenericOauth1aTypeController
     public function getService()
     {
         if (!$this->service) {
-            $this->service = \Core::make('authentication/twitter');
+            /** @var TwitterServiceFactory $factory */
+            $factory = $this->app->make(TwitterServiceFactory::class);
+            $this->service = $factory->createService();
         }
+
         return $this->service;
     }
 
@@ -74,7 +78,7 @@ class Controller extends GenericOauth1aTypeController
     {
         \Config::save('auth.twitter.appid', $args['apikey']);
         \Config::save('auth.twitter.secret', $args['apisecret']);
-        \Config::save('auth.twitter.registration.enabled', !!$args['registration_enabled']);
+        \Config::save('auth.twitter.registration.enabled', (bool) $args['registration_enabled']);
         \Config::save('auth.twitter.registration.group', intval($args['registration_group'], 10));
     }
 
@@ -91,7 +95,9 @@ class Controller extends GenericOauth1aTypeController
 
     /**
      * We override this method because twitter doesn't give us the email, we have to have the user input it before we can create a user.
+     *
      * @return null|\User
+     *
      * @throws Exception
      */
     protected function attemptAuthentication()
@@ -120,7 +126,7 @@ class Controller extends GenericOauth1aTypeController
             $flashbag->set('username', parent::getUsername());
             $flashbag->set('token', $this->getToken());
 
-            $response = \Redirect::to('/login/callback/twitter/handle_register/', id(new Token)->generate('twitter_register'));
+            $response = \Redirect::to('/login/callback/twitter/handle_register/', id(new Token())->generate('twitter_register'));
             $response->send();
             exit;
         }
@@ -128,7 +134,8 @@ class Controller extends GenericOauth1aTypeController
         return null;
     }
 
-    public function handle_register($token=null) {
+    public function handle_register($token = null)
+    {
 
         /** @var FlashBagInterface $flashbag */
         $flashbag = \Session::getFlashBag();
@@ -137,7 +144,7 @@ class Controller extends GenericOauth1aTypeController
         $this->username = array_shift($flashbag->peek('username'));
         $this->token = array_shift($flashbag->peek('token'));
 
-        $token_helper = new Token;
+        $token_helper = new Token();
 
         if (!$token_helper->validate('twitter_register', $token) && !$token_helper->validate('twitter_register') ||
             !$this->token) {
@@ -149,7 +156,7 @@ class Controller extends GenericOauth1aTypeController
 
             $user = $this->createUser();
             if ($user && !$user->isError()) {
-                $this->completeAuthentication($user);
+                return $this->completeAuthentication($user);
             }
         }
 
@@ -157,37 +164,44 @@ class Controller extends GenericOauth1aTypeController
         $this->set('show_email', true);
     }
 
-    public function supportsEmail() {
+    public function supportsEmail()
+    {
         return true;
     }
 
-    public function getEmail() {
+    public function getEmail()
+    {
         if (!$this->email) {
             $this->email = parent::getEmail();
         }
+
         return $this->email;
     }
 
-    public function getFirstName() {
+    public function getFirstName()
+    {
         if (!$this->firstName) {
             $this->firstName = parent::getFirstname();
         }
+
         return $this->firstName;
     }
 
-    public function getLastName() {
+    public function getLastName()
+    {
         if (!$this->lastName) {
             $this->lastName = parent::getLastName();
         }
+
         return $this->lastName;
     }
 
-    public function getUsername() {
+    public function getUsername()
+    {
         if (!$this->username) {
             $this->username = parent::getUsername();
         }
+
         return $this->username;
     }
-
-
 }

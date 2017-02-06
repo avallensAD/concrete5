@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -18,28 +18,28 @@ class Barcode extends AbstractValidator
     const INVALID_CHARS  = 'barcodeInvalidChars';
     const INVALID_LENGTH = 'barcodeInvalidLength';
 
-    protected $messageTemplates = array(
+    protected $messageTemplates = [
         self::FAILED         => "The input failed checksum validation",
         self::INVALID_CHARS  => "The input contains invalid characters",
         self::INVALID_LENGTH => "The input should have a length of %length% characters",
         self::INVALID        => "Invalid type given. String expected",
-    );
+    ];
 
     /**
      * Additional variables available for validation failure messages
      *
      * @var array
      */
-    protected $messageVariables = array(
-        'length' => array('options' => 'length'),
-    );
+    protected $messageVariables = [
+        'length' => ['options' => 'length'],
+    ];
 
-    protected $options = array(
+    protected $options = [
         'adapter'     => null,  // Barcode adapter Zend\Validator\Barcode\AbstractAdapter
         'options'     => null,  // Options for this adapter
         'length'      => null,
         'useChecksum' => null,
-    );
+    ];
 
     /**
      * Constructor for barcodes
@@ -48,12 +48,16 @@ class Barcode extends AbstractValidator
      */
     public function __construct($options = null)
     {
+        if ($options === null) {
+            $options = [];
+        }
+
         if (!is_array($options) && !($options instanceof Traversable)) {
-            $options = array('adapter' => $options);
+            $options = ['adapter' => $options];
         }
 
         if (array_key_exists('options', $options)) {
-            $options['options'] = array('options' => $options['options']);
+            $options['options'] = ['options' => $options['options']];
         }
 
         parent::__construct($options);
@@ -91,14 +95,19 @@ class Barcode extends AbstractValidator
                 throw new Exception\InvalidArgumentException('Barcode adapter matching "' . $adapter . '" not found');
             }
 
-            $this->options['adapter'] = new $adapter($options);
+            $adapter = new $adapter($options);
         }
 
-        if (!$this->options['adapter'] instanceof Barcode\AdapterInterface) {
+        if (!$adapter instanceof Barcode\AdapterInterface) {
             throw new Exception\InvalidArgumentException(
-                "Adapter $adapter does not implement Zend\\Validate\\Barcode\\AdapterInterface"
+                sprintf(
+                    "Adapter %s does not implement Zend\\Validator\\Barcode\\AdapterInterface",
+                    (is_object($adapter) ? get_class($adapter) : gettype($adapter))
+                )
             );
         }
+
+        $this->options['adapter'] = $adapter;
 
         return $this;
     }

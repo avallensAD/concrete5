@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -27,12 +27,12 @@ class PostCode extends AbstractValidator
     /**
      * @var array
      */
-    protected $messageTemplates = array(
+    protected $messageTemplates = [
         self::INVALID        => "Invalid type given. String or integer expected",
         self::NO_MATCH       => "The input does not appear to be a postal code",
         self::SERVICE        => "The input does not appear to be a postal code",
         self::SERVICEFAILURE => "An exception has been raised while validating the input",
-    );
+    ];
 
     /**
      * Optional Locale to use
@@ -60,8 +60,8 @@ class PostCode extends AbstractValidator
      *
      * @var array
      */
-    protected static $postCodeRegex = array(
-        'GB' => 'GIR[ ]?0AA|((AB|AL|B|BA|BB|BD|BH|BL|BN|BR|BS|BT|CA|CB|CF|CH|CM|CO|CR|CT|CV|CW|DA|DD|DE|DG|DH|DL|DN|DT|DY|E|EC|EH|EN|EX|FK|FY|G|GL|GY|GU|HA|HD|HG|HP|HR|HS|HU|HX|IG|IM|IP|IV|JE|KA|KT|KW|KY|L|LA|LD|LE|LL|LN|LS|LU|M|ME|MK|ML|N|NE|NG|NN|NP|NR|NW|OL|OX|PA|PE|PH|PL|PO|PR|RG|RH|RM|S|SA|SE|SG|SK|SL|SM|SN|SO|SP|SR|SS|ST|SW|SY|TA|TD|TF|TN|TQ|TR|TS|TW|UB|W|WA|WC|WD|WF|WN|WR|WS|WV|YO|ZE)(\d[\dA-Z]?[ ]?\d[ABD-HJLN-UW-Z]{2}))|BFPO[ ]?\d{1,4}',
+    protected static $postCodeRegex = [
+        'GB' => 'GIR[ ]?0AA|^((AB|AL|B|BA|BB|BD|BH|BL|BN|BR|BS|BT|CA|CB|CF|CH|CM|CO|CR|CT|CV|CW|DA|DD|DE|DG|DH|DL|DN|DT|DY|E|EC|EH|EN|EX|FK|FY|G|GL|GY|GU|HA|HD|HG|HP|HR|HS|HU|HX|IG|IM|IP|IV|JE|KA|KT|KW|KY|L|LA|LD|LE|LL|LN|LS|LU|M|ME|MK|ML|N|NE|NG|NN|NP|NR|NW|OL|OX|PA|PE|PH|PL|PO|PR|RG|RH|RM|S|SA|SE|SG|SK|SL|SM|SN|SO|SP|SR|SS|ST|SW|SY|TA|TD|TF|TN|TQ|TR|TS|TW|UB|W|WA|WC|WD|WF|WN|WR|WS|WV|YO|ZE)(\d[\dA-Z]?[ ]?\d[ABD-HJLN-UW-Z]{2}))$|^BFPO[ ]?\d{1,4}',
         'JE' => 'JE\d[\dA-Z]?[ ]?\d[ABD-HJLN-UW-Z]{2}',
         'GG' => 'GY\d[\dA-Z]?[ ]?\d[ABD-HJLN-UW-Z]{2}',
         'IM' => 'IM\d[\dA-Z]?[ ]?\d[ABD-HJLN-UW-Z]{2}',
@@ -69,7 +69,7 @@ class PostCode extends AbstractValidator
         'CA' => '[ABCEGHJKLMNPRSTVXY]\d[ABCEGHJ-NPRSTV-Z][ ]?\d[ABCEGHJ-NPRSTV-Z]\d',
         'DE' => '\d{5}',
         'JP' => '\d{3}-\d{4}',
-        'FR' => '\d{2}[ ]?\d{3}',
+        'FR' => '(?!(0{2})|(9(6|9))[ ]?\d{3})(\d{2}[ ]?\d{3})',
         'AU' => '\d{4}',
         'IT' => '\d{5}',
         'CH' => '\d{4}',
@@ -79,7 +79,7 @@ class PostCode extends AbstractValidator
         'BE' => '\d{4}',
         'DK' => '\d{4}',
         'SE' => '\d{3}[ ]?\d{2}',
-        'NO' => '\d{4}',
+        'NO' => '(?!0000)\d{4}',
         'BR' => '\d{5}[\-]?\d{3}',
         'PT' => '\d{4}([\-]\d{3})?',
         'FI' => '\d{5}',
@@ -140,7 +140,7 @@ class PostCode extends AbstractValidator
         'MY' => '\d{5}',
         'MV' => '\d{5}',
         'MT' => '[A-Z]{3}[ ]?\d{2,4}',
-        'MU' => '(\d{3}[A-Z]{2}\d{3})?',
+        'MU' => '\d{5}',
         'MX' => '\d{5}',
         'MD' => '\d{4}',
         'MC' => '980\d{2}',
@@ -178,7 +178,7 @@ class PostCode extends AbstractValidator
         'AS' => '96799',
         'CC' => '6799',
         'CK' => '\d{4}',
-        'RS' => '\d{6}',
+        'RS' => '\d{5}',
         'ME' => '8\d{4}',
         'CS' => '\d{5}',
         'YU' => '\d{5}',
@@ -219,7 +219,8 @@ class PostCode extends AbstractValidator
         'TC' => 'TKCA 1ZZ',
         'WF' => '986\d{2}',
         'YT' => '976\d{2}',
-    );
+        'VN' => '\d{6}',
+    ];
 
     /**
      * Constructor for the PostCode validator
@@ -229,7 +230,7 @@ class PostCode extends AbstractValidator
      * @param  array|Traversable $options
      * @throws Exception\ExtensionNotLoadedException if ext/intl is not present
      */
-    public function __construct($options = array())
+    public function __construct($options = [])
     {
         if (!extension_loaded('intl')) {
             throw new I18nException\ExtensionNotLoadedException(sprintf(
@@ -369,10 +370,10 @@ class PostCode extends AbstractValidator
 
             try {
                 $callback = new Callback($service);
-                $callback->setOptions(array(
+                $callback->setOptions([
                     'format' => $format,
                     'locale' => $locale,
-                ));
+                ]);
                 if (!$callback->isValid($value)) {
                     $this->error(self::SERVICE, $value);
                     return false;

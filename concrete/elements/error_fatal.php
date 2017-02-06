@@ -2,4 +2,4 @@
 
 <h3><?php echo $titleContent?></h3>
 
-<div class="alert alert-danger"><?php print $innerContent ?></div>
+<div class="alert alert-danger"><?php echo $innerContent ?></div>

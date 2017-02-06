@@ -2,12 +2,14 @@
 namespace Concrete\Block\ImageSlider;
 
 use Concrete\Core\Block\BlockController;
+use Concrete\Core\File\Tracker\FileTrackableInterface;
+use Concrete\Core\Statistics\UsageTracker\AggregateTracker;
 use Database;
 use Page;
 use Concrete\Core\Editor\LinkAbstractor;
 use Core;
 
-class Controller extends BlockController
+class Controller extends BlockController implements FileTrackableInterface
 {
     protected $btTable = 'btImageSlider';
     protected $btExportTables = array('btImageSlider', 'btImageSliderEntries');
@@ -20,6 +22,23 @@ class Controller extends BlockController
     protected $btCacheBlockOutputOnPost = true;
     protected $btCacheBlockOutputForRegisteredUsers = false;
     protected $btIgnorePageThemeGridFrameworkContainer = true;
+
+    /**
+     * @var \Concrete\Core\Statistics\UsageTracker\AggregateTracker
+     */
+    protected $tracker;
+
+    /**
+     * Instantiates the block controller.
+     *
+     * @param BlockType|null $obj
+     * @param \Concrete\Core\Statistics\UsageTracker\AggregateTracker $tracker
+     */
+    public function __construct($obj = null, AggregateTracker $tracker = null)
+    {
+        parent::__construct($obj);
+        $this->tracker = $tracker;
+    }
 
     public function getBlockTypeDescription()
     {
@@ -50,14 +69,12 @@ class Controller extends BlockController
     {
         $this->requireAsset('core/file-manager');
         $this->requireAsset('core/sitemap');
-        $this->requireAsset('redactor');
     }
 
     public function edit()
     {
         $this->requireAsset('core/file-manager');
         $this->requireAsset('core/sitemap');
-        $this->requireAsset('redactor');
         $db = Database::get();
         $query = $db->GetAll('SELECT * from btImageSliderEntries WHERE bID = ? ORDER BY sortOrder', array($this->bID));
         $this->set('rows', $query);
@@ -74,7 +91,6 @@ class Controller extends BlockController
 
         $this->requireAsset('javascript', 'jquery');
         $this->requireAsset('responsive-slides');
-
 
         $al->register('javascript', 'responsiveslides', 'blocks/image_slider/responsiveslides.js');
         $this->requireAsset('javascript', 'blocks/image_slider/responsiveslides');
@@ -134,6 +150,8 @@ class Controller extends BlockController
         $db = Database::get();
         $db->delete('btImageSliderEntries', array('bID' => $this->bID));
         parent::delete();
+
+        $this->tracker->forget($this);
     }
 
     public function validate($args)
@@ -150,9 +168,10 @@ class Controller extends BlockController
         }
         // https://github.com/viljamis/ResponsiveSlides.js/issues/132#issuecomment-12543345
         // "The 'timeout' (amount of time spent on one slide) has to be at least 100 bigger than 'speed', otherwise the function simply returns."
-        if(($timeout - $speed) < 100) {
+        if (($timeout - $speed) < 100) {
             $error->add(t('Slide Duration must be at least 100 ms greater than the Slide Transition Speed.'));
         }
+
         return $error;
     }
 
@@ -209,5 +228,20 @@ class Controller extends BlockController
                 ++$i;
             }
         }
+
+        $this->tracker->track($this);
     }
+
+    public function getUsedFiles()
+    {
+        return array_map(function($entry) {
+            return $entry['fID'];
+        }, $this->getEntries());
+    }
+
+    public function getUsedCollection()
+    {
+        return $this->getCollectionObject();
+    }
+
 }

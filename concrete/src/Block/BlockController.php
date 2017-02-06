@@ -1,10 +1,9 @@
 <?php
-
 namespace Concrete\Core\Block;
 
 use Concrete\Core\Backup\ContentExporter;
 use Concrete\Core\Backup\ContentImporter;
-use Concrete\Core\Block\BlockType\BlockType;
+use Concrete\Core\Entity\Block\BlockType\BlockType;
 use Concrete\Core\Block\View\BlockViewTemplate;
 use Concrete\Core\Controller;
 use Concrete\Core\Feature\Feature;
@@ -21,10 +20,10 @@ use Page;
 
 class BlockController extends \Concrete\Core\Controller\AbstractController
 {
-    public $headerItems = array(); // blockrecord
+    public $headerItems = []; // blockrecord
     public $blockViewRenderOverride;
     protected $record;
-    protected $helpers = array('form');
+    protected $helpers = ['form'];
     protected $block;
     protected $bID;
     protected $btDescription = "";
@@ -45,16 +44,21 @@ class BlockController extends \Concrete\Core\Controller\AbstractController
     protected $btCacheBlockOutputOnPost = false;
     protected $btCacheBlockOutputForRegisteredUsers = false;
     protected $bActionCID;
-    protected $btExportPageColumns = array();
-    protected $btExportFileColumns = array();
-    protected $btExportPageTypeColumns = array();
-    protected $btExportPageFeedColumns = array();
+    protected $btExportPageColumns = [];
+    protected $btExportFileColumns = [];
+    protected $btExportPageTypeColumns = [];
+    protected $btExportPageFeedColumns = [];
     protected $btWrapperClass = '';
     protected $btDefaultSet;
-    protected $btFeatures = array();
+    protected $btFeatures = [];
     protected $btFeatureObjects;
     protected $identifier;
     protected $btTable = null;
+
+    public function getBlockTypeInSetName()
+    {
+        return $this->getBlockTypeName();
+    }
 
     public function getBlockTypeExportPageColumns()
     {
@@ -79,7 +83,7 @@ class BlockController extends \Concrete\Core\Controller\AbstractController
      *     $this->doSecondSpecialInstallMethod();
      *     parent::install($path);
      * }
-     * </code>
+     * </code>.
      *
      * There are several different possible return values:
      *  Returns FALSE if $btTable is set but no db.xml file exists.
@@ -116,7 +120,7 @@ class BlockController extends \Concrete\Core\Controller\AbstractController
      * public function view() { // The view() method is automatically run when a block is viewed
      *     $this->render("other_special_view"); // don't use .php
      * }
-     * </code>
+     * </code>.
      *
      * @param string $view
      */
@@ -157,7 +161,7 @@ class BlockController extends \Concrete\Core\Controller\AbstractController
             if ($this->cacheBlockRecord() && Config::get('concrete.cache.blocks')) {
                 $record = base64_encode(serialize($this->record));
                 $db = Database::connection();
-                $db->Execute('update Blocks set btCachedBlockRecord = ? where bID = ?', array($record, $this->bID));
+                $db->Execute('update Blocks set btCachedBlockRecord = ? where bID = ?', [$record, $this->bID]);
             }
         }
     }
@@ -265,7 +269,7 @@ class BlockController extends \Concrete\Core\Controller\AbstractController
                     // this is the first time we're loading
                     $record = base64_encode(serialize($this->record));
                     $db = Database::connection();
-                    $db->Execute('update Blocks set btCachedBlockRecord = ? where bID = ?', array($record, $this->bID));
+                    $db->Execute('update Blocks set btCachedBlockRecord = ? where bID = ?', [$record, $this->bID]);
                 }
             }
         }
@@ -288,7 +292,7 @@ class BlockController extends \Concrete\Core\Controller\AbstractController
     public function getBlockTypeFeatureObjects()
     {
         if (!isset($this->btFeatureObjects)) {
-            $this->btFeatureObjects = array();
+            $this->btFeatureObjects = [];
             foreach ($this->btFeatures as $feHandle) {
                 $fe = Feature::getByHandle($feHandle);
                 if (is_object($fe)) {
@@ -317,7 +321,7 @@ class BlockController extends \Concrete\Core\Controller\AbstractController
             $columns = $db->MetaColumns($tbl);
             // remove columns we don't want
             unset($columns['bid']);
-            $r = $db->Execute('select * from ' . $tbl . ' where bID = ?', array($this->bID));
+            $r = $db->Execute('select * from ' . $tbl . ' where bID = ?', [$this->bID]);
             while ($record = $r->FetchRow()) {
                 $tableRecord = $data->addChild('record');
                 foreach ($record as $key => $value) {
@@ -352,9 +356,9 @@ class BlockController extends \Concrete\Core\Controller\AbstractController
         $db = Database::connection();
         // handle the adodb stuff
         $args = $this->getImportData($blockNode, $page);
-        $blockData = array();
+        $blockData = [];
 
-        $bt = BlockType::getByHandle($this->btHandle);
+        $bt = \Concrete\Core\Block\BlockType\BlockType::getByHandle($this->btHandle);
         $b = $page->addBlock($bt, $arHandle, $args);
         $bName = (string) $blockNode['name'];
         $bFilename = (string) $blockNode['custom-template'];
@@ -392,7 +396,7 @@ class BlockController extends \Concrete\Core\Controller\AbstractController
 
     protected function getImportData($blockNode, $page)
     {
-        $args = array();
+        $args = [];
         $inspector = \Core::make('import/value_inspector');
         if (isset($blockNode->data)) {
             foreach ($blockNode->data as $data) {
@@ -447,12 +451,14 @@ class BlockController extends \Concrete\Core\Controller\AbstractController
     public function validateEditBlockPassThruAction(Block $b)
     {
         $bp = new \Permissions($b);
+
         return $bp->canEditBlock();
     }
 
     public function validateComposerAddBlockPassThruAction(Type $type)
     {
         $pp = new \Permissions($type);
+
         return $pp->canAddPageType();
     }
 
@@ -466,15 +472,15 @@ class BlockController extends \Concrete\Core\Controller\AbstractController
         $method = 'action_' . $parameters[0];
         $parameters = array_slice($parameters, 1);
 
-        return array($method, $parameters);
+        return [$method, $parameters];
     }
 
-    public function isValidControllerTask($method, $parameters = array())
+    public function isValidControllerTask($method, $parameters = [])
     {
         if (strpos($method, 'action_') !== 0) { // gotta start with action_
             return false;
         }
-        if (is_callable(array($this, $method))) {
+        if (is_callable([$this, $method])) {
             $r = new \ReflectionMethod(get_class($this), $method);
             if (count($parameters) - $r->getNumberOfParameters() <= 1) {
                 // how do we get <= 1? If it's 1, that means that the method has one fewer param. That's ok because
@@ -618,7 +624,7 @@ class BlockController extends \Concrete\Core\Controller\AbstractController
             $this->on_start($method);
         }
         if ($method) {
-            $this->runTask($method, array());
+            $this->runTask($method, []);
         }
 
         if (method_exists($this, 'on_before_render')) {
@@ -642,8 +648,6 @@ class BlockController extends \Concrete\Core\Controller\AbstractController
     }
 
     /**
-     * @access private
-     *
      * @todo   Make block's uninstallable
      */
     public function uninstall()
@@ -696,12 +700,9 @@ class BlockController extends \Concrete\Core\Controller\AbstractController
      */
     public function getBlockTypeHelp()
     {
-        return $this->btHelpContent;
+        return isset($this->btHelpContent) ? $this->btHelpContent : null;
     }
 
-    /**
-     * @access private
-     */
     public function isCopiedWhenPropagated()
     {
         return $this->btCopyWhenPropagate;
@@ -763,6 +764,6 @@ class BlockController extends \Concrete\Core\Controller\AbstractController
      */
     public function getJavaScriptStrings()
     {
-        return array();
+        return [];
     }
 }

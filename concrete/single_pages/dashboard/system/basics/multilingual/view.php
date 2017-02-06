@@ -1,11 +1,15 @@
 <?php defined('C5_EXECUTE') or die("Access Denied.");?>
-<?php if (count($interfacelocales) <= 1) { ?>
+<?php if (count($interfacelocales) <= 1) {
+    ?>
 <fieldset>
-	<?php echo t("You don't have any interface languages installed. You must run concrete5 in English.");?>
+	<?php echo t("You don't have any interface languages installed. You must run concrete5 in English.");
+    ?>
 </fieldset>
-<?php } else { ?>
+<?php 
+} else {
+    ?>
 
-<form method="post" class="form-horizontal" action="<?php echo $view->action('save_interface_language')?>">
+<form method="post" action="<?php echo $view->action('save_interface_language')?>">
     <fieldset>
 
         <div class="form-group">
@@ -17,11 +21,15 @@
         <div class="form-group">
             <?php echo $form->label('SITE_LOCALE', t('Default Language'))?>
             <div class="checkbox">
-                <?php echo $form->select('SITE_LOCALE', $interfacelocales, $SITE_LOCALE);?>
+                <?php echo $form->select('SITE_LOCALE', $interfacelocales, $SITE_LOCALE);
+    ?>
             </div>
         </div>
 
-        <br/>
+        <div class="alert alert-info">
+            <p><?php echo t('Additional languages can be downloaded from <a href="%s">concrete5.org</a>.', 'http://www.concrete5.org/developers/translate')?></p>
+        </div>
+
         <?php echo Loader::helper('validation/token')->output('save_interface_language')?>
     </fieldset>
     <div class="ccm-dashboard-form-actions-wrapper">
@@ -31,4 +39,5 @@
     </div>
 </form>
 	
-<?php } ?>
+<?php 
+} ?>

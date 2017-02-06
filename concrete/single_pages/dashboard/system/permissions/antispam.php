@@ -2,34 +2,35 @@
 <form method="post" id="site-form" action="<?php echo $view->action('update_library')?>">
     <div class="form-group">
 		<label for='group_id'><?php echo t('Spam Whitelist Group')?></label>
-		<?php echo $form->select('group_id', (array)$groups, $whitelistGroup);?>
+		<?php echo $form->select('group_id', (array) $groups, $whitelistGroup);?>
     </div>
 	<?php echo $this->controller->token->output('update_library')?>
-	<?php if (count($libraries) > 0) { ?>
+	<?php if (count($libraries) > 0) {
+    ?>
 
 		<div class="form-group">
 		<?php echo $form->label('activeLibrary', t('Active Library'))?>
 		<?php
-		$activeHandle = '';
-		if (is_object($activeLibrary)) {
-			$activeHandle = $activeLibrary->getSystemAntispamLibraryHandle();
-		}
-		?>
+        $activeHandle = '';
+    if (is_object($activeLibrary)) {
+        $activeHandle = $activeLibrary->getSystemAntispamLibraryHandle();
+    }
+    ?>
 
 		<?php echo $form->select('activeLibrary', $libraries, $activeHandle, array('class' => 'form-control'))?>
 		</div>
 
 		<?php if (is_object($activeLibrary)) {
-			if ($activeLibrary->hasOptionsForm()) {
-				if ($activeLibrary->getPackageID() > 0) {
-					Loader::packageElement('system/antispam/' . $activeLibrary->getSystemAntispamLibraryHandle() . '/form', $activeLibrary->getPackageHandle());
-				} else {
-					Loader::element('system/antispam/' . $activeLibrary->getSystemAntispamLibraryHandle() . '/form');
-				}
-			}
-		}
-		if (is_object($activeLibrary)) {
-			?>
+    if ($activeLibrary->hasOptionsForm()) {
+        if ($activeLibrary->getPackageID() > 0) {
+            Loader::packageElement('system/antispam/' . $activeLibrary->getSystemAntispamLibraryHandle() . '/form', $activeLibrary->getPackageHandle());
+        } else {
+            Loader::element('system/antispam/' . $activeLibrary->getSystemAntispamLibraryHandle() . '/form');
+        }
+    }
+}
+    if (is_object($activeLibrary)) {
+        ?>
 			<fieldset>
 				<legend style="margin-bottom: 0"><?php echo t('Log Settings')?></legend>
 				<div class="checkbox">
@@ -46,12 +47,16 @@
 				</div>
 			</fieldset>
 			<?php
-		}
-		?>
 
-	<?php } else { ?>
+    }
+    ?>
+
+	<?php 
+} else {
+    ?>
 		<p><?php echo t('You have no anti-spam libraries installed.')?></p>
-	<?php } ?>
+	<?php 
+} ?>
 
 	<div class="ccm-dashboard-form-actions-wrapper">
         <div class="ccm-dashboard-form-actions">

@@ -1,8 +1,8 @@
 <?php
-	defined('C5_EXECUTE') or die("Access Denied.");
-	$bObj=$controller;
-	$al = Loader::helper('concrete/asset_library');
-	$bf = null;
+    defined('C5_EXECUTE') or die("Access Denied.");
+    $bObj = $controller;
+    $al = Loader::helper('concrete/asset_library');
+    $bf = null;
     if ($controller->getWebmFileID() > 0) {
         $webm = $controller->getWebMFileObject();
     }
@@ -17,33 +17,24 @@
         $poster = $controller->getPosterFileObject();
     }
 ?>
-<style>
-    .help-text {
-        color: #ddd;
-        display: block;
-        line-height: 1.3em;
-        font-size: 11px;
-        margin-bottom: 20px;
-    }
-</style>
+
 <fieldset>
-    <div class="form-group">
-    <label><?php echo t('Video Files')?></label>
-        <span class="help-text"><?php echo t('Include WebM, Ogg, and MP4 file types for best cross-browser results') ?></span>
+    <legend><?php echo t('Video Files')?></legend>
+
         <div class="form-group">
-            <label><?php echo t('Video Placeholder Image'); ?></label>
+            <label class="control-label"><?php echo t('Video Placeholder Image'); ?></label>
             <?php echo $al->image('ccm-b-poster-file', 'posterfID', t('Choose Video Placeholder Image (Optional)'), $poster);?>
         </div>
         <div class="form-group">
-            <label>WebM</label>
+            <label class="control-label"><?php echo t('WebM')?></label>
             <?php echo $al->video('ccm-b-webm-file', 'webmfID', t('Choose WebM Video File'), $webm);?>
         </div>
         <div class="form-group">
-            <label>Ogg</label>
+            <label class="control-label"><?php echo t('OGG')?></label>
             <?php echo $al->video('ccm-b-ogg-file', 'oggfID', t('Choose Video File'), $ogg);?>
         </div>
         <div class="form-group">
-            <label>MP4</label>
+            <label class="control-label"><?php echo t('MP4')?></label>
             <?php echo $al->video('ccm-b-mp4-file', 'mp4fID', t('Choose Video File'), $mp4);?>
         </div>
 </fieldset>

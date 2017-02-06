@@ -37,7 +37,7 @@ if (!$editmode) {
                 </tr>
             </thead>
             <tbody><?php
-                foreach($ats as $at) {
+                foreach ($ats as $at) {
                     ?><tr
                         data-authID="<?php echo $at->getAuthenticationTypeID()?>"
                         data-editURL="<?php echo h($view->action('edit', $at->getAuthenticationTypeID()))?>"
@@ -52,8 +52,9 @@ if (!$editmode) {
                         <td><?php echo $at->getAuthenticationTypeName()?></td>
                         <td style="text-align:right"><i style="cursor: move" class="fa fa-arrows"></i></td>
                     </tr><?php
+
                 }
-            ?></tbody>
+    ?></tbody>
         </table>
     </fieldset>
     <script type="text/javascript">
@@ -87,14 +88,15 @@ if (!$editmode) {
     })(jQuery, window.location);
     </script>
     <?php
+
 } else {
     ?>
     <?php echo $at->renderTypeForm()?>
     <?php
+
 }
 
 if ($editmode) {
-
     $url = $view->action($at->isEnabled() ? 'disable' : 'enable', $at->getAuthenticationTypeID());
     $url = Concrete\Core\Url\Url::createFromUrl($url);
     $url = $url->setQuery(array('ccm_token' => $token->generate("auth_type_toggle.{$at->getAuthenticationTypeID()}")));
@@ -112,4 +114,5 @@ if ($editmode) {
         </div>
     </form>
     <?php
+
 }

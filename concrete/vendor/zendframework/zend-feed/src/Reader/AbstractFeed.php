@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -20,7 +20,7 @@ abstract class AbstractFeed implements Feed\FeedInterface
      *
      * @var array
      */
-    protected $data = array();
+    protected $data = [];
 
     /**
      * Parsed feed data in the shape of a DOMDocument
@@ -34,7 +34,7 @@ abstract class AbstractFeed implements Feed\FeedInterface
      *
      * @var array
      */
-    protected $entries = array();
+    protected $entries = [];
 
     /**
      * A pointer for the iterator to keep track of the entries array
@@ -55,7 +55,7 @@ abstract class AbstractFeed implements Feed\FeedInterface
      *
      * @var array
      */
-    protected $extensions = array();
+    protected $extensions = [];
 
     /**
      * Original Source URI (set if imported from a URI)
@@ -168,7 +168,7 @@ abstract class AbstractFeed implements Feed\FeedInterface
      */
     public function saveXml()
     {
-          return $this->getDomDocument()->saveXml();
+        return $this->getDomDocument()->saveXml();
     }
 
     /**
@@ -178,7 +178,7 @@ abstract class AbstractFeed implements Feed\FeedInterface
      */
     public function getElement()
     {
-          return $this->getDomDocument()->documentElement;
+        return $this->getDomDocument()->documentElement;
     }
 
     /**
@@ -188,7 +188,7 @@ abstract class AbstractFeed implements Feed\FeedInterface
      */
     public function getXpath()
     {
-          return $this->xpath;
+        return $this->xpath;
     }
 
     /**
@@ -248,7 +248,7 @@ abstract class AbstractFeed implements Feed\FeedInterface
     {
         foreach ($this->extensions as $extension) {
             if (method_exists($extension, $method)) {
-                return call_user_func_array(array($extension, $method), $args);
+                return call_user_func_array([$extension, $method], $args);
             }
         }
         throw new Exception\BadMethodCallException('Method: ' . $method
@@ -266,7 +266,7 @@ abstract class AbstractFeed implements Feed\FeedInterface
         if (array_key_exists($name . '\Feed', $this->extensions)) {
             return $this->extensions[$name . '\Feed'];
         }
-        return null;
+        return;
     }
 
     protected function loadExtensions()

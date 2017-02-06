@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -37,7 +37,7 @@ class Atom extends AbstractEntry implements EntryInterface
         $this->xpathQuery = '//atom:entry[' . ($this->entryKey + 1) . ']';
 
         $manager    = Reader\Reader::getExtensionManager();
-        $extensions = array('Atom\Entry', 'Thread\Entry', 'DublinCore\Entry');
+        $extensions = ['Atom\Entry', 'Thread\Entry', 'DublinCore\Entry'];
 
         foreach ($extensions as $name) {
             $extension = $manager->get($name);
@@ -62,7 +62,7 @@ class Atom extends AbstractEntry implements EntryInterface
             return $authors[$index];
         }
 
-        return null;
+        return;
     }
 
     /**
@@ -104,7 +104,7 @@ class Atom extends AbstractEntry implements EntryInterface
     /**
      * Get the entry creation date
      *
-     * @return string
+     * @return \DateTime
      */
     public function getDateCreated()
     {
@@ -122,7 +122,7 @@ class Atom extends AbstractEntry implements EntryInterface
     /**
      * Get the entry modification date
      *
-     * @return string
+     * @return \DateTime
      */
     public function getDateModified()
     {
@@ -207,7 +207,7 @@ class Atom extends AbstractEntry implements EntryInterface
             return $this->data['links'][$index];
         }
 
-        return null;
+        return;
     }
 
     /**

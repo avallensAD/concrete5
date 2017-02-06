@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -52,12 +52,12 @@ class Writer
      *
      * @var array
      */
-    protected static $extensions = array(
-        'entry'         => array(),
-        'feed'          => array(),
-        'entryRenderer' => array(),
-        'feedRenderer'  => array(),
-    );
+    protected static $extensions = [
+        'entry'         => [],
+        'feed'          => [],
+        'entryRenderer' => [],
+        'feedRenderer'  => [],
+    ];
 
     /**
      * Set plugin loader for use with Extensions
@@ -105,13 +105,16 @@ class Writer
                 return;
             }
         }
-        if (!$manager->has($feedName)
-            && !$manager->has($entryName)
-            && !$manager->has($feedRendererName)
-            && !$manager->has($entryRendererName)
+        if (! $manager->has($feedName)
+            && ! $manager->has($entryName)
+            && ! $manager->has($feedRendererName)
+            && ! $manager->has($entryRendererName)
         ) {
-            throw new Exception\RuntimeException('Could not load extension: ' . $name
-                . 'using Plugin Loader. Check prefix paths are configured and extension exists.');
+            throw new Exception\RuntimeException(sprintf(
+                'Could not load extension "%s" using Plugin Loader. '
+                . 'Check prefix paths are configured and extension exists.',
+                $name
+            ));
         }
         if ($manager->has($feedName)) {
             static::$extensions['feed'][] = $feedName;
@@ -167,12 +170,12 @@ class Writer
     public static function reset()
     {
         static::$extensionManager = null;
-        static::$extensions   = array(
-            'entry'         => array(),
-            'feed'          => array(),
-            'entryRenderer' => array(),
-            'feedRenderer'  => array(),
-        );
+        static::$extensions   = [
+            'entry'         => [],
+            'feed'          => [],
+            'entryRenderer' => [],
+            'feedRenderer'  => [],
+        ];
     }
 
     /**

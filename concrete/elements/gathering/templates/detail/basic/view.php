@@ -2,10 +2,14 @@
 
 <div class="ccm-gathering-overlay">
 	<div class="ccm-gathering-overlay-title"><?php echo $title?></div>
-	<?php if ($date_time) { ?>
+	<?php if ($date_time) {
+    ?>
 		<div><?php echo Core::make('helper/date')->formatDateTime($date_time, true)?></div>
-	<?php } ?>
-	<?php if ($description) { ?>
+	<?php 
+} ?>
+	<?php if ($description) {
+    ?>
 		<p><?php echo $description?></p>
-	<?php } ?>
+	<?php 
+} ?>
 </div>

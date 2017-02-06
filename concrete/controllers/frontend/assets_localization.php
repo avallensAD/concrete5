@@ -4,7 +4,6 @@ namespace Concrete\Controller\Frontend;
 use Controller;
 use Concrete\Core\File\Type\Type as FileType;
 use Concrete\Core\Localization\Localization;
-use Core;
 use Environment;
 
 class AssetsLocalization extends Controller
@@ -22,9 +21,11 @@ class AssetsLocalization extends Controller
         ?>
 var ccmi18n = {
   expand: <?php echo json_encode(t('Expand'))?>,
+  loadingText: <?php echo json_encode(t('Loading'))?>,
   cancel: <?php echo json_encode(t('Cancel'))?>,
   collapse: <?php echo json_encode(t('Collapse'))?>,
   error: <?php echo json_encode(t('Error'))?>,
+  deleteBlockConfirm: <?php echo json_encode(t('Delete Block'))?>,
   deleteBlock: <?php echo json_encode(t('Block Deleted'))?>,
   deleteBlockMsg: <?php echo json_encode(t('The block has been removed successfully.'))?>,
   addBlock: <?php echo json_encode(t('Add Block'))?>,
@@ -88,6 +89,8 @@ var ccmi18n = {
   marketplaceLoginSuccessMsg: <?php echo json_encode(t('<p>You have successfully logged into the concrete5 Marketplace.</p>'))?>,
   marketplaceLogoutSuccessMsg: <?php echo json_encode(t('<p>You are now logged out of concrete5 Marketplace.</p>'))?>,
   deleteAttributeValue: <?php echo json_encode(t('Are you sure you want to remove this value?'))?>,
+  search: <?php echo json_encode(t('Search'))?>,
+  advanced: <?php echo json_encode(t('Advanced'))?>,
   customizeSearch: <?php echo json_encode(t('Customize Search'))?>,
   properties: <?php echo json_encode(t('Page Saved'))?>,
   savePropertiesMsg: <?php echo json_encode(t('Page Properties saved.'))?>,
@@ -103,6 +106,7 @@ var ccmi18n = {
   user_delete: <?php echo json_encode(t('Delete'))?>,
   user_group_remove: <?php echo json_encode(t('Remove From Group'))?>,
   user_group_add: <?php echo json_encode(t('Add to Group'))?>,
+  chooseUser: <?php echo json_encode(t('Choose a User'))?>,
   none: <?php echo json_encode(t('None'))?>,
   editModeMsg: <?php echo json_encode(t('Let\'s start editing a page.'))?>,
   editMode: <?php echo json_encode(t('Edit Mode'))?>,
@@ -126,6 +130,11 @@ var ccmi18n_editor = {
   insertLinkToFile: <?php echo json_encode(t('Insert Link to File'))?>,
   insertImage: <?php echo json_encode(t('Insert Image'))?>,
   insertLinkToPage: <?php echo json_encode(t('Link to Page'))?>
+};
+
+var ccmi18n_express = {
+    chooseEntry: <?php echo json_encode(t('Choose Entry'))?>,
+    entriesTitle: <?php echo json_encode(t('Entries'))?>
 };
 
 var ccmi18n_sitemap = {
@@ -208,6 +217,7 @@ var ccmi18n_filemanager = {
   deleteFile: <?php echo json_encode(t('Delete'))?>,
   title: <?php echo json_encode(t('File Manager'))?>,
   uploadErrorChooseFile: <?php echo json_encode(t('You must choose a file.'))?>,
+  addFiles: <?php echo json_encode(t('Add Files'))?>,
   rescan: <?php echo json_encode(t('Rescan'))?>,
   pending: <?php echo json_encode(t('Pending'))?>,
   uploadComplete: <?php echo json_encode(t('Upload Complete'))?>,
@@ -243,12 +253,17 @@ var ccmi18n_topics = {
   editPermissions: <?php echo json_encode(t('Edit Permissions'))?>
 };
 
+var ccmi18n_tree = {
+    add: <?php echo json_encode(t('Add'))?>,
+    edit: <?php echo json_encode(t('Edit'))?>,
+    delete: <?php echo json_encode(t('Delete'))?>
+};
 var ccmi18n_tourist = {
-  skipButton: <?php echo json_encode('<button class="btn btn-default btn-sm pull-right tour-next">'.t('Skip →').'</button>')?>,
-  nextButton: <?php echo json_encode('<button class="btn btn-primary btn-sm pull-right tour-next">'.t('Next →').'</button>')?>,
-  finalButton: <?php echo json_encode('<button class="btn btn-primary btn-sm pull-right tour-next">'.t('Done').'</button>')?>,
+  skipButton: <?php echo json_encode('<button class="btn btn-default btn-xs pull-right tour-next">'.t('Skip →').'</button>')?>,
+  nextButton: <?php echo json_encode('<button class="btn btn-primary btn-xs pull-right tour-next">'.t('Next →').'</button>')?>,
+  finalButton: <?php echo json_encode('<button class="btn btn-primary btn-xs pull-right tour-next">'.t('Done').'</button>')?>,
   closeButton: <?php echo json_encode('<a class="btn btn-close tour-close" href="#"><i class="fa fa-remove"></i></a>')?>,
-  okButton: <?php echo json_encode('<button class="btn btn-sm tour-close btn-primary">'.t('Ok').'</button>')?>,
+  okButton: <?php echo json_encode('<button class="btn btn-xs tour-close btn-primary">'.t('Ok').'</button>')?>,
   doThis: <?php echo json_encode(t('Do this:'))?>,
   thenThis: <?php echo json_encode(t('Then this:'))?>,
   nextThis: <?php echo json_encode(t('Next this:'))?>,
@@ -450,14 +465,14 @@ jQuery.each(jQuery.Redactor.opts.langs.en, function(key, value) {
 
     }
 
-    public static function getDynatreeJavascript($setResponseHeaders = true)
+    public static function getFancytreeJavascript($setResponseHeaders = true)
     {
         if ($setResponseHeaders) {
             static::sendJavascriptHeader();
         }
         ?>
-jQuery.ui.dynatree.prototype.options.strings.loading = <?php echo json_encode(t('Loading...'))?>;
-jQuery.ui.dynatree.prototype.options.strings.loadError = <?php echo json_encode(t('Load error!'))?>;
+jQuery.ui.fancytree.prototype.options.strings.loading = <?php echo json_encode(t('Loading...'))?>;
+jQuery.ui.fancytree.prototype.options.strings.loadError = <?php echo json_encode(t('Load error!'))?>;
 <?php
 
     }
@@ -555,7 +570,7 @@ ccmTranslator.setI18NDictionart({
             static::sendJavascriptHeader();
         }
         ?>
-Dropzone.prototype.defaultOptions.dictDefaultMessage = <?php echo json_encode(t('Drop files here to upload'))?>;
+Dropzone.prototype.defaultOptions.dictDefaultMessage = <?php echo json_encode(t('Drop files here or click to upload.'))?>;
 Dropzone.prototype.defaultOptions.dictFallbackMessage = <?php echo json_encode(t("Your browser does not support drag'n'drop file uploads."))?>;
 Dropzone.prototype.defaultOptions.dictFallbackText = <?php echo json_encode(t('Please use the fallback form below to upload your files like in the olden days.'))?>;
     <?php

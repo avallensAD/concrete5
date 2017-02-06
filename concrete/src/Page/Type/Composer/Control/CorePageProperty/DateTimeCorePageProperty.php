@@ -1,15 +1,17 @@
 <?php
+
 namespace Concrete\Core\Page\Type\Composer\Control\CorePageProperty;
 
 use Loader;
-use Page;
+use Concrete\Core\Page\Page;
+use Concrete\Core\Attribute\FontAwesomeIconFormatter;
 
 class DateTimeCorePageProperty extends CorePageProperty
 {
     public function __construct()
     {
         $this->setCorePagePropertyHandle('date_time');
-        $this->setPageTypeComposerControlIconSRC(ASSETS_URL . '/attributes/date_time/icon.png');
+        $this->setPageTypeComposerControlIconFormatter(new FontAwesomeIconFormatter('calendar'));
     }
 
     public function getPageTypeComposerControlName()
@@ -39,8 +41,8 @@ class DateTimeCorePageProperty extends CorePageProperty
     {
         if (is_object($this->page)) {
             $c = $this->page;
+
             return $c->getCollectionDatePublic();
         }
     }
-
 }

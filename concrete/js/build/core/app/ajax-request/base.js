@@ -8,6 +8,7 @@
 		options = $.extend({
 			'dataType': 'json',
 			'type': 'post',
+			'loader': 'standard',
 			'error': function(r) {
 				my.error(r, my);
 			},
@@ -28,21 +29,37 @@
 
 			options.success = function(r) {
 				my.success(r, my, successCallback);
-			}
+			};
 
-			my.before();
+			my.before(my);
 			$.ajax(options);
 		},
 
 		before: function(my) {
-			jQuery.fn.dialog.showLoader();
+			if (my.options.loader) {
+				jQuery.fn.dialog.showLoader();
+			}
+		},
+
+		errorResponseToString: function(r) {
+			var result = r.responseText;
+			if (r.responseJSON) {
+				var json = r.responseJSON;
+				if ($.isArray(json.errors) && json.errors.length > 0 && typeof json.errors[0] === 'string') {
+					result = json.errors.join('\n');
+				} else if (typeof json.error === 'string' && json.error !== '') {
+					result = json.error;
+				}
+			}
+
+			return result;
 		},
 
 		error: function(r, my) {
 			ConcreteEvent.fire('AjaxRequestError', {
 				'response': r
 			});
-			ConcreteAlert.dialog('Error', r.responseText);
+			ConcreteAlert.dialog('Error', my.errorResponseToString(r));
 		},
 
 		validateResponse: function(r) {
@@ -57,23 +74,28 @@
 		},
 
 		success: function(r, my, callback) {
-			if (my.validateResponse(r)) {
-				callback(r);
+			if (my.options.dataType != 'json' || my.validateResponse(r)) {
+				if (callback) {
+					callback(r);
+				}
 			}
 		},
 
 		complete: function(my) {
-			jQuery.fn.dialog.hideLoader();
+			if (my.options.loader) {
+				jQuery.fn.dialog.hideLoader();
+			}
 		}
-	}
+	};
 
 	// static method
 	ConcreteAjaxRequest.validateResponse = ConcreteAjaxRequest.prototype.validateResponse;
+	ConcreteAjaxRequest.errorResponseToString = ConcreteAjaxRequest.prototype.errorResponseToString;
 
 	// jQuery Plugin
 	$.concreteAjax = function(options) {
 		new ConcreteAjaxRequest(options);
-	}
+	};
 
 	global.ConcreteAjaxRequest = ConcreteAjaxRequest;
 

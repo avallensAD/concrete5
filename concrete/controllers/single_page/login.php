@@ -3,7 +3,10 @@ namespace Concrete\Controller\SinglePage;
 
 use Concrete\Core\Authentication\AuthenticationType;
 use Concrete\Core\Authentication\AuthenticationTypeFailureException;
+use Concrete\Core\Page\Desktop\DesktopList;
+use Concrete\Core\Routing\Redirect;
 use Concrete\Core\Routing\RedirectResponse;
+use Concrete\Core\Url\Url;
 use Localization;
 use Page;
 use PageController;
@@ -109,7 +112,7 @@ class Login extends PageController
                 $at = AuthenticationType::getByHandle($type);
                 $user = $at->controller->authenticate();
                 if ($user && $user->isLoggedIn()) {
-                    $this->finishAuthentication($at);
+                    return $this->finishAuthentication($at);
                 }
             } catch (\exception $e) {
                 $this->error->add($e->getMessage());
@@ -179,8 +182,7 @@ class Login extends PageController
             $session->set('uRequiredAttributeUserAuthenticationType', $type->getAuthenticationTypeHandle());
 
             $this->view();
-            echo $this->getViewObject()->render();
-            exit;
+            return $this->getViewObject()->render();
         }
 
         $u->setLastAuthType($type);
@@ -188,7 +190,7 @@ class Login extends PageController
         $ue = new \Concrete\Core\User\Event\User($u);
         $this->app->make('director')->dispatch('on_user_login', $ue);
 
-        $this->chooseRedirect();
+        return $this->chooseRedirect();
     }
 
     public function on_start()
@@ -267,30 +269,7 @@ class Login extends PageController
                     }
                 }
 
-                // admin to dashboard?
-                $dash = Page::getByPath("/dashboard", "RECENT");
-                $dbp = new Permissions($dash);
-                //should administrator be redirected to dashboard?  defaults to yes if not set.
-                $adminToDash = intval($config->get('concrete.misc.login_admin_to_dashboard'));
-                if ($dbp->canRead() && $adminToDash) {
-                    if (!$rc instanceof Page || $rc->isError()) {
-                        $rc = $dash;
-                    }
-                    $rUrl = $navigation->getLinkToCollection($rc);
-                    break;
-                }
-
-                //options set in dashboard/users/registration
                 $login_redirect_mode = $config->get('concrete.misc.login_redirect');
-
-                //redirect to user profile
-                if ($login_redirect_mode == 'PROFILE') {
-                    $profileURL = $u->getUserInfoObject()->getUserPublicProfileUrl();
-                    if ($profileURL) {
-                        $rUrl = $profileURL;
-                    }
-                    break;
-                }
 
                 //redirect to custom page
                 $login_redirect_cid = intval($config->get('concrete.misc.login_redirect_cid'));
@@ -302,16 +281,29 @@ class Login extends PageController
                     }
                 }
 
+                if ($login_redirect_mode == 'DESKTOP') {
+
+                    $desktop = DesktopList::getMyDesktop();
+                    if (is_object($desktop)) {
+                        $rUrl = $navigation->getLinkToCollection($desktop);
+                    }
+                }
+
                 break;
             } while (false);
 
-            if ($rUrl) {
-                $r = new RedirectResponse($rUrl);
-                $r->send();
-                exit;
-            } else {
-                $this->redirect('/');
+            if (!$rUrl) {
+                $rUrl = $navigation->getLinkToCollection(Page::getByID(HOME_CID));
             }
+
+            $response = new RedirectResponse((string) $rUrl);
+
+            // Disable caching for response
+            $response = $response->setMaxAge(0)->setSharedMaxAge(0)->setPrivate();
+            $response->headers->addCacheControlDirective('must-revalidate', true);
+            $response->headers->addCacheControlDirective('no-store', true);
+
+            return $response;
         } else {
             $this->error->add(t('User is not registered. Check your authentication controller.'));
             $u->logout();
@@ -363,20 +355,24 @@ class Login extends PageController
 
             $saveAttributes = array();
             foreach ($unfilled as $attribute) {
-                $err = $attribute->validateAttributeForm();
-                if ($err == false) {
-                    $this->error->add(t('The field "%s" is required', $attribute->getAttributeKeyDisplayName()));
-                } elseif ($err instanceof \Concrete\Core\Error\Error) {
-                    $this->error->add($err);
-                } else {
+                $controller = $attribute->getController();
+                $validator = $controller->getValidator();
+                $response = $validator->validateSaveValueRequest($controller, $this->request);
+                /**
+                 * @var $response ResponseInterface
+                 */
+                if ($response->isValid()) {
                     $saveAttributes[] = $attribute;
+                } else {
+                    $error = $response->getErrorObject();
+                    $this->error->add($error);
                 }
             }
 
             if (count($saveAttributes) > 0) {
                 $ui->saveUserAttributesForm($saveAttributes);
             }
-            $this->finishAuthentication($at);
+            return $this->finishAuthentication($at);
         } catch (\Exception $e) {
             $this->error->add($e->getMessage());
         }

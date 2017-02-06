@@ -5,22 +5,29 @@ $dh = Core::make('helper/date'); /* @var $dh \Concrete\Core\Localization\Service
 <div id="ccm-profile-header">
 
 <div id="ccm-profile-avatar">
-<?php print $profile->getUserAvatar()->output(); ?>
+<?php echo $profile->getUserAvatar()->output(); ?>
 </div>
 
 <h1><?php echo $profile->getUserName()?></h1>
 
 <div id="ccm-profile-controls">
-	<?php if ($canEdit) { ?>
+	<?php if ($canEdit) {
+    ?>
 		<div class="btn-group">
 			<a href="<?php echo $view->url('/account/edit_profile')?>" class="btn btn-sm btn-default"><i class="fa fa-cog"></i> <?php echo t('Edit')?></a>
 			<a href="<?php echo $view->url('/')?>" class="btn btn-sm btn-default"><i class="fa fa-home"></i> <?php echo t('Home')?></a>
 		</div>
-	<?php } else { ?>
-		<?php if ($profile->getAttribute('profile_private_messages_enabled')) { ?>
-			<a href="<?php echo $view->url('/account/messages/inbox', 'write', $profile->getUserID())?>" class="btn btn-sm btn-default"><i class="fa-user fa"></i> <?php echo t('Connect')?></a>
-		<?php } ?>
-	<?php } ?>
+	<?php 
+} else {
+    ?>
+		<?php if ($profile->getAttribute('profile_private_messages_enabled')) {
+    ?>
+			<a href="<?php echo $view->url('/account/messages', 'write', $profile->getUserID())?>" class="btn btn-sm btn-default"><i class="fa-user fa"></i> <?php echo t('Connect')?></a>
+		<?php 
+}
+    ?>
+	<?php 
+} ?>
 </div>
 
 
@@ -47,29 +54,33 @@ $dh = Core::make('helper/date'); /* @var $dh \Concrete\Core\Localization\Service
 
         <?php
         $uaks = UserAttributeKey::getPublicProfileList();
-        foreach($uaks as $ua) { ?>
+        foreach ($uaks as $ua) {
+            ?>
 		<div>
-			<h4><?php echo $ua->getKeyName()?></h4>
+			<h4><?php echo $ua->getAttributeKeyDisplayName()?></h4>
 			<?php
-			$r = $profile->getAttribute($ua, 'displaySanitized', 'display');
-			if ($r) {
-				print $r;
-			} else {
-				print t('None');
-			}
-			?>
+            $r = $profile->getAttribute($ua, 'displaySanitized', 'display');
+            if ($r) {
+                echo $r;
+            } else {
+                echo t('None');
+            }
+            ?>
 		</div>
-        <?php  } ?>
+        <?php 
+        } ?>
 
 		<h4><?php echo t("Badges")?></h4>
-		<?php if (count($badges) > 0) { ?>
+		<?php if (count($badges) > 0) {
+    ?>
 
 
 		<ul class="thumbnails">
 
-			<?php foreach($badges as $ub) {
-				$uf = $ub->getGroupBadgeImageObject();
-				if (is_object($uf)) { ?>
+			<?php foreach ($badges as $ub) {
+    $uf = $ub->getGroupBadgeImageObject();
+    if (is_object($uf)) {
+        ?>
 
 			  <li class="span2">
 
@@ -80,24 +91,31 @@ $dh = Core::make('helper/date'); /* @var $dh \Concrete\Core\Localization\Service
 
 			</li>
 
-			    <?php } ?>
+			    <?php 
+    }
+    ?>
 
-			<?php } ?>
+			<?php 
+}
+    ?>
 
 		</ul>
 
-		<?php } else { ?>
+		<?php 
+} else {
+    ?>
 			<p><?php echo t("This user hasn't won any badges.")?></p>
-		<?php } ?>
+		<?php 
+} ?>
 
 
 		<?php
-			$a = new Area('Main');
-			//$a->setAttribute('profile', $profile);
-			$a->setBlockWrapperStart('<div class="ccm-profile-body-item">');
-			$a->setBlockWrapperEnd('</div>');
-			$a->display($c);
-		?>
+            $a = new Area('Main');
+            //$a->setAttribute('profile', $profile);
+            $a->setBlockWrapperStart('<div class="ccm-profile-body-item">');
+            $a->setBlockWrapperEnd('</div>');
+            $a->display($c);
+        ?>
 
 	</div>
 </div>

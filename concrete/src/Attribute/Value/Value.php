@@ -1,14 +1,43 @@
 <?php
 
+
 namespace Concrete\Core\Attribute\Value;
 
+use Concrete\Core\Attribute\AttributeValueInterface;
+use Concrete\Core\Attribute\Key\Key;
+use Concrete\Core\Entity\Attribute\Value\LegacyValue;
 use Concrete\Core\Foundation\Object;
 use Loader;
 
-class Value extends Object
+/*
+ * @deprecated
+ */
+class Value extends Object implements AttributeValueInterface
 {
     protected $attributeType;
     protected $attributeKey;
+
+    public function getController()
+    {
+        $controller = $this->attributeKey->getController();
+        $controller->setAttributeValue($this);
+        return $controller;
+    }
+
+    protected function getAttributeValue()
+    {
+        $lv = new LegacyValue();
+        $orm = \Database::connection()->getEntityManager();
+        $genericValue = $orm->find('Concrete\Core\Entity\Attribute\Value\Value\Value', $this->getAttributeValueID());
+        $lv->setGenericValue($genericValue);
+        $lv->setAttributeKey($this->attributeKey);
+        return $lv;
+    }
+
+    public function getValueObject()
+    {
+        return $this->getAttributeValue()->getValueObject();
+    }
 
     public static function getByID($avID)
     {
@@ -22,24 +51,18 @@ class Value extends Object
     protected function load($avID)
     {
         $db = Loader::db();
-        $row = $db->GetRow('select avID, akID, uID, avDateAdded, atID from AttributeValues where avID = ?', array($avID));
+//        $row = $db->GetRow('select avID, akID, uID, avDateAdded, atID from AttributeValues where avID = ?', array($avID));
+        $row = $db->GetRow('select avID, akID from AttributeValues where avID = ?', array($avID));
         if (is_array($row) && $row['avID'] == $avID) {
             $this->setPropertiesFromArray($row);
-
+            $this->attributeKey = Key::getByID($row['akID']);
             $this->attributeType = $this->getAttributeTypeObject();
-            $this->attributeType->controller->setAttributeKey($this->getAttributeKey());
-            $this->attributeType->controller->setAttributeValue($this);
         }
     }
 
-    public function __destruct()
+    public function setAttributeKey($ak)
     {
-        if (isset($this->attributeType)) {
-            if (is_object($this->attributeType)) {
-                $this->attributeType->__destruct();
-            }
-            unset($this->attributeType);
-        }
+        $this->attributeKey = $ak;
     }
 
     /**
@@ -49,42 +72,41 @@ class Value extends Object
     public function validateAttributeValue()
     {
         $at = $this->attributeType;
-        $at->controller->setAttributeKey($this->attributeKey);
+        $at->getController()->setAttributeKey($this->attributeKey);
         $e = true;
-        if (method_exists($at->controller, 'validateValue')) {
-            $e = $at->controller->validateValue();
+        if (method_exists($at->getController(), 'validateValue')) {
+            $e = $at->getController()->validateValue();
         }
         return $e;
     }
 
     public function getValue($mode = false)
     {
-        if ($mode != false) {
-            $th = Loader::helper('text');
-            $modes = func_get_args();
-            foreach ($modes as $mode) {
-                $method = 'get'.$th->camelcase($mode).'Value';
-                if (method_exists($this->attributeType->controller, $method)) {
-                    return $this->attributeType->controller->{$method}();
-                }
+        $value = $this->getAttributeValue();
+        $controller = $this->getController();
+        if (is_object($value)) {
+            if ($mode != false) {
+                return $value->getValue($mode);
+            } else {
+                return $value->getValue();
             }
         }
 
-        return $this->attributeType->controller->getValue();
+        return $controller->getValue();
     }
 
     public function getSearchIndexValue()
     {
-        if (method_exists($this->attributeType->controller, 'getSearchIndexValue')) {
-            return $this->attributeType->controller->getSearchIndexValue();
+        if (method_exists($this->attributeType->getController(), 'getSearchIndexValue')) {
+            return $this->getController()->getSearchIndexValue();
         } else {
-            return $this->attributeType->controller->getValue();
+            return $this->getController()->getValue();
         }
     }
 
     public function delete()
     {
-        $this->attributeType->controller->deleteValue();
+        $this->getController()->deleteValue();
         $db = Loader::db();
         $db->Execute('delete from AttributeValues where avID = ?', $this->getAttributeValueID());
     }
@@ -93,11 +115,7 @@ class Value extends Object
     {
         return $this->attributeKey;
     }
-    public function setAttributeKey($ak)
-    {
-        $this->attributeKey = $ak;
-        $this->attributeType->controller->setAttributeKey($ak);
-    }
+
     public function getAttributeValueID()
     {
         return $this->avID;
@@ -116,7 +134,7 @@ class Value extends Object
     }
     public function getAttributeTypeObject()
     {
-        $ato = \Concrete\Core\Attribute\Type::getByID($this->atID);
+        $ato = \Concrete\Core\Attribute\Type::getByHandle($this->getAttributeKey()->getAttributeTypeHandle());
 
         return $ato;
     }

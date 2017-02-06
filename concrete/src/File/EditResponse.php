@@ -1,12 +1,13 @@
 <?php
 namespace Concrete\Core\File;
 
+use Concrete\Core\Entity\File\File as FileEntity;
+
 class EditResponse extends \Concrete\Core\Application\EditResponse
 {
-
     protected $files = array();
 
-    public function setFile(File $file)
+    public function setFile(FileEntity $file)
     {
         $this->files[] = $file;
     }
@@ -22,7 +23,7 @@ class EditResponse extends \Concrete\Core\Application\EditResponse
         foreach ($this->files as $file) {
             $o->files[] = $file->getJSONObject();
         }
+
         return $o;
     }
-
 }

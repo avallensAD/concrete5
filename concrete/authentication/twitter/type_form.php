@@ -43,6 +43,7 @@
                 <?php echo $group->getGroupDisplayName(false) ?>
             </option>
         <?php
+
         }
         ?>
     </select>

@@ -1,11 +1,11 @@
 <?php
 namespace Concrete\Core\Html;
 
+use Concrete\Core\Entity\File\File;
 use PageTheme;
 
 class Image
 {
-
     protected $usePictureTag = false;
     protected $tag;
 
@@ -27,7 +27,7 @@ class Image
      * @param \File $f
      * @param null $usePictureTag
      */
-    public function __construct(\File $f = null, $usePictureTag = null)
+    public function __construct(File $f = null, $usePictureTag = null)
     {
         if (!is_object($f)) {
             return false;
@@ -40,19 +40,18 @@ class Image
         }
 
         if ($this->usePictureTag) {
-
             if (!isset($this->theme)) {
                 $c = \Page::getCurrentPage();
                 $this->theme = $c->getCollectionThemeObject();
             }
             $sources = array();
             $fallbackSrc = $f->getRelativePath();
-            if(!$fallbackSrc) {
+            if (!$fallbackSrc) {
                 $fallbackSrc = $f->getURL();
             }
-            foreach($this->theme->getThemeResponsiveImageMap() as $thumbnail => $width) {
+            foreach ($this->theme->getThemeResponsiveImageMap() as $thumbnail => $width) {
                 $type = \Concrete\Core\File\Image\Thumbnail\Type\Type::getByHandle($thumbnail);
-                if($type != NULL) {
+                if ($type != null) {
                     $src = $f->getThumbnailURL($type->getBaseVersion());
                     $sources[] = array('src' => $src, 'width' => $width);
                     if ($width == 0) {
@@ -64,12 +63,12 @@ class Image
         } else {
             // Return a simple image tag.
             $path = $f->getRelativePath();
-            if(!$path) {
+            if (!$path) {
                 $path = $f->getURL();
             }
             $this->tag = \HtmlObject\Image::create($path);
-            $this->tag->width($f->getAttribute('width'));
-            $this->tag->height($f->getAttribute('height'));
+            $this->tag->width((string) $f->getAttribute('width'));
+            $this->tag->height((string) $f->getAttribute('height'));
         }
     }
 
@@ -80,5 +79,4 @@ class Image
     {
         return $this->tag;
     }
-
 }

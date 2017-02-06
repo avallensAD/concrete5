@@ -9,7 +9,6 @@ use HtmlObject\Link;
 
 class Controller extends AbstractController implements ControllerInterface
 {
-
     /** @var ItemInterface */
     protected $menuItem;
 
@@ -18,6 +17,9 @@ class Controller extends AbstractController implements ControllerInterface
         return true;
     }
 
+    /**
+     * @return Link
+     */
     public function getMenuItemLinkElement()
     {
         $a = new Link();
@@ -39,6 +41,7 @@ class Controller extends AbstractController implements ControllerInterface
         $label = new Element('span');
         $label->addClass('ccm-toolbar-accessibility-title')->setValue($this->menuItem->getLabel());
         $a->appendChild($label);
+
         return $a;
     }
 

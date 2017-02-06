@@ -1,21 +1,23 @@
-<?php defined('C5_EXECUTE') or die("Access Denied."); 
+<?php defined('C5_EXECUTE') or die("Access Denied.");
 $c = Page::getCurrentPage();
 $canAccessComposer = false;
 if (is_object($composer)) {
-	$ccp = new Permissions($composer);
-	if ($ccp->canAccessComposer()) {
-		$canAccessComposer = true;
-	}
+    $ccp = new Permissions($composer);
+    if ($ccp->canAccessComposer()) {
+        $canAccessComposer = true;
+    }
 }
 
 $dh = Core::make('helper/date'); /* @var $dh \Concrete\Core\Localization\Service\Date */
 
-if (is_object($discussion)) { ?>
+if (is_object($discussion)) {
+    ?>
 
 	<div class="ccm-discussion" data-discussion-block-id="<?php echo $b->getBlockID()?>">
 
 	<?php
-	if ($enableNewTopics && $canAccessComposer) { ?>
+    if ($enableNewTopics && $canAccessComposer) {
+        ?>
 
 		<div style="display: none">
 			<div data-form="discussion">
@@ -31,60 +33,85 @@ if (is_object($discussion)) { ?>
 
 		<button class="pull-right btn" data-action="add-conversation" type="button"><?php echo t('New Topic')?></button>
 
-	<?php } ?>
+	<?php 
+    }
+    ?>
 
-		<?php if ($enableOrdering) { ?>
+		<?php if ($enableOrdering) {
+    ?>
 			<select name="orderBy" class="ccm-discussion-order-by" data-select="order">
-				<option data-sort-url="<?php echo Loader::helper('url')->setVariable('orderBy', 'date_last_message')?>" value="date_last_message" <?php if ($reqOrderBy == 'date_last_message') { ?>selected<?php } ?>><?php echo t('Recent Comment')?></option>
-				<option data-sort-url="<?php echo Loader::helper('url')->setVariable('orderBy', 'date')?>" value="date" <?php if ($reqOrderBy == 'date') { ?>selected<?php } ?>><?php echo t('Original Post')?></option>
-				<option data-sort-url="<?php echo Loader::helper('url')->setVariable('orderBy', 'replies')?>" value="replies" <?php if ($reqOrderBy == 'replies') { ?>selected<?php } ?>><?php echo t('Activity')?></option>
+				<option data-sort-url="<?php echo Loader::helper('url')->setVariable('orderBy', 'date_last_message')?>" value="date_last_message" <?php if ($reqOrderBy == 'date_last_message') {
+    ?>selected<?php 
+}
+    ?>><?php echo t('Recent Comment')?></option>
+				<option data-sort-url="<?php echo Loader::helper('url')->setVariable('orderBy', 'date')?>" value="date" <?php if ($reqOrderBy == 'date') {
+    ?>selected<?php 
+}
+    ?>><?php echo t('Original Post')?></option>
+				<option data-sort-url="<?php echo Loader::helper('url')->setVariable('orderBy', 'replies')?>" value="replies" <?php if ($reqOrderBy == 'replies') {
+    ?>selected<?php 
+}
+    ?>><?php echo t('Activity')?></option>
 			</select>
-		<?php } ?>
+		<?php 
+}
+    ?>
 
 		<h3><?php echo $c->getCollectionName()?></h3>
 	
-		<?php if (count($topics)) { ?>
+		<?php if (count($topics)) {
+    ?>
 
 			<?php echo $list->displaySummary()?>
 
 			<ul class="ccm-discussion-topics">
 
-			<?php foreach($topics as $t) { 
-				$v = $t->getVersionObject();
-				$fa = CollectionVersionFeatureAssignment::getFeature('conversation', $v);
-				$replies = 0;
-				if (is_object($fa)) {
-					$fd = $fa->getFeatureDetailObject();
-					$cnv = $fd->getConversationObject();
-					if (is_object($cnv)) {
-						$replies = $cnv->getConversationMessagesTotal();
-					}
-				}
+			<?php foreach ($topics as $t) {
+    $v = $t->getVersionObject();
+    $fa = CollectionVersionFeatureAssignment::getFeature('conversation', $v);
+    $replies = 0;
+    if (is_object($fa)) {
+        $fd = $fa->getFeatureDetailObject();
+        $cnv = $fd->getConversationObject();
+        if (is_object($cnv)) {
+            $replies = $cnv->getConversationMessagesTotal();
+        }
+    }
 
-				?>
+    ?>
 			<li>
 				<div class="ccm-discussion-topic-replies">
 					<?php echo t2('<em>%s</em> Reply', '<em>%s</em> Replies', $replies)?>
 				</div>
 				<div class="ccm-discussion-topic-details">
 					<h3><a href="<?php echo Loader::helper('navigation')->getLinkToCollection($t)?>"><?php echo $t->getCollectionName()?></a></h3>
-					<p><?php echo t('Topic Posted on %s.', $dh->formatDateTime($t->getCollectionDatePublic(), true))?>
-					<?php if ($replies > 0) { ?>
-						<?php echo t('Last Message Posted on %s.', $dh->formatDateTime($cnv->getConversationDateLastMessage(), true))?>
-					<?php } ?>
+					<p><?php echo t(/*i18n: %s is a date/time*/'Topic Posted on %s.', $dh->formatDateTime($t->getCollectionDatePublic(), true))?>
+					<?php if ($replies > 0) {
+    ?>
+						<?php echo t(/*i18n: %s is a date/time*/'Last Message Posted on %s.', $dh->formatDateTime($cnv->getConversationDateLastMessage(), true))?>
+					<?php 
+}
+    ?>
 					</p>
 				</div>
 			</li>
-			<?php } ?>
+			<?php 
+}
+    ?>
 
 			</ul>
 
 			<?php echo $list->displayPagingV2()?>
 
-		<?php } else { ?>
+		<?php 
+} else {
+    ?>
 			<div class="well"><?php echo t('No topics have been posted.')?></div>
-		<?php } ?>
-	<?php } ?>
+		<?php 
+}
+    ?>
+	<?php 
+} ?>
 
 	</div>
 

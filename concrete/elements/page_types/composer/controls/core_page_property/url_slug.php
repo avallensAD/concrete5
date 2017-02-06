@@ -5,7 +5,7 @@ $draft = $control->getPageObject();
 
 <div class="form-group ccm-composer-url-slug" data-composer-field="url_slug" style="position: relative">
 	<label class="control-label"><?php echo $label?></label>
-	<?php if($description): ?>
+	<?php if ($description): ?>
 	<i class="fa fa-question-circle launch-tooltip" title="" data-original-title="<?php echo $description?>"></i>
 	<?php endif; ?>
 
@@ -14,11 +14,15 @@ $draft = $control->getPageObject();
     ?>
     <div>
         <i class="fa-refresh fa-spin fa ccm-composer-url-slug-loading"></i>
-        <?php if (is_object($draft) && !$draft->isPageDraft()) { ?>
+        <?php if (is_object($draft) && !$draft->isPageDraft()) {
+    ?>
             <div><a href="#" class="icon-link" data-composer-field="edit_url_slug"><i class="fa fa-pencil"></i></a> <span><?php echo $control->getPageTypeComposerControlDraftValue()?></span></div>
-        <?php } else { ?>
+        <?php 
+} else {
+    ?>
             <?php echo $element?>
-        <?php } ?>
+        <?php 
+} ?>
     </div>
 </div>
 
@@ -41,7 +45,7 @@ $draft = $control->getPageObject();
         });
         var $urlSlugField = $('div[data-composer-field=url_slug] input');
         if ($urlSlugField.length) {
-            $('div[data-composer-field=name] input').on('keyup', function() {
+            $('div[data-composer-field=name] input').on('input', function() {
                 var input = $(this);
                 var send = {
                     token: '<?php echo Loader::helper('validation/token')->generate('get_url_slug')?>',

@@ -9,33 +9,45 @@ use Gettext\Translations;
 use Gettext\Generators\Po as PoGenerator;
 use Gettext\Generators\Mo as MoGenerator;
 use Concrete\Core\Package\PackageList;
-use Config;
+use Concrete\Core\Support\Facade\Application;
+use C5TL\Options as C5TLOptions;
+use C5TL\Parser\Php as C5TLParserPhp;
+use C5TL\Parser\BlockTemplates as C5TLParserBlockTemplates;
+use C5TL\Parser\ThemePresets as C5TLParserThemePresets;
+use C5TL\Parser\ConfigFiles as C5TLParserConfigFiles;
+use C5TL\Parser\Dynamic as C5TLParserDynamic;
 
 defined('C5_EXECUTE') or die("Access Denied.");
 
 class Extractor
 {
     /**
-     * return \GetText\Translations $translations;
+     * return \GetText\Translations $translations;.
      */
     public function extractTranslatableSiteStrings()
     {
+        $app = Application::getFacadeApplication();
         $translations = new Translations();
-        $translations->insert('SiteName', Config::get('concrete.site'));
-        $phpParser = new \C5TL\Parser\Php();
-        $blockTemplatesParser = new \C5TL\Parser\BlockTemplates();
-        $themesPresetsParser = new \C5TL\Parser\ThemePresets();
+        $translations->insert('SiteName', $app->make('site')->getSite()->getSiteName());
+        $fh = $app->make('helper/file');
+        C5TLOptions::setTemporaryDirectory($fh->getTemporaryDirectory());
+        $phpParser = new C5TLParserPhp();
+        $blockTemplatesParser = new C5TLParserBlockTemplates();
+        $themesPresetsParser = new C5TLParserThemePresets();
+        $configFilesParser = new C5TLParserConfigFiles();
 
-        $processApplication = array(
-            DIRNAME_BLOCKS => array($phpParser, $blockTemplatesParser),
-            DIRNAME_ELEMENTS => array($phpParser),
-            DIRNAME_CONTROLLERS => array($phpParser),
-            DIRNAME_MAIL_TEMPLATES => array($phpParser),
-            DIRNAME_PAGE_TYPES => array($phpParser),
-            DIRNAME_PAGES => array($phpParser),
-            DIRNAME_THEMES => array($phpParser, $themesPresetsParser, $blockTemplatesParser),
-            DIRNAME_VIEWS => array($phpParser),
-        );
+        $configFilesParser->parseDirectory(DIR_BASE, '');
+
+        $processApplication = [
+            DIRNAME_BLOCKS => [$phpParser, $blockTemplatesParser],
+            DIRNAME_ELEMENTS => [$phpParser],
+            DIRNAME_CONTROLLERS => [$phpParser],
+            DIRNAME_MAIL_TEMPLATES => [$phpParser],
+            DIRNAME_PAGE_TYPES => [$phpParser],
+            DIRNAME_PAGES => [$phpParser],
+            DIRNAME_THEMES => [$phpParser, $themesPresetsParser, $blockTemplatesParser],
+            DIRNAME_VIEWS => [$phpParser],
+        ];
         foreach ($processApplication as $dirname => $parsers) {
             if (is_dir(DIR_APPLICATION.'/'.$dirname)) {
                 foreach ($parsers as $parser) {
@@ -54,12 +66,14 @@ class Extractor
 
         if (is_dir(DIR_PACKAGES)) {
             $packages = Package::getInstalledList();
-            foreach($packages as $package) {
+            foreach ($packages as $package) {
                 $fullDirname = DIR_PACKAGES.'/'.$package->getPackageHandle();
                 $phpParser->parseDirectory($fullDirname,
                     DIRNAME_PACKAGES.'/'.$dirname,
                     $translations
                 );
+                $packageController = $package->getController();
+                $packageController->getTranslatableStrings($translations);
             }
         }
 
@@ -72,15 +86,19 @@ class Extractor
 
     public function getDynamicTranslations()
     {
-        $parser = new \C5TL\Parser\Dynamic();
+        $app = Application::getFacadeApplication();
+        $fh = $app->make('helper/file');
+        C5TLOptions::setTemporaryDirectory($fh->getTemporaryDirectory());
+        $parser = new C5TLParserDynamic();
 
         return $parser->parseRunningConcrete5();
     }
 
     public function clearTranslationsFromDatabase()
     {
-        $db = \Database::get();
-        $db->Execute('truncate table MultilingualTranslations');
+        $app = Application::getFacadeApplication();
+        $db = $app->make('database')->connection();
+        $db->executeQuery('truncate table MultilingualTranslations');
     }
 
     public function deleteSectionTranslationFile(Section $section)
@@ -190,17 +208,18 @@ class Extractor
 
     public function saveSectionTranslationsToDatabase(Section $section, Translations $translations)
     {
-        $db = \Database::get();
-        $db->delete('MultilingualTranslations', array('mtSectionID' => $section->getCollectionID()));
+        $app = Application::getFacadeApplication();
+        $db = $app->make('database')->connection();
+        $db->delete('MultilingualTranslations', ['mtSectionID' => $section->getCollectionID()]);
         foreach ($translations as $translation) {
             /* @var $translation \Gettext\Translation */
-            $data = array(
+            $data = [
                 'mtSectionID' => $section->getCollectionID(),
                 'msgid' => $translation->getOriginal(),
                 'msgidPlural' => $translation->getPlural(),
                 'msgstr' => $translation->getTranslation(),
                 'context' => $translation->getContext(),
-            );
+            ];
             $plurals = $translation->getPluralTranslation();
             if (!empty($plurals)) {
                 $data['msgstrPlurals'] = implode("\x00", $plurals);
@@ -218,7 +237,7 @@ class Extractor
             }
             $flags = $translation->getFlags();
             if (!empty($flags)) {
-                $data['flags'] =  implode("\n", $flags);
+                $data['flags'] = implode("\n", $flags);
             }
             $db->insert('MultilingualTranslations', $data);
         }
@@ -226,14 +245,15 @@ class Extractor
 
     public function getSectionSiteInterfaceCompletionData(Section $section)
     {
-        $db = \Database::get();
-        $data = array();
-        $data['messageCount'] = $db->GetOne('select count(mtID) from MultilingualTranslations where mtSectionID = ?',
-            array($section->getCollectionID())
+        $app = Application::getFacadeApplication();
+        $db = $app->make('database')->connection();
+        $data = [];
+        $data['messageCount'] = $db->fetchColumn('select count(mtID) from MultilingualTranslations where mtSectionID = ?',
+            [$section->getCollectionID()]
         );
-        $data['translatedCount'] = $db->GetOne(
+        $data['translatedCount'] = $db->fetchColumn(
             'select count(mtID) from MultilingualTranslations where mtSectionID = ? and msgstr != ""',
-            array($section->getCollectionID())
+            [$section->getCollectionID()]
         );
         $data['completionPercentage'] = 0;
         if ($data['messageCount'] > 0) {

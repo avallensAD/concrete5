@@ -3,12 +3,11 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2016 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
 namespace Zend\Mail\Header;
-
 
 class ContentTransferEncoding implements HeaderInterface
 {
@@ -17,18 +16,17 @@ class ContentTransferEncoding implements HeaderInterface
      * (reduced set)
      * @var array
      */
-    protected static $allowedTransferEncodings = array(
+    protected static $allowedTransferEncodings = [
         '7bit',
         '8bit',
         'quoted-printable',
         'base64',
+        'binary',
         /*
          * not implemented:
-         * 'binary',
          * x-token: 'X-'
          */
-    );
-
+    ];
 
     /**
      * @var string
@@ -38,12 +36,12 @@ class ContentTransferEncoding implements HeaderInterface
     /**
      * @var array
      */
-    protected $parameters = array();
+    protected $parameters = [];
 
     public static function fromString($headerLine)
     {
-        $headerLine = iconv_mime_decode($headerLine, ICONV_MIME_DECODE_CONTINUE_ON_ERROR, 'UTF-8');
         list($name, $value) = GenericHeader::splitHeaderLine($headerLine);
+        $value = HeaderWrap::mimeDecodeValue($value);
 
         // check to ensure proper header type for this factory
         if (strtolower($name) !== 'content-transfer-encoding') {
@@ -87,16 +85,16 @@ class ContentTransferEncoding implements HeaderInterface
      *
      * @param  string $transferEncoding
      * @throws Exception\InvalidArgumentException
-     * @return self
+     * @return $this
      */
     public function setTransferEncoding($transferEncoding)
     {
         // Per RFC 1521, the value of the header is not case sensitive
         $transferEncoding = strtolower($transferEncoding);
 
-        if (!in_array($transferEncoding, self::$allowedTransferEncodings)) {
+        if (!in_array($transferEncoding, static::$allowedTransferEncodings)) {
             throw new Exception\InvalidArgumentException(sprintf(
-                '%s expects one of "'. implode(', ', self::$allowedTransferEncodings) . '"; received "%s"',
+                '%s expects one of "'. implode(', ', static::$allowedTransferEncodings) . '"; received "%s"',
                 __METHOD__,
                 (string) $transferEncoding
             ));

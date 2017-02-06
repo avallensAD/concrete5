@@ -5,22 +5,29 @@ $ih = Core::make("multilingual/interface/flag");
 <div class="ccm-block-language-list-set-default-wrapper">
 
 	<form method="post" action="<?php echo $view->action('set_current_language')?>" class="form-stacked">
-        <?php if (Loader::helper('validation/numbers')->integer($_REQUEST['rcID'])) { ?>
+        <?php if (Loader::helper('validation/numbers')->integer($_REQUEST['rcID'])) {
+    ?>
             <input type="hidden" name="rcID" value="<?php echo Loader::helper('text')->entities($_REQUEST['rcID'])?>" />
-        <?php } ?>
+        <?php 
+} ?>
 
         <div class="form-group">
             <label class="control-label"><?php echo $label?></label>
 
-            <?php foreach($languageSections as $ml) {  ?>
+            <?php foreach ($languageSections as $ml) {
+    ?>
                 <div class="radio">
                     <label>
-                        <input type="radio" name="language" value="<?php echo $ml->getCollectionID()?>"  <?php if (is_object($defaultLocale) && $defaultLocale->getCollectionID() == $ml->getCollectionID()) { ?> checked="checked" <?php } ?> />
+                        <input type="radio" name="language" value="<?php echo $ml->getCollectionID()?>"  <?php if (is_object($defaultLocale) && $defaultLocale->getCollectionID() == $ml->getCollectionID()) {
+    ?> checked="checked" <?php 
+}
+    ?> />
                         <?php echo $ih->getSectionFlagIcon($ml)?>
                         <?php echo $ml->getLanguageText($locale)?>
                     </label>
                 </div>
-            <?php } ?>
+            <?php 
+} ?>
         </div>
 
         <div class="form-group">

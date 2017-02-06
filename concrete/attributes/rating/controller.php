@@ -1,84 +1,75 @@
 <?php
 namespace Concrete\Attribute\Rating;
 
+use Concrete\Core\Attribute\FontAwesomeIconFormatter;
+use Concrete\Core\Entity\Attribute\Value\Value\NumberValue;
+use Concrete\Core\Entity\Attribute\Value\Value\RatingValue;
 use Loader;
-use \Concrete\Core\Foundation\Object;
-use \Concrete\Core\Attribute\Controller as AttributeTypeController;
+use Concrete\Core\Attribute\Controller as AttributeTypeController;
 
 class Controller extends AttributeTypeController
 {
-
     protected $searchIndexFieldDefinition = array(
         'type' => 'decimal',
-        'options' => array('precision' => 14, 'scale' => 4, 'default' => 0, 'notnull' => false)
+        'options' => array('precision' => 14, 'scale' => 4, 'default' => 0, 'notnull' => false),
     );
 
-    public function getValue()
+    public function getIconFormatter()
     {
-        $db = Loader::db();
-        $value = $db->GetOne("select value from atNumber where avID = ?", array($this->getAttributeValueID()));
-        return round($value);
+        return new FontAwesomeIconFormatter('star');
     }
 
+    public function getAttributeValueClass()
+    {
+        return NumberValue::class;
+    }
 
     public function getDisplayValue()
     {
-        $value = $this->getValue();
-        $rt = Loader::helper('rating');
-        return $rt->outputDisplay($value);
+        $rt = $this->app->make('helper/rating');
+        return $rt->outputDisplay($this->attributeValue->getValue());
     }
 
     public function form()
     {
         $caValue = 0;
-        if ($this->getAttributeValueID() > 0) {
-            $caValue = $this->getValue() / 20;
+        if (is_object($this->attributeValue)) {
+            $caValue = $this->attributeValue->getValue() / 20;
         }
         $rt = Loader::helper('form/rating');
-        print $rt->rating($this->field('value'), $caValue);
+        echo $rt->rating($this->field('value'), $caValue);
     }
 
     public function searchForm($list)
     {
         $minRating = $this->request('value');
+        $minRating = $minRating * 20;
         $list->filterByAttribute($this->attributeKey->getAttributeKeyHandle(), $minRating, '>=');
+
         return $list;
     }
 
-    // run when we call setAttribute(), instead of saving through the UI
-    public function saveValue($rating)
+    public function createAttributeValue($rating)
     {
+        $value = new NumberValue();
         if ($rating == '') {
             $rating = 0;
         }
-        $db = Loader::db();
-        $db->Replace('atNumber', array('avID' => $this->getAttributeValueID(), 'value' => $rating), 'avID', true);
+        $value->setValue($rating);
+
+        return $value;
     }
 
-    public function deleteKey()
+    public function createAttributeValueFromRequest()
     {
-        $db = Loader::db();
-        $arr = $this->attributeKey->getAttributeValueIDList();
-        foreach ($arr as $id) {
-            $db->Execute('delete from atNumber where avID = ?', array($id));
-        }
-    }
-
-    public function saveForm($data)
-    {
-        $this->saveValue($data['value'] * 20);
+        $data = $this->post();
+        return $this->createAttributeValue($data['value'] * 20);
     }
 
     public function search()
     {
-        $rt = Loader::helper('form/rating');
-        print $rt->rating($this->field('value'), $this->request('value'));
-    }
-
-    public function deleteValue()
-    {
-        $db = Loader::db();
-        $db->Execute('delete from atNumber where avID = ?', array($this->getAttributeValueID()));
+        $rt = $this->app->make('helper/form/rating');
+        echo $rt->rating($this->field('value'), $this->request('value'));
     }
 
 }

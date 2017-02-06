@@ -1,5 +1,4 @@
 <?php
-
 namespace Concrete\Core\Permission\Access;
 
 use Concrete\Core\Foundation\Object;
@@ -178,7 +177,19 @@ class Access extends Object
         return $p;
     }
 
-    public function getAccessListItems($accessType = PermissionKey::ACCESS_TYPE_INCLUDE, $filterEntities = array())
+    protected function getCacheIdentifier($accessType, $filterEntities = array())
+    {
+        $filter = $accessType . ':';
+        foreach ($filterEntities as $pae) {
+            $filter .= $pae->getAccessEntityID() . ':';
+        }
+        $filter = trim($filter, ':');
+        $paID = $this->getPermissionAccessID();
+        $class = strtolower(get_class($this->pk));
+        return sprintf('permission/access/list_items/%s/%s/%s', $paID, $filter, $class);
+    }
+
+    public function getAccessListItems($accessType = PermissionKey::ACCESS_TYPE_INCLUDE, $filterEntities = array(), $checkCache = true)
     {
         if (count($this->paIDList) > 0) {
             $q = 'select paID, peID, pdID, accessType from PermissionAccessList where paID in (' . implode(
@@ -188,31 +199,25 @@ class Access extends Object
 
             return $this->deliverAccessListItems($q, $accessType, $filterEntities);
         } else {
-            $filter = $accessType . ':';
-            foreach ($filterEntities as $pae) {
-                $filter .= $pae->getAccessEntityID() . ':';
-            }
-            $filter = trim($filter, ':');
-            if (!isset($this->listItems)) {
-                $items = CacheLocal::getEntry(
-                    'permission_access_list_items',
-                    $this->getPermissionAccessID() . $filter . strtolower(get_class($this->pk))
-                );
-                if (is_array($items)) {
-                    return $items;
+            // Sometimes we want to disable cache checking here because we're going to be
+            // adding items to the cache from a class that subclasses this one. See
+            // AddBlockToAreaAreaAccess
+
+            if ($checkCache) {
+                $cache = \Core::make('cache/request');
+                $item = $cache->getItem($this->getCacheIdentifier($accessType, $filterEntities));
+                if (!$item->isMiss()) {
+                    return $item->get();
                 }
+                $item->lock();
             }
 
             $q = 'select paID, peID, pdID, accessType from PermissionAccessList where paID = ' . $this->getPermissionAccessID(
                 );
             $items = $this->deliverAccessListItems($q, $accessType, $filterEntities);
 
-            if (!isset($this->listItems)) {
-                CacheLocal::set(
-                    'permission_access_list_items',
-                    $this->getPermissionAccessID() . $filter . strtolower(get_class($this->pk)),
-                    $items
-                );
+            if ($checkCache) {
+                $cache->save($item->set($items));
             }
 
             return $items;

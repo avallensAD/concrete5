@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -23,7 +23,7 @@ class HttpResponse
      *
      * @var array
      */
-    protected $headers = array();
+    protected $headers = [];
 
     /**
      * HTTP response code to use in headers
@@ -94,11 +94,11 @@ class HttpResponse
                 }
             }
         }
-        $this->headers[] = array(
+        $this->headers[] = [
             'name'    => $name,
             'value'   => $value,
             'replace' => $replace,
-        );
+        ];
 
         return $this;
     }
@@ -203,7 +203,7 @@ class HttpResponse
      */
     protected function _normalizeHeader($name)
     {
-        $filtered = str_replace(array('-', '_'), ' ', (string) $name);
+        $filtered = str_replace(['-', '_'], ' ', (string) $name);
         $filtered = ucwords(strtolower($filtered));
         $filtered = str_replace(' ', '-', $filtered);
         return $filtered;

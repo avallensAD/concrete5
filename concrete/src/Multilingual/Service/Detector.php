@@ -1,19 +1,15 @@
 <?php
-
 namespace Concrete\Core\Multilingual\Service;
 
+use Concrete\Core\Localization\Localization;
 use Concrete\Core\Multilingual\Page\Section\Section;
 use Concrete\Core\Page\Page;
-use Session;
-use Cookie;
-use Config;
+use Concrete\Core\Support\Facade\Facade;
 
 defined('C5_EXECUTE') or die("Access Denied.");
 
 class Detector
 {
-    protected static $enabled;
-
     /**
      * Returns the preferred section based on session, cookie,
      * user object, default browser (if allowed), and finally
@@ -25,12 +21,20 @@ class Detector
      */
     public static function getPreferredSection()
     {
+
+        $site = \Site::getSite();
+
         $locale = false;
+        $app = Facade::getFacadeApplication();
         // they have a language in a certain session going already
-        if (Session::has('multilingual_default_locale')) {
-            $locale = Session::get('multilingual_default_locale');
-        } elseif (Cookie::has('multilingual_default_locale')) {
-            $locale = Cookie::get('multilingual_default_locale');
+        $session = $app->make('session');
+        if ($session->has('multilingual_default_locale')) {
+            $locale = $session->get('multilingual_default_locale');
+        } else {
+            $cookie = $app->make('cookie');
+            if ($cookie->has('multilingual_default_locale')) {
+                $locale = $cookie->get('multilingual_default_locale');
+            }
         }
 
         if ($locale) {
@@ -51,7 +55,8 @@ class Detector
             }
         }
 
-        if (Config::get('concrete.multilingual.use_browser_detected_locale')) {
+        $config = $site->getConfigRepository();
+        if ($config->get('multilingual.use_browser_detected_locale')) {
             $home = false;
             $locales = \Punic\Misc::getBrowserLocales();
             foreach (array_keys($locales) as $locale) {
@@ -66,19 +71,18 @@ class Detector
             }
         }
 
-        return Section::getByLocale(Config::get('concrete.multilingual.default_locale'));
+        $site = \Site::getSite();
+        return Section::getByLocale($site->getDefaultLocale());
     }
 
     public static function setupSiteInterfaceLocalization(Page $c = null)
     {
-        if (\User::isLoggedIn() && Config::get('concrete.multilingual.keep_users_locale')) {
-            return;
-        }
         if (!$c) {
             $c = Page::getCurrentPage();
         }
+        $app = Facade::getFacadeApplication();
         // don't translate dashboard pages
-        $dh = \Core::make('helper/concrete/dashboard');
+        $dh = $app->make('helper/concrete/dashboard');
         if ($dh->inDashboard($c)) {
             return;
         }
@@ -93,24 +97,37 @@ class Detector
         }
 
         $locale = $ms->getLocale();
-
-        if (strlen($locale)) {
-            \Localization::changeLocale($locale);
+        if ($locale) {
+            $app->make('session')->set('multilingual_default_locale', $locale);
+            $loc = Localization::getInstance();
+            $loc->setContextLocale('site', $locale);
         }
     }
 
+    /**
+     * Check if there's some multilingual section.
+     *
+     * @return bool
+     */
     public static function isEnabled()
     {
-        if (!isset(self::$enabled)) {
-            $app = \Core::make('app');
-            if (!$app->isInstalled()) {
-                return false;
-            }
-            $db = \Database::connection();
-            $count = $db->GetOne('select count(cID) from MultilingualSections');
-            self::$enabled = $count > 0;
+        $app = Facade::getFacadeApplication();
+        $cache = $app->make('cache/request');
+        $item = $cache->getItem('multilingual/enabled');
+        if (!$item->isMiss()) {
+            return $item->get();
         }
 
-        return self::$enabled;
+        $item->lock();
+        $result = false;
+        if ($app->isInstalled()) {
+            $site = $app->make('site')->getSite();
+            if (count($site->getLocales()) > 1) {
+                $result = true;
+            }
+        }
+
+        $cache->save($item->set($result));
+        return $result;
     }
 }

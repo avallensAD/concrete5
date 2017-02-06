@@ -3,7 +3,7 @@ defined('C5_EXECUTE') or die("Access Denied.");
 
 $subject = $siteName.' '.t("Registration - Approval Required");
 
-/**
+/*
  * HTML BODY START
  */
 ob_start()
@@ -18,7 +18,7 @@ ob_start()
 <?php
 
 $bodyHTML = ob_get_clean();
-/**
+/*
  * HTML BODY END
  *
  * ======================
@@ -38,6 +38,6 @@ ob_start();
 <?php
 
 $body = ob_get_clean();
-/**
+/*
  * PLAIN TEXT BODY END
  */

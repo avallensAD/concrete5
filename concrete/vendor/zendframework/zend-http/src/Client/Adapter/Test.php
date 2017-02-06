@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -28,7 +28,7 @@ class Test implements AdapterInterface
      *
      * @var array
      */
-    protected $config = array();
+    protected $config = [];
 
     /**
      * Buffer of responses to be returned by the read() method.  Can be
@@ -36,7 +36,7 @@ class Test implements AdapterInterface
      *
      * @var array
      */
-    protected $responses = array("HTTP/1.1 400 Bad Request\r\n\r\n");
+    protected $responses = ["HTTP/1.1 400 Bad Request\r\n\r\n"];
 
     /**
      * Current position in the response buffer
@@ -56,7 +56,8 @@ class Test implements AdapterInterface
      * Adapter constructor, currently empty. Config is set using setOptions()
      */
     public function __construct()
-    { }
+    {
+    }
 
     /**
      * Set the nextRequestWillFail flag
@@ -77,7 +78,7 @@ class Test implements AdapterInterface
      * @param  array|Traversable $options
      * @throws Exception\InvalidArgumentException
      */
-    public function setOptions($options = array())
+    public function setOptions($options = [])
     {
         if ($options instanceof Traversable) {
             $options = ArrayUtils::iteratorToArray($options);
@@ -121,20 +122,21 @@ class Test implements AdapterInterface
      * @param string        $body
      * @return string Request as string
      */
-    public function write($method, $uri, $httpVer = '1.1', $headers = array(), $body = '')
+    public function write($method, $uri, $httpVer = '1.1', $headers = [], $body = '')
     {
-        $host = $uri->getHost();
-            $host = (strtolower($uri->getScheme()) == 'https' ? 'sslv2://' . $host : $host);
-
         // Build request headers
         $path = $uri->getPath();
         if (empty($path)) {
             $path = '/';
         }
-        if ($uri->getQuery()) $path .= '?' . $uri->getQuery();
+        if ($uri->getQuery()) {
+            $path .= '?' . $uri->getQuery();
+        }
         $request = "{$method} {$path} HTTP/{$httpVer}\r\n";
         foreach ($headers as $k => $v) {
-            if (is_string($k)) $v = ucfirst($k) . ": $v";
+            if (is_string($k)) {
+                $v = ucfirst($k) . ": $v";
+            }
             $request .= "$v\r\n";
         }
 
@@ -164,7 +166,8 @@ class Test implements AdapterInterface
      *
      */
     public function close()
-    { }
+    {
+    }
 
     /**
      * Set the HTTP response(s) to be returned by this adapter
@@ -188,9 +191,9 @@ class Test implements AdapterInterface
      */
     public function addResponse($response)
     {
-         if ($response instanceof Response) {
+        if ($response instanceof Response) {
             $response = $response->toString();
-         }
+        }
 
         $this->responses[] = $response;
     }

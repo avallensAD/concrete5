@@ -3,12 +3,10 @@ namespace Concrete\Core\Page\Type\PublishTarget\Configuration;
 
 use Concrete\Core\Page\Page;
 use Concrete\Core\Page\Type\Type;
-use Loader;
 use PageType;
 
 class PageTypeConfiguration extends Configuration
 {
-
     protected $ptID;
     protected $selectorFormFactor;
     protected $startingPointPage;
@@ -31,6 +29,15 @@ class PageTypeConfiguration extends Configuration
     public function setSelectorFormFactor($selectorFormFactor)
     {
         $this->selectorFormFactor = $selectorFormFactor;
+    }
+
+    public function getDefaultParentPageID()
+    {
+        $db = \Database::connection();
+        $ids = $db->GetCol('select cID from Pages where ptID = ? and cIsTemplate = 0 and cIsActive = 1', [$this->getPageTypeID()]);
+        if (count($ids) == 1) {
+            return $ids[0];
+        }
     }
 
     /**
@@ -69,5 +76,4 @@ class PageTypeConfiguration extends Configuration
     {
         return $page->getPageTypeID() == $this->getPageTypeID();
     }
-
 }

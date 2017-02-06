@@ -11,19 +11,22 @@
 		options = $.extend({
 			displayNodePagination: false,
 			cParentID: 0,
+			siteTreeID: 0,
 			cookieId: 'ConcreteSitemap',
 			includeSystemPages: false,
             displaySingleLevel: false,
+			persist: true,
 			minExpandLevel: false,
 			dataSource: CCM_TOOLS_PATH + '/dashboard/sitemap_data',
 			ajaxData: {},
 			selectMode: false, // 1 - single, 2 = multiple , 3 = hierarchical-multiple - has NOTHING to do with clicks. If you enable select mode you CANNOT use a click handler.
 			onClickNode: false, // This handles clicking on the title.
 			onSelectNode: false, // this handles when a radio or checkbox in the tree is checked
-			onPostInit: false
+			init: false
 		}, options);
 		my.options = options;
 		my.$element = $element;
+		my.$sitemap = null;
 		my.setupTree();
 		my.setupTreeEvents();
 
@@ -34,9 +37,44 @@
 
 	ConcreteSitemap.prototype = {
 
+		sitemapTemplate: '<div class="ccm-sitemap-wrapper"><div class="ccm-sitemap-locales-wrapper"></div><div class="ccm-sitemap-tree"></div></div>',
+		localesWrapperTemplate: '<ul class="nav nav-tabs ccm-sitemap-locales"></ul>',
+		localeTemplate: '<li <% if (selectedLocale) { %>class="active"<% } %>><a href="#" data-locale-site-tree="<%=treeID%>"><img src="<%=icon%>"> <span><%=localeDisplayName%></span></a></li>',
+
 		getTree: function() {
 			var my = this;
-			return my.$element.dynatree('getTree');
+			return my.$sitemap.fancytree('getTree');
+		},
+
+		setupLocales: function(locales) {
+			var my = this;
+			if (!locales) {
+				return;
+			}
+
+			if (locales.length < 2) {
+				return;
+			}
+			if (!my.$element.find('div.ccm-sitemap-locales-wrapper ul').length) {
+				var $menu = $(my.localesWrapperTemplate);
+				var _locale =  _.template(my.localeTemplate);
+				for (var i = 0; i < locales.length; i++) {
+					var data = locales[i];
+					$menu.append(_locale(data));
+				}
+
+				$menu.find('a[data-locale-site-tree]').on('click', function(e) {
+					e.preventDefault();
+					var treeID = $(this).attr('data-locale-site-tree');
+					var source = my.getTree().options.source;
+					$menu.find('li').removeClass('active');
+					$(this).parent().addClass('active');
+					my.options.siteTreeID = treeID;
+					source.data.siteTreeID = treeID;
+					my.getTree().reload(source);
+				});
+				my.$element.find('div.ccm-sitemap-locales-wrapper').append($menu);
+			}
 		},
 
 		setupTree: function() {
@@ -44,18 +82,18 @@
 				my = this,
 				doPersist = true;
 
-			var dynatreeSelectMode = 1,
+			var treeSelectMode = 1,
 				checkbox = false,
 				classNames = false;
 
 			if (my.options.selectMode == 'single') {
 				checkbox = true;
-				classNames = {checkbox: "dynatree-radio"};
+				classNames = {checkbox: "fancytree-radio"};
 			} else if (my.options.selectMode == 'multiple') {
-				dynatreeSelectMode = 2;
+				treeSelectMode = 2;
 				checkbox = true;
 			} else if (my.options.selectMode == 'hierarchical-multiple') {
-				dynatreeSelectMode = 3;
+				treeSelectMode = 3;
 				checkbox = true;
 			}
 
@@ -82,61 +120,102 @@
 				}
 			}
 
+			if (!my.options.persist) {
+				doPersist = false;
+			}
+
 			var ajaxData = $.extend({
 				'displayNodePagination': my.options.displayNodePagination ? 1 : 0,
 				'cParentID': my.options.cParentID,
+				'siteTreeID': my.options.siteTreeID,
 				'displaySingleLevel': my.options.displaySingleLevel ? 1 : 0,
 				'includeSystemPages': my.options.includeSystemPages ? 1 : 0
 			}, my.options.ajaxData);
 
-    		$(my.$element).addClass('ccm-tree-sitemap');
-    		$(my.$element).dynatree({
-                onQueryExpand: function () {
-                    (my.options.onQueryExpand || $.noop).apply(this, arguments);
-                },
-				autoFocus: false,
-				classNames: classNames,
-				cookieId: my.options.cookieId,
-				cookie: {
-					path: CCM_REL + '/'
+			var extensions = ["glyph", "dnd"];
+			if (doPersist) {
+				extensions.push("persist");
+			}
+
+			var _sitemap = _.template(my.sitemapTemplate);
+
+			my.$element.append(_sitemap);
+			my.$sitemap = my.$element.find('div.ccm-sitemap-tree');
+    		$(my.$sitemap).fancytree({
+				tabindex: null,
+				titlesTabbable: false,
+				extensions: extensions,
+				glyph: {
+					map: {
+						doc: "fa fa-file-o",
+						docOpen: "fa fa-file-o",
+						checkbox: "fa fa-square-o",
+						checkboxSelected: "fa fa-check-square-o",
+						checkboxUnknown: "fa fa-share-square",
+						dragHelper: "fa fa-share",
+						dropMarker: "fa fa-angle-right",
+						error: "fa fa-warning",
+						expanderClosed: "fa fa-plus-square-o",
+						expanderLazy: "fa fa-plus-square-o",  // glyphicon-expand
+						expanderOpen: "fa fa-minus-square-o",  // glyphicon-collapse-down
+						loading: "fa fa-spin fa-refresh"
+					}
 				},
-				persist: doPersist,
-				initAjax: {
+                persist: {
+                    // Available options with their default:
+                    cookieDelimiter: "~",    // character used to join key strings
+                    cookiePrefix: my.options.cookieId,
+                    cookie: { // settings passed to jquery.cookie plugin
+                        path: CCM_REL + '/'
+                    }
+                },
+                autoFocus: false,
+				classNames: classNames,
+				source: {
 					url: my.options.dataSource,
 					data: ajaxData
 				},
-				onPostInit: function() {
-					if (my.options.onPostInit) {
-						my.options.onPostInit.call();
+				init: function() {
+					if (my.options.init) {
+						my.options.init.call();
 					}
 					if (my.options.displayNodePagination) {
-						my.setupNodePagination(my.$element, my.options.cParentID);
+						my.setupNodePagination(my.$sitemap, my.options.cParentID);
 					}
+
+					my.setupLocales(my.getTree().data.locales);
 				},
-                onRender: function(node, span) {
+				/*
+                renderNode: function(event, data) {
 					if (my.options.selectMode != false) {
 						$(span).find('.fa').remove();
 					}
-                    my.$element.children('.ccm-pagination-bound').remove();
-                },
-				selectMode: dynatreeSelectMode,
+                    my.$sitemap.children('.ccm-pagination-bound').remove();
+                },*/
+
+				selectMode: treeSelectMode,
 				checkbox: checkbox,
 				minExpandLevel:  minExpandLevel,
 				clickFolderMode: 2,
-				onLazyRead: function(node) {
-					if (my.options.displaySingleLevel) {
-						my.displaySingleLevel(node);
+				lazyLoad: function(event, data) {
+					if (!my.options.displaySingleLevel) {
+						data.result = my.getLoadNodePromise(data.node);
 					} else {
-						my.reloadNode(node);
+						return false;
+					}
+
+				},
+				/*
+				expand: function(event, data) {
+					if (my.options.displaySingleLevel) {
+						data.result = my.displaySingleLevel(data.node);
 					}
 				},
-				onExpand: function(expand, node) {
-					if (expand && my.options.displaySingleLevel) {
-						my.displaySingleLevel(node);
-					}
-				},
-				onClick: function(node, e) {
-					if (node.getEventTargetType(e) == "title" && node.data.cID) {
+*/
+
+				click: function(event, data) {
+					var node = data.node;
+					if (data.targetType == "title" && node.data.cID) {
 
 						// I have a select mode, so clicking on the title does nothing.
 						if (my.options.selectMode) {
@@ -149,8 +228,7 @@
 							return my.options.onClickNode.call(my, node);
 						}
 
-						// Standard sitemap dashboard mode.
-						var menu = new ConcretePageMenu($(node.span).find('>a'), {
+						var menu = new ConcretePageMenu($(node.li), {
 							menuOptions: my.options,
 							data: node.data,
 							sitemap: my,
@@ -160,71 +238,68 @@
 								});
 							}
 						});
-						menu.show(e);
+						menu.show(event);
 
 					} else if (node.data.href) {
 						window.location.href = node.data.href;
-					} else if (node.data.displaySingleLevel) {
+					} else if (my.options.displaySingleLevel) {
 						my.displaySingleLevel(node);
+						return false;
 					}
 				},
-				onSelect: function(flag, node) {
+				select: function(event, data, flag) {
 					if (my.options.onSelectNode) {
-						my.options.onSelectNode.call(my, node, flag);
+						my.options.onSelectNode.call(my, data.node, data.node.isSelected());
 					}
 				},
 
-				fx: {height: 'toggle', duration: 200},
 				dnd: {
-					onDragStart: function(node) {
+					preventRecursiveMoves: true, // Prevent dropping nodes on own descendants,
+					focusOnClick: true,
+					preventVoidMoves: true, // Prevent dropping nodes 'before self', etc.
+
+					dragStart: function(sourceNode, data) {
 						if (my.options.selectMode) {
 							return false;
 						}
-						if (node.data.cID) {
+                        if (sourceNode.data.cID) {
 							return true;
 						}
 						return false;
 					},
-					onDragStop: function(node) {
-
-					},
-					autoExpandMS: 1000,
-					preventVoidMoves: false,
-					onDragEnter: function(node, sourceNode) {
+					dragStop: function(sourceNode, data) {
 						return true;
 					},
-					onDragOver: function(node, sourceNode, hitMode) {
-						if ((!node.parent.data.cID) && (node.data.cID !== '1')) { // Home page has no parents, but we still want to be able to hit it.
+
+					dragEnter: function(targetNode, data) {
+						if ((!targetNode.parent.data.cID) && (targetNode.data.cID !== '1')) { // Home page has no parents, but we still want to be able to hit it.
 							return false;
 						}
-
-                        if((hitMode != 'over') && (node.data.cID == 1)) {  // Home gets no siblings
-                            return false;
+                        if (targetNode.data.cID == 1) {  // Home gets no siblings
+							return 'over';
                         }
 
-                        if (sourceNode.data.cID == node.data.cID) {
+                        if (targetNode.data.cID == data.otherNode.data.cID) {
                             return false; // can't drag node onto itself.
                         }
-
-						if (!node.data.cID && hitMode == 'after') {
+						if (!data.otherNode.data.cID && data.hitMode == 'after') {
 							return false;
 						}
 
 				        // Prevent dropping a parent below it's own child
-				        if(node.isDescendantOf(sourceNode)){
-				          return false;
+				        if (targetNode.isDescendantOf(data.otherNode)) {
+							return false;
 				        }
 				        return true;
-
 					},
-					onDrop: function(node, sourceNode, hitMode, ui, draggable) {
-						if (node.parent.data.cID == sourceNode.parent.data.cID && hitMode != 'over') {
+					dragDrop: function(targetNode, data) {
+						if (targetNode.parent.data.cID == data.otherNode.parent.data.cID && data.hitMode != 'over') {
 							// we are reordering
-				        	sourceNode.move(node, hitMode);
-							my.rescanDisplayOrder(sourceNode.parent);
+							data.otherNode.moveTo(targetNode, data.hitMode);
+							my.rescanDisplayOrder(data.otherNode.parent);
 						} else {
 							// we are dragging either onto a node or into another part of the site
-							my.selectMoveCopyTarget(sourceNode, node, hitMode);
+							my.selectMoveCopyTarget(data.otherNode, targetNode, data.hitMode);
 						}
 					}
 				}
@@ -242,7 +317,7 @@
 			}
             ConcreteEvent.unsubscribe('SitemapDeleteRequestComplete.sitemap');
 			ConcreteEvent.subscribe('SitemapDeleteRequestComplete.sitemap', function(e) {
-	 			var node = my.$element.dynatree('getActiveNode');
+	 			var node = my.$sitemap.fancytree('getActiveNode');
 				var parent = node.parent;
 				my.reloadNode(parent);
 			});
@@ -270,8 +345,8 @@
 				params = [],
 				i;
 
-			node.setLazyNodeStatus(DTNodeStatus_Loading);
-			for (i = 0; i < childNodes.length; i++) {
+			node.setStatus('loading');
+            for (i = 0; i < childNodes.length; i++) {
 				var childNode = childNodes[i];
 				params.push({'name': 'cID[]', 'value': childNode.data.cID});
 			}
@@ -281,7 +356,7 @@
 				data: params,
 				url: CCM_TOOLS_PATH + '/dashboard/sitemap_update',
 				success: function(r) {
-					node.setLazyNodeStatus(DTNodeStatus_Ok);
+                    node.setStatus('ok');
 					ConcreteAlert.notify({
 					'message': r.message
 					});
@@ -322,7 +397,7 @@
 
 				my.reloadNode(reloadNode, function() {
 					if (!destNode.bExpanded) {
-						destNode.expand(true);
+						destNode.setExpanded(true, {noAnimation: true});
 					}
 				});
 			});
@@ -330,32 +405,30 @@
     	},
 
 
-    	setupNodePagination: function($tree, nodeKey) {
-    		//var tree = $tree.dynatree('getTree');
-    		var pg = $tree.find('div.ccm-pagination-wrapper');
+    	setupNodePagination: function($tree) {
+    		var pg = $tree.find('div.ccm-pagination-wrapper'),
+				my = this;
     		$tree.children('.ccm-pagination-bound').remove();
     		if (pg.length) {
     			pg.find('a').unbind('click').on('click', function() {
-    				// load under node
-    				var href = $(this).attr('href');
-    				$tree.dynatree('option', 'initAjax', {
-    					url: href
-    				});
-    				$tree.dynatree('getTree').reload();
-    				return false;
+					var href = $(this).attr('href');
+					var root = my.$sitemap.fancytree('getRootNode');
+					jQuery.fn.dialog.showLoader();
+					$.ajax({
+						dataType: 'json',
+						url: href,
+						success: function(data) {
+							jQuery.fn.dialog.hideLoader();
+							root.removeChildren();
+							root.addChildren(data);
+							my.setupNodePagination(my.$sitemap);
+						}
+					});
+					return false;
     			});
-                var node = $.ui.dynatree.getNode(pg);
-                if (node && typeof node.remove === 'function') {
-                    node.remove();
-                }
-	    		pg.addClass('ccm-pagination-bound').appendTo($tree);
 
-				$tree.dynatree('option', 'onActivate', function(node) {
-					if ($(node.span).hasClass('ccm-sitemap-explore-paging')) {
-						node.deactivate();
-					}
-				});
-	    	}
+	    		pg.addClass('ccm-pagination-bound').appendTo($tree);
+			}
     	},
 
     	displaySingleLevel: function(node) {
@@ -365,47 +438,61 @@
 
             (my.options.onDisplaySingleLevel || $.noop).call(this, node);
 
-    		var root = my.$element.dynatree('getRoot');
-			$(node.li).closest('[data-sitemap=container]').dynatree('option', 'minExpandLevel', minExpandLevel);
-			root.removeChildren();
+    		var root = my.$sitemap.fancytree('getRootNode');
+			//my.$sitemap.fancytree('option', 'minExpandLevel', minExpandLevel);
 			var ajaxData = $.extend({
+                'dataType': 'json',
 				'displayNodePagination': options.displayNodePagination ? 1 : 0,
+				'siteTreeID': options.siteTreeID,
 				'cParentID': node.data.cID,
 				'displaySingleLevel': true,
 				'includeSystemPages': options.includeSystemPages ? 1 : 0
 			}, options.ajaxData);
-			root.appendAjax({
-				url: options.dataSource,
-				data: ajaxData,
-				success: function() {
-					my.setupNodePagination(root.tree.$tree, node.data.key);
-				}
-			});
 
+			jQuery.fn.dialog.showLoader();
+            return $.ajax({
+				dataType: 'json',
+                url: options.dataSource,
+                data: ajaxData,
+                success: function(data) {
+					jQuery.fn.dialog.hideLoader();
+					root.removeChildren();
+					root.addChildren(data);
+                    my.setupNodePagination(my.$sitemap, node.data.key);
+                }
+            });
     	},
 
-    	reloadNode: function(node, onComplete) {
-    		var my = this,
-    			options = my.options,
+		getLoadNodePromise: function(node) {
+			var my = this,
+				options = my.options,
 				ajaxData = $.extend({
-					cParentID: node.data.cID,
+					'cParentID': node.data.cID ? node.data.cID : 0,
+					'siteTreeID': options.siteTreeID,
+					'reloadNode': 1,
 					'includeSystemPages': options.includeSystemPages ? 1 : 0,
 					'displayNodePagination': options.displayNodePagination ? 1 : 0
 				}, options.ajaxData),
-
-    			params = {
+				params = {
+					dataType: 'json',
 					url: options.dataSource,
-					data: ajaxData,
-					success: function() {
-						if (onComplete) {
-							onComplete();
-						}
-					}
+					data: ajaxData
 				};
 
-			node.appendAjax(params);
-    	}
+			return $.ajax(params);
+		},
 
+
+		reloadNode: function(node, onComplete) {
+			this.getLoadNodePromise(node).done(function(data) {
+				node.removeChildren();
+				node.addChildren(data);
+				node.setExpanded(true, {noAnimation: true});
+				if (onComplete) {
+					onComplete();
+				}
+			});
+		}
 	}
 
 	/**

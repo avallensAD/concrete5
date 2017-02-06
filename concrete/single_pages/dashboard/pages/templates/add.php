@@ -29,15 +29,19 @@ $form = Loader::helper('form');
 
         <?php
         $i = 0;
-        foreach($icons as $ic) { ?>
+        foreach ($icons as $ic) {
+            ?>
           <div class="col-sm-2">
             <label style="display:block;text-align: center">
-                 <img src="<?php echo REL_DIR_FILES_PAGE_TEMPLATE_ICONS.'/'.$ic;?>" class="img-responsive" style="vertical-align: middle" />
+                 <img src="<?php echo REL_DIR_FILES_PAGE_TEMPLATE_ICONS.'/'.$ic;
+            ?>" class="img-responsive" style="vertical-align: middle" />
                  <?php echo $form->radio('pTemplateIcon', $ic, $i == 0)?>
             </label>
           </div>
-          <?php $i++; ?>
-        <?php } ?>
+          <?php ++$i;
+            ?>
+        <?php 
+        } ?>
         </div>
     </div>
 

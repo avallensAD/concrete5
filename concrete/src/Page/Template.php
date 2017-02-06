@@ -2,34 +2,10 @@
 namespace Concrete\Core\Page;
 
 use PageType;
-use Concrete\Core\Support\Facade\Database;
-use \Concrete\Core\Package\PackageList;
 use Core;
 
-/**
- * @Entity
- * @Table(name="PageTemplates")
- */
 class Template
 {
-    /** @Id @Column(type="integer") @GeneratedValue **/
-    protected $pTemplateID;
-
-    /** @Column(type="string") **/
-    protected $pTemplateHandle;
-
-    /** @Column(type="string") **/
-    protected $pTemplateIcon = FILENAME_PAGE_TEMPLATE_DEFAULT_ICON;
-
-    /** @Column(type="string") **/
-    protected $pTemplateName;
-
-    /** @Column(type="boolean") **/
-    protected $pTemplateIsInternal = false;
-
-    /** @Column(type="integer") **/
-    protected $pkgID = 0;
-
     public static function exportList($xml)
     {
         $nxml = $xml->addChild('pagetemplates');
@@ -39,123 +15,66 @@ class Template
         }
     }
 
-    public function export($node)
-    {
-        $type = $node->addChild('pagetemplate');
-        $type->addAttribute('icon', $this->getPageTemplateIcon());
-        $type->addAttribute('name', Core::make('helper/text')->entities($this->getPageTemplateName()));
-        $type->addAttribute('handle', $this->getPageTemplateHandle());
-        $type->addAttribute('package', $this->getPackageHandle());
-        $type->addAttribute('internal', $this->isPageTemplateInternal());
-    }
-
-    public function getPageTemplateID()
-    {
-        return $this->pTemplateID;
-    }
-
-    public function getPageTemplateName()
-    {
-        return $this->pTemplateName;
-    }
-
-    public function getPageTemplateHandle()
-    {
-        return $this->pTemplateHandle;
-    }
-
-    public function isPageTemplateInternal()
-    {
-        return $this->pTemplateIsInternal;
-    }
-
-    public function getPageTemplateIcon()
-    {
-        return $this->pTemplateIcon;
-    }
-
-    public function getPackageID()
-    {
-        return $this->pkgID;
-    }
-
-    public function getPackageHandle()
-    {
-        return PackageList::getHandle($this->pkgID);
-    }
-
-    /** Returns the display name for this page template (localized and escaped accordingly to $format)
-     * @param string $format = 'html'
-     *   Escape the result in html format (if $format is 'html').
-     *   If $format is 'text' or any other value, the display name won't be escaped.
-     * @return string
-     */
-    public function getPageTemplateDisplayName($format = 'html')
-    {
-        $value = tc('PageTemplateName', $this->getPageTemplateName());
-        switch ($format) {
-            case 'html':
-                return h($value);
-            case 'text':
-            default:
-                return $value;
-        }
-    }
-
     public static function getByHandle($pTemplateHandle)
     {
-        $em = \ORM::entityManager('core');
-        return $em->getRepository('\Concrete\Core\Page\Template')
+        $em = \ORM::entityManager();
+
+        return $em->getRepository('\Concrete\Core\Entity\Page\Template')
             ->findOneBy(
-                array('pTemplateHandle' => $pTemplateHandle)
+                ['pTemplateHandle' => $pTemplateHandle]
             );
     }
 
     public static function getByID($pTemplateID)
     {
         if ($pTemplateID) {
-            $em = \ORM::entityManager('core');
-            return $em->find('\Concrete\Core\Page\Template', $pTemplateID);
-        }
-    }
+            $em = \ORM::entityManager();
 
-    public function delete()
-    {
-        $em = \ORM::entityManager('core');
-        $em->remove($this);
-        $em->flush();
+            return $em->find('\Concrete\Core\Entity\Page\Template', $pTemplateID);
+        }
     }
 
     protected static function sort($list)
     {
+        $wrapperList = [];
+        foreach ($list as $item) {
+            $wrapperList[] = ['item' => $item, 'text' => $item->getPageTemplateDisplayName('text')];
+        }
         usort(
-            $list,
+            $wrapperList,
             function ($a, $b) {
-                return strcasecmp($a->getPageTemplateDisplayName('text'), $b->getPageTemplateDisplayName('text'));
+                return strcasecmp($a['text'], $b['text']);
             }
         );
-        return $list;
+        $result = [];
+        foreach ($wrapperList as $array) {
+            $result[] = $array['item'];
+        }
+
+        return $result;
     }
 
     public static function getListByPackage($pkg)
     {
-        $em = \ORM::entityManager('core');
-        $list = $em->getRepository('\Concrete\Core\Page\Template')
+        $em = \ORM::entityManager();
+        $list = $em->getRepository('\Concrete\Core\Entity\Page\Template')
             ->findBy(
-                array('pkgID' => $pkg->getPackageID())
+                ['pkgID' => $pkg->getPackageID()]
             );
         $list = self::sort($list);
+
         return $list;
     }
 
     public static function getList($includeInternal = false)
     {
-        $em = \ORM::entityManager('core');
-        $args = array('pTemplateIsInternal' => $includeInternal);
-        $list = $em->getRepository('\Concrete\Core\Page\Template')->findBy(
-            $args, array('pTemplateID' => 'asc')
+        $em = \ORM::entityManager();
+        $args = ['pTemplateIsInternal' => $includeInternal];
+        $list = $em->getRepository('\Concrete\Core\Entity\Page\Template')->findBy(
+            $args, ['pTemplateID' => 'asc']
         );
         $list = self::sort($list);
+
         return $list;
     }
 
@@ -168,14 +87,14 @@ class Template
     ) {
         $pkgID = (!is_object($pkg)) ? 0 : $pkg->getPackageID();
 
-        $template = new self();
+        $template = new \Concrete\Core\Entity\Page\Template();
         $template->pTemplateHandle = $pTemplateHandle;
         $template->pTemplateName = $pTemplateName;
         $template->pTemplateIcon = $pTemplateIcon;
         $template->pkgID = $pkgID;
         $template->pTemplateIsInternal = (bool) $pTemplateIsInternal;
 
-        $em = \ORM::entityManager('core');
+        $em = \ORM::entityManager();
         $em->persist($template);
         $em->flush();
 
@@ -189,28 +108,10 @@ class Template
         return $template;
     }
 
-    public function update($pTemplateHandle, $pTemplateName, $pTemplateIcon = FILENAME_PAGE_TEMPLATE_DEFAULT_ICON)
-    {
-        $this->pTemplateHandle = $pTemplateHandle;
-        $this->pTemplateName = $pTemplateName;
-        $this->pTemplateIcon = $pTemplateIcon;
-
-        $em = \ORM::entityManager('core');
-        $em->persist($this);
-        $em->flush();
-    }
-
     public function getIcons()
     {
         $f = Core::make('helper/file');
-        return $f->getDirectoryContents(DIR_FILES_PAGE_TEMPLATE_ICONS);
-    }
 
-    public function getPageTemplateIconImage()
-    {
-        $src = REL_DIR_FILES_PAGE_TEMPLATE_ICONS . '/' . $this->pTemplateIcon;
-        $iconImg = '<img src="' . $src . '" height="' . \Config::get('concrete.icons.page_template.height') . '" width="' . \Config::get('concrete.icons.page_template.width') . '" alt="' . $this->getPageTemplateDisplayName(
-            ) . '" title="' . $this->getPageTemplateDisplayName() . '" />';
-        return $iconImg;
+        return $f->getDirectoryContents(DIR_FILES_PAGE_TEMPLATE_ICONS);
     }
 }

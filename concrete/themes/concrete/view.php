@@ -18,7 +18,7 @@ View::element(
 </div>
 </div>
 
-<?php print $innerContent ?>
+<?php echo $innerContent ?>
 
 </div>
 </div>

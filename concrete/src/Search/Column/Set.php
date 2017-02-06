@@ -11,12 +11,27 @@ class Set
         $this->columns[] = $col;
     }
 
+    public function removeColumnByKey($key)
+    {
+        foreach($this->columns as $i => $column) {
+            if ($key == $column->getColumnKey()) {
+                unset($this->columns[$i]);
+            }
+        }
+    }
+
+    public function __sleep()
+    {
+        return array('columns', 'defaultSortColumn');
+    }
+
+
     public function __wakeup()
     {
         $i = 0;
         foreach ($this->columns as $col) {
             if ($col instanceof AttributeKeyColumn) {
-                $ak = call_user_func(array($this->attributeClass, 'getByHandle'), substr($col->getColumnKey(), 3));
+                $ak = $this->getAttributeKeyColumn(substr($col->getColumnKey(), 3));
                 if (!is_object($ak)) {
                     unset($this->columns[$i]);
                 }
@@ -51,13 +66,17 @@ class Set
         return $this->defaultSortColumn;
     }
 
+    public function getAttributeKeyColumn($akHandle)
+    {
+        $ak = call_user_func(array($this->attributeClass, 'getByHandle'), $akHandle);
+        $col = new AttributeKeyColumn($ak);
+        return $col;
+    }
+
     public function getColumnByKey($key)
     {
         if (substr($key, 0, 3) == 'ak_') {
-            $ak = call_user_func(array($this->attributeClass, 'getByHandle'), substr($key, 3));
-            $col = new AttributeKeyColumn($ak);
-
-            return $col;
+            return $this->getAttributeKeyColumn(substr($key, 3));
         } else {
             foreach ($this->columns as $col) {
                 if ($col->getColumnKey() == $key) {
@@ -79,7 +98,7 @@ class Set
                 if ($_col->getColumnKey() == $col->getColumnKey()) {
                     return true;
                 }
-            } elseif (is_a($col, '\Concrete\Core\Attribute\Key\Key')) {
+            } elseif (is_a($col, '\Concrete\Core\Attribute\AttributeKeyInterface')) {
                 if ($_col->getColumnKey() == 'ak_' . $col->getAttributeKeyHandle()) {
                     return true;
                 }

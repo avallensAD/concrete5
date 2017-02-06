@@ -11,7 +11,8 @@ if ($this->controller->getTask() == 'viewDetail') {
         t('Results for &#34;%s&#34;', $current_survey),
         false,
         false,
-        false); ?>
+        false);
+    ?>
 
     <div class="ccm-dashboard-header-buttons">
         <a href="<?php echo $view->action('view') ?>" class="btn btn-default">
@@ -42,7 +43,9 @@ if ($this->controller->getTask() == 'viewDetail') {
                             <td><?php echo $detail['date'] ?></td>
                             <td><?php echo $detail['user'] ?></td>
                         </tr>
-                    <?php } ?>
+                    <?php 
+                    }
+    ?>
                 </tbody>
             </table>
 
@@ -63,15 +66,21 @@ if ($this->controller->getTask() == 'viewDetail') {
 
     <?php echo Loader::helper('concrete/dashboard')->getDashboardPaneFooterWrapper(false) ?>
 
-<?php } else { ?>
+<?php 
+} else {
+    ?>
 
-    <?php echo Loader::helper('concrete/dashboard')->getDashboardPaneHeaderWrapper(t('Surveys'), false, false); ?>
+    <?php echo Loader::helper('concrete/dashboard')->getDashboardPaneHeaderWrapper(t('Surveys'), false, false);
+    ?>
 
-    <?php if (count($surveys) == 0) { ?>
+    <?php if (count($surveys) == 0) {
+    ?>
         <p>
             <?php echo t('You have not created any surveys.') ?>
         </p>
-    <?php } else { ?>
+    <?php 
+} else {
+    ?>
 
         <div class="ccm-dashboard-content-full">
             <table class="ccm-search-results-table">
@@ -125,17 +134,20 @@ if ($this->controller->getTask() == 'viewDetail') {
                         </td>
                     </tr>
                 <?php
+
                 }
-                ?>
+    ?>
 
                 </tbody>
             </table>
         </div>
     <?php
-    }
+
+}
     $surveyList->displayPagingV2();
     ?>
 
     <?php echo Loader::helper('concrete/dashboard')->getDashboardPaneFooterWrapper() ?>
 
-<?php } ?>
+<?php 
+} ?>

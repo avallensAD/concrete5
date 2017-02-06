@@ -1,13 +1,14 @@
 <?php
 namespace Concrete\Core\Console\Command;
 
+use Concrete\Core\Error\ErrorList\ErrorList;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Package;
 use Exception;
+use Concrete\Core\Support\Facade\Package;
 
 class InstallPackageCommand extends Command
 {
@@ -23,6 +24,8 @@ class InstallPackageCommand extends Command
 Returns codes:
   0 operation completed successfully
   1 errors occurred
+
+More info at http://documentation.concrete5.org/developers/appendix/cli-commands#c5-package-install
 EOT
             )
         ;
@@ -75,19 +78,27 @@ EOT
             $output->writeln(sprintf('<info>found (%s).</info>', $pkg->getPackageName()));
 
             $output->write('Checking preconditions... ');
-            $test = Package::testForInstall($pkgHandle);
-            if ($test !== true) {
-                throw new Exception(implode("\n", Package::mapError($r)));
+            $test = $pkg->testForInstall();
+            if (is_object($test)) {
+                throw new Exception(implode("\n", $test->getList()));
             }
-            $output->writeln('<info>good.</info>');
 
-            $output->write('Installing package... ');
-            $pkgInstalled = $pkg->install($packageOptions);
-            $output->writeln('<info>done.</info>');
+            $output->write('Preconditions good. Installing...');
 
-            if ($pkg->allowsFullContentSwap() && $input->getOption('full-content-swap')) {
+            $r = Package::install($pkg, []);
+            if ($r instanceof ErrorList) {
+                throw new Exception(implode("\n", $r->getList()));
+            }
+
+            $output->writeln('<info>Package Installed.</info>');
+            $swapper = $pkg->getContentSwapper();
+
+            if ($swapper->allowsFullContentSwap($pkg) && $input->getOption('full-content-swap')) {
                 $output->write('Performing full content swap... ');
-                $pkg->swapContent(array());
+                $swapper->swapContent($pkg, array());
+                if (method_exists($pkg, 'on_after_swap_content')) {
+                    $pkg->on_after_swap_content(array());
+                }
                 $output->writeln('<info>done.</info>');
             }
         } catch (Exception $x) {

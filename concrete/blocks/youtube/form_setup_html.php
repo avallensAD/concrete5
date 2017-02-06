@@ -1,10 +1,10 @@
 <?php defined('C5_EXECUTE') or die("Access Denied."); ?>
 <?php
 if (!$vWidth) {
-    $vWidth=640;
+    $vWidth = 640;
 }
 if (!$vHeight) {
-    $vHeight=360;
+    $vHeight = 360;
 }
 
 if (!$sizing) {
@@ -15,19 +15,17 @@ if (!$sizing) {
 <?php
 echo Core::make('helper/concrete/ui')->tabs(array(
     array('video', t('Video'), true),
-    array('settings', t('Settings'))
+    array('settings', t('Settings')),
 ));
 ?>
 
 <div class="ccm-tab-content" id="ccm-tab-content-video">
-    <fieldset>
-        <legend><?php echo t('YouTube URL'); ?></legend>
-        <div class="form-group">
-            <?php echo $form->text('videoURL', $videoURL, array('required'=>'required'));?>
-        </div>
-    </fieldset>
-    <fieldset>
-        <legend><?php echo t('Size'); ?></legend>
+    <div class="form-group">
+        <label class="control-label"><?php echo t('YouTube URL'); ?></label>
+        <?php echo $form->text('videoURL', $videoURL, array('required' => 'required'));?>
+    </div>
+    <div class="form-group">
+        <label class="control-label"><?php echo t('Size')?></label>
         <div class="radio">
             <label>
                 <?php echo $form->radio('sizing', '16:9', $sizing); ?>
@@ -46,23 +44,23 @@ echo Core::make('helper/concrete/ui')->tabs(array(
                 <?php echo t("Fixed Size (non-responsive)")?>
             </label>
         </div>
-        <div id="fixedsizes" class="row <?php echo ($sizing == 'fixed' ? '' : 'hidden');?>">
-            <div class="form-group col-xs-6">
-                <label><?php echo t('Width')?></label>
-                <div class="input-group">
-                    <input type="text" class="form-control" id="YouTubeVideoWidth" name="vWidth" value="<?php echo $vWidth?>" />
-                    <div class="input-group-addon"><?php echo t('px');?></div>
-                </div>
-            </div>
-            <div class="form-group col-xs-6">
-                <label><?php echo t('Height')?></label>
-                <div class="input-group">
-                    <input type="text" class="form-control" id="YouTubeVideoHeight" name="vHeight" value="<?php echo $vHeight?>" />
-                    <div class="input-group-addon"><?php echo t('px');?></div>
-                </div>
+    </div>
+    <div id="fixedsizes" class="<?php echo $sizing == 'fixed' ? '' : 'hidden';?>">
+        <div class="form-group">
+            <label class="control-label"><?php echo t('Width')?></label>
+            <div class="input-group">
+                <input type="text" class="form-control" id="YouTubeVideoWidth" name="vWidth" value="<?php echo $vWidth?>" />
+                <div class="input-group-addon"><?php echo t('px');?></div>
             </div>
         </div>
-    </fieldset>
+        <div class="form-group">
+            <label class="control-label"><?php echo t('Height')?></label>
+            <div class="input-group">
+                <input type="text" class="form-control" id="YouTubeVideoHeight" name="vHeight" value="<?php echo $vHeight?>" />
+                <div class="input-group-addon"><?php echo t('px');?></div>
+            </div>
+        </div>
+    </div>
 </div>
 <div class="ccm-tab-content" id="ccm-tab-content-settings">
     <fieldset>
@@ -89,7 +87,7 @@ echo Core::make('helper/concrete/ui')->tabs(array(
                             if ($color == 'white') {
                                 $disabledattr['disabled'] = 'disabled';
                             }
-                            echo $form->checkbox('modestbranding', 1,  (isset($modestbranding) ? $modestbranding : true),$disabledattr); ?>
+                            echo $form->checkbox('modestbranding', 1,  (isset($modestbranding) ? $modestbranding : true), $disabledattr); ?>
                             <?php echo t("Hide YouTube Logo")?>
                         </label>
                     </div>
@@ -97,9 +95,9 @@ echo Core::make('helper/concrete/ui')->tabs(array(
             </div>
 
             <div class="col-xs-6">
-                <div class="form-group controls-only <?php echo (isset($controls) && $controls == 0 ? 'hidden' : '');?>">
+                <div class="form-group controls-only <?php echo isset($controls) && $controls == 0 ? 'hidden' : '';?>">
                     <?php  echo $form->label('color', t('Progress Bar Color'))?>
-                    <?php  echo $form->select('color', array('red'=>t('Red'), 'white'=>t('White')), $color)?>
+                    <?php  echo $form->select('color', array('red' => t('Red'), 'white' => t('White')), $color)?>
                 </div>
             </div>
         </div>

@@ -4,29 +4,33 @@
     <label class="control-label"><?php echo t('Choose Social Links to Show')?></label>
     <div id="ccm-block-social-links-list">
     <?php
-    if (count($links) == 0) { ?>
+    if (count($links) == 0) {
+        ?>
         <p><?php echo t('You have not added any social links.')?></p>
-    <?php }
+    <?php 
+    }
 
-    foreach($links as $link) {
+    foreach ($links as $link) {
         $service = $link->getServiceObject();
         ?>
         <div class="checkbox">
             <label><input type="checkbox" name="slID[]"
-               <?php if (is_array($selectedLinks) && in_array($link, $selectedLinks)) { ?>
+               <?php if (is_array($selectedLinks) && in_array($link, $selectedLinks)) {
+    ?>
                  checked
-                <?php } ?>
+                <?php 
+}
+        ?>
             value="<?php echo $link->getID()?>" />
             <?php echo $service->getDisplayName()?>
             </label>
 
             <i class="pull-right fa fa-arrows"></i>
         </div>
-    <?php } ?>
+    <?php 
+    } ?>
     </div>
 </div>
-
-<hr/>
 <div class="alert alert-info">
     <?php echo t('Add social links <a href="%s">in the dashboard</a>', URL::to('/dashboard/system/basics/social'))?>
 </div>

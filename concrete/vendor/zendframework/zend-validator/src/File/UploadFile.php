@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -34,7 +34,7 @@ class UploadFile extends AbstractValidator
     /**
      * @var array Error message templates
      */
-    protected $messageTemplates = array(
+    protected $messageTemplates = [
         self::INI_SIZE       => "File exceeds the defined ini size",
         self::FORM_SIZE      => "File exceeds the defined form size",
         self::PARTIAL        => "File was only partially uploaded",
@@ -45,7 +45,7 @@ class UploadFile extends AbstractValidator
         self::ATTACK         => "File was illegally uploaded. This could be a possible attack",
         self::FILE_NOT_FOUND => "File was not found",
         self::UNKNOWN        => "Unknown error while uploading file",
-    );
+    ];
 
     /**
      * Returns true if and only if the file was uploaded without errors
@@ -72,14 +72,11 @@ class UploadFile extends AbstractValidator
         }
         $this->setValue($filename);
 
-        if (empty($file) || false === stream_resolve_include_path($file)) {
-            $this->error(self::FILE_NOT_FOUND);
-            return false;
-        }
-
         switch ($error) {
             case UPLOAD_ERR_OK:
-                if (!is_uploaded_file($file)) {
+                if (empty($file) || false === is_file($file)) {
+                    $this->error(self::FILE_NOT_FOUND);
+                } elseif (! is_uploaded_file($file)) {
                     $this->error(self::ATTACK);
                 }
                 break;

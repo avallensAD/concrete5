@@ -6,31 +6,39 @@ defined('C5_EXECUTE') or die("Access Denied.");
 	<form method="post" action="<?php echo $controller->action('save_simple')?>" data-dialog-form="permissions" data-panel-detail-form="permissions">
 		<?php echo Loader::helper('concrete/ui/help')->display('panel', '/page/permissions')?>
 		
-		<p class="lead"><?php echo t('Who can view this page?')?></p>
+		<label class="control-label"><?php echo t('Who can view this page?')?></label>
 
 
 
 		<?php
 
-		foreach ($gArray as $g) {
-		?>
+        foreach ($gArray as $g) {
+            ?>
 
-		<div class="radio"><label><input type="checkbox" name="readGID[]" value="<?php echo $g->getGroupID()?>" <?php if (in_array($g->getGroupID(), $viewAccess)) { ?> checked <?php } ?> /> <?php echo $g->getGroupDisplayName(false)?></label></div>
+		<div class="radio"><label><input type="checkbox" name="readGID[]" value="<?php echo $g->getGroupID()?>" <?php if (in_array($g->getGroupID(), $viewAccess)) {
+    ?> checked <?php 
+}
+            ?> /> <?php echo $g->getGroupDisplayName(false)?></label></div>
 
-		<?php } ?>
+		<?php 
+        } ?>
 
 		<hr/>
 
-		<p class="lead"><?php echo t('Who can edit this page?')?></p>
+		<label class="control-label"><?php echo t('Who can edit this page?')?></label>
 
 		<?php
 
-		foreach ($gArray as $g) {
-		?>
+        foreach ($gArray as $g) {
+            ?>
 
-		<div class="radio"><label><input type="checkbox" name="editGID[]" value="<?php echo $g->getGroupID()?>" <?php if (in_array($g->getGroupID(), $editAccess)) { ?> checked <?php } ?> /> <?php echo $g->getGroupDisplayName(false)?></label></div>
+		<div class="radio"><label><input type="checkbox" name="editGID[]" value="<?php echo $g->getGroupID()?>" <?php if (in_array($g->getGroupID(), $editAccess)) {
+    ?> checked <?php 
+}
+            ?> /> <?php echo $g->getGroupDisplayName(false)?></label></div>
 
-		<?php } ?>
+		<?php 
+        } ?>
 
 	</form>
 	<div class="dialog-buttons ccm-panel-detail-form-actions">

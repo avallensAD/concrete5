@@ -1,4 +1,5 @@
 <?php
+
 use Concrete\Core\Block\View\BlockView;
 
 defined('C5_EXECUTE') or die("Access Denied.");
@@ -14,7 +15,6 @@ $bt->controller->displaySubPages = $_REQUEST['displaySubPages'];
 $bt->controller->displaySubPageLevels = $_REQUEST['displaySubPageLevels'];
 $bt->controller->displaySubPageLevelsNum = $_REQUEST['displaySubPageLevelsNum'];
 $bt->controller->displayUnavailablePages = $_REQUEST['displayUnavailablePages'];
-$bt->controller->displaySystemPages = $_REQUEST['displaySystemPages'];
 
 if ($bt->controller->displayPages == "custom") {
     $bt->controller->displayPagesCID = $_REQUEST['displayPagesCID'];

@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -20,6 +20,15 @@ class ExcludeMimeType extends MimeType
     const FALSE_TYPE   = 'fileExcludeMimeTypeFalse';
     const NOT_DETECTED = 'fileExcludeMimeTypeNotDetected';
     const NOT_READABLE = 'fileExcludeMimeTypeNotReadable';
+
+    /**
+     * @var array Error message templates
+     */
+    protected $messageTemplates = [
+        self::FALSE_TYPE   => "File has an incorrect mimetype of '%type%'",
+        self::NOT_DETECTED => "The mimetype could not be detected from the file",
+        self::NOT_READABLE => "File is not readable or does not exist",
+    ];
 
     /**
      * Returns true if the mimetype of the file does not matche the given ones. Also parts

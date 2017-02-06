@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -12,7 +12,7 @@ namespace Zend\Validator\Hostname;
 /**
  * Resource file for com and net idn validation
  */
-return array(
+return [
     1  => '/^[\x{002d}0-9\x{0400}-\x{052f}]{1,63}$/iu',
     2  => '/^[\x{002d}0-9\x{0370}-\x{03ff}]{1,63}$/iu',
     3  => '/^[\x{002d}0-9a-z\x{ac00}-\x{d7a3}]{1,17}$/iu',
@@ -169,8 +169,6 @@ return array(
     68 => '/^[\x{A000}-\x{A48F}]{1,63}$/iu',
     69 => '/^[\x{A490}-\x{A4CF}]{1,63}$/iu',
     70 => '/^[\x{AC00}-\x{D7AF}]{1,63}$/iu',
-    71 => '/^[\x{D800}-\x{DB7F}]{1,63}$/iu',
-    72 => '/^[\x{DC00}-\x{DFFF}]{1,63}$/iu',
     73 => '/^[\x{F900}-\x{FAFF}]{1,63}$/iu',
     74 => '/^[\x{FB00}-\x{FB4F}]{1,63}$/iu',
     75 => '/^[\x{FB50}-\x{FDFF}]{1,63}$/iu',
@@ -179,4 +177,4 @@ return array(
     78 => '/^[\x{FF00}-\x{FFEF}]{1,63}$/iu',
     79 => '/^[\x{20000}-\x{2A6DF}]{1,63}$/iu',
     80 => '/^[\x{2F800}-\x{2FA1F}]{1,63}$/iu',
-);
+];

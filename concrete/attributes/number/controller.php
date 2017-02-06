@@ -1,22 +1,30 @@
 <?php
 namespace Concrete\Attribute\Number;
 
-use Loader;
-use \Concrete\Core\Foundation\Object;
-use \Concrete\Core\Attribute\Controller as AttributeTypeController;
+use Concrete\Core\Attribute\FontAwesomeIconFormatter;
+use Concrete\Core\Entity\Attribute\Value\Value\NumberValue;
+use Concrete\Core\Attribute\Controller as AttributeTypeController;
 
 class Controller extends AttributeTypeController
 {
-
-    protected $searchIndexFieldDefinition = array(
+    protected $searchIndexFieldDefinition = [
         'type' => 'decimal',
-        'options' => array('precision' => 14, 'scale' => 4, 'default' => 0, 'notnull' => false)
-    );
+        'options' => ['precision' => 14, 'scale' => 4, 'default' => 0, 'notnull' => false],
+    ];
 
-    public function getValue()
+    public function getIconFormatter()
     {
-        $db = Loader::db();
-        return (float)$db->GetOne("select value from atNumber where avID = ?", array($this->getAttributeValueID()));
+        return new FontAwesomeIconFormatter('hashtag');
+    }
+
+    public function getDisplayValue()
+    {
+        return floatval($this->attributeValue->getValue());
+    }
+
+    public function getAttributeValueClass()
+    {
+        return NumberValue::class;
     }
 
     public function searchForm($list)
@@ -29,24 +37,27 @@ class Controller extends AttributeTypeController
         if ($numTo) {
             $list->filterByAttribute($this->attributeKey->getAttributeKeyHandle(), $numTo, '<=');
         }
+
         return $list;
     }
 
     public function search()
     {
-        $f = Loader::helper('form');
+        $f = $this->app->make('helper/form');
         $html = $f->number($this->field('from'), $this->request('from'));
         $html .= ' ' . t('to') . ' ';
         $html .= $f->number($this->field('to'), $this->request('to'));
-        print $html;
+        echo $html;
     }
 
     public function form()
     {
         if (is_object($this->attributeValue)) {
             $value = $this->getAttributeValue()->getValue();
+        } else {
+            $value = null;
         }
-        print Loader::helper('form')->number($this->field('value'), $value, array('style' => 'width:80px'));
+        echo $this->app->make('helper/form')->number($this->field('value'), $value, ['style' => 'width:100px']);
     }
 
     public function validateForm($p)
@@ -56,37 +67,26 @@ class Controller extends AttributeTypeController
 
     public function validateValue()
     {
-        $val = $this->getValue();
+        $val = $this->getAttributeValue()->getValue();
         return $val !== null && $val !== false;
     }
 
     // run when we call setAttribute(), instead of saving through the UI
-    public function saveValue($value)
+    public function createAttributeValue($value)
     {
-        $db = Loader::db();
+        $av = new NumberValue();
         $value = ($value == false || $value == '0') ? 0 : $value;
-        $db->Replace('atNumber', array('avID' => $this->getAttributeValueID(), 'value' => $value), 'avID', true);
+        $av->setValue($value);
+
+        return $av;
     }
 
-    public function deleteKey()
+    public function createAttributeValueFromRequest()
     {
-        $db = Loader::db();
-        $arr = $this->attributeKey->getAttributeValueIDList();
-        foreach ($arr as $id) {
-            $db->Execute('delete from atNumber where avID = ?', array($id));
+        $data = $this->post();
+        if (isset($data['value'])) {
+            return $this->createAttributeValue($data['value']);
         }
-    }
-
-    public function saveForm($data)
-    {
-        $db = Loader::db();
-        $this->saveValue($data['value']);
-    }
-
-    public function deleteValue()
-    {
-        $db = Loader::db();
-        $db->Execute('delete from atNumber where avID = ?', array($this->getAttributeValueID()));
     }
 
 }

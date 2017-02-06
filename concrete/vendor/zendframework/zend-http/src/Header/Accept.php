@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -51,7 +51,7 @@ class Accept extends AbstractAccept
      * @param  array $params
      * @return Accept
      */
-    public function addMediaType($type, $priority = 1, array $params = array())
+    public function addMediaType($type, $priority = 1, array $params = [])
     {
         return $this->addType($type, $priority, $params);
     }
@@ -80,7 +80,7 @@ class Accept extends AbstractAccept
         if ($pos = strpos($fieldValuePart, '/')) {
             $type = trim(substr($fieldValuePart, 0, $pos));
         } else {
-            $type = trim(substr($fieldValuePart, 0));
+            $type = trim($fieldValuePart);
         }
 
         $params = $this->getParametersFromFieldValuePart($fieldValuePart);
@@ -89,7 +89,7 @@ class Accept extends AbstractAccept
             $fieldValuePart = trim(substr($fieldValuePart, 0, $pos));
         }
 
-        if ($pos = strpos($fieldValuePart, '/')) {
+        if (strpos($fieldValuePart, '/')) {
             $subtypeWhole = $format = $subtype = trim(substr($fieldValuePart, strpos($fieldValuePart, '/') + 1));
         } else {
             $subtypeWhole = '';
@@ -103,7 +103,7 @@ class Accept extends AbstractAccept
             $subtype = trim(substr($subtype, 0, $pos));
         }
 
-        $aggregated = array(
+        $aggregated = [
             'typeString' => trim($fieldValuePart),
             'type'       => $type,
             'subtype'    => $subtype,
@@ -112,7 +112,7 @@ class Accept extends AbstractAccept
             'priority'   => isset($params['q']) ? $params['q'] : 1,
             'params'     => $params,
             'raw'        => trim($raw),
-        );
+        ];
 
         return new FieldValuePart\AcceptFieldValuePart((object) $aggregated);
     }

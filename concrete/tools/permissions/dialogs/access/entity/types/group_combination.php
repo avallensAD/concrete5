@@ -2,9 +2,10 @@
 defined('C5_EXECUTE') or die("Access Denied.");
 $tp = new TaskPermission();
 use \Concrete\Core\Permission\Access\Entity\Type as PermissionAccessEntityType;
+
 $dt = Loader::helper('form/date_time');
 if (!$tp->canAccessGroupSearch()) {
-	die(t("You do not have group search permissions."));
+    die(t("You do not have group search permissions."));
 }
 ?>
 <?php
@@ -21,9 +22,11 @@ $url = $type->getAccessEntityTypeToolsURL(); ?>
 <tr>
 	<th><div style="width: 16px"></div></th>
 	<th width="100%"><?php echo t("Name")?></th>
-	<?php if (!is_object($pae)) { ?>
+	<?php if (!is_object($pae)) {
+    ?>
 		<th><div style="width: 16px"></div></th>
-	<?php } ?>
+	<?php
+} ?>
 </tr>
 <tr>
 	<td colspan="3" id="ccm-permissions-access-entity-combination-groups-none"><?php echo t("No users or groups added.")?></td>
@@ -32,7 +35,7 @@ $url = $type->getAccessEntityTypeToolsURL(); ?>
 
 </form>
 
-<input type="button" class="btn btn-small pull-right dialog-launch" dialog-width="640" dialog-height="480" id="ccm-permissions-access-entity-members-add-group" href="<?php echo URL::to('/ccm/system/dialogs/group/search')?>" dialog-modal="false" dialog-title="<?php echo t('Add Group')?>" value="<?php echo t('Add Group')?>" />
+<input type="button" class="btn btn-default pull-right dialog-launch" dialog-width="640" dialog-height="480" id="ccm-permissions-access-entity-members-add-group" href="<?php echo URL::to('/ccm/system/dialogs/group/search')?>" dialog-modal="false" dialog-title="<?php echo t('Add Group')?>" value="<?php echo t('Add Group')?>" />
 
 </div>
 
@@ -44,7 +47,9 @@ ConcreteEvent.subscribe('SelectGroup', function(e, data) {
         jQuery.fn.dialog.closeTop();
 		$("#ccm-permissions-access-entity-combination-groups-none").hide();
 		var tbl = $("#ccm-permissions-access-entity-combination-groups");
-		html = '<tr><td><input type="hidden" class="combogID" name="gID[]" value="' + gID + '" /><img src="<?php echo ASSETS_URL_IMAGES?>/icons/group.png" /></td><td>' + gName + '</td><?php if (!is_object($pae)) { ?><td><a href="javascript:void(0)" onclick="ccm_removeCombinationGroup(this)"><img src="<?php echo ASSETS_URL_IMAGES?>/icons/remove.png" /></a></td><?php } ?>';
+		html = '<tr><td><input type="hidden" class="combogID" name="gID[]" value="' + gID + '" /><img src="<?php echo ASSETS_URL_IMAGES?>/icons/group.png" /></td><td>' + gName + '</td><?php if (!is_object($pae)) {
+    ?><td><a href="javascript:void(0)" onclick="ccm_removeCombinationGroup(this)"><img src="<?php echo ASSETS_URL_IMAGES?>/icons/remove.png" /></a></td><?php
+} ?>';
 		tbl.append(html);
 	}
 });
@@ -75,7 +80,7 @@ $(function() {
 </script>
 
 <div class="dialog-buttons">
-	<input type="button" onclick="jQuery.fn.dialog.closeTop()" value="<?php echo t('Cancel')?>" class="btn" />
-	<input type="submit" onclick="$('#ccm-permission-access-entity-combination-groups-form').submit()" value="<?php echo t('Save')?>" class="btn primary ccm-button-right" />
+	<input type="button" onclick="jQuery.fn.dialog.closeTop()" value="<?php echo t('Cancel')?>" class="btn btn-default btn-hover-danger" />
+	<input type="submit" onclick="$('#ccm-permission-access-entity-combination-groups-form').submit()" value="<?php echo t('Save')?>" class="btn pull-right btn-primary" />
 </div>
 

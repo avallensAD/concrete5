@@ -6,38 +6,37 @@ defined('C5_EXECUTE') or die("Access Denied.");
 
     <fieldset>
         <legend><?php echo t('Pretty URLs') ?></legend>
-        <div class="checkbox">
-            <label>
-                <?php echo $fh->checkbox('URL_REWRITING', 1, $intRewriting) ?>
-                <?php echo t('Remove index.php from URLs'); ?>
-            </label>
-        </div>
-        <?php
-        if (Config::get('concrete.seo.url_rewriting')) { ?>
-            <div class="form-group">
-                <label class="control-label"><?php echo t('Code for your .htaccess file')?></label>
-                <textarea rows="8" class="form-control" onclick="this.select()"><?php echo $strRules?></textarea>
+        <div class="form-group">
+            <div class="checkbox">
+                <label>
+                    <?php echo $fh->checkbox('URL_REWRITING', 1, $urlRewriting) ?>
+                    <?php echo t('Remove index.php from URLs'); ?>
+                </label>
             </div>
-        <?php } ?>
+        </div>
+        <?php if (isset($configuration_action)) { ?>
+            <div class="form-group">
+                <label class="control-label"><?php echo $configuration_action?></label>
+                <textarea rows="8" class="form-control" onclick="this.select()"><?php echo h($configuration_code)?></textarea>
+            </div>
+        <?php
+        } ?>
     </fieldset>
 
     <fieldset>
         <legend><?php echo t('Canonical URLs') ?></legend>
         <div class="form-group">
             <label class="control-label" for="canonical_url"><?php echo t('Canonical URL') ?></label>
-            <input type="text" class="form-control" placeholder="http://domain.com" value="<?php echo $canonical_url ?>"
-                   name="canonical_url">
+            <?php echo $form->text('canonical_url', $canonical_url, ['placeholder' => 'http://domain.com'])?>
         </div>
 
         <div class="form-group">
-            <label class="control-label" for="canonical_ssl_url"><?php echo t('SSL URL') ?></label>
-            <input type="text" class="form-control" placeholder="https://domain.com" value="<?php echo $canonical_ssl_url ?>"
-                   name="canonical_ssl_url">
+            <label class="control-label" for="canonical_ssl_url"><?php echo t('Separate SSL URL') ?></label>
+            <?php echo $form->text('canonical_ssl_url', $canonical_ssl_url, ['placeholder' => 'http://domain.com'])?>
+
         </div>
         <div class="form-group">
-            <label class="control-label" for="redirect_to_canonical_url"><?php echo t('URL Redirection') ?> <i
-                    class="fa fa-question-circle launch-tooltip"
-                    title="<?php echo t('If checked, this site will only be available at the host, port and SSL combination chosen above.') ?>"></i></label>
+            <label class="control-label launch-tooltip" title="<?php echo t('If checked, this site will only be available at the host, port and SSL combination chosen above.') ?>" for="redirect_to_canonical_url"><?php echo t('URL Redirection') ?></label>
 
             <div class="checkbox">
                 <label>
@@ -67,14 +66,14 @@ defined('C5_EXECUTE') or die("Access Denied.");
     $(function () {
 
         var steps = [{
-            content: '<p><span class="h5"><?php echo t('Pretty URLs')?></span><br/><?php echo t('Check this checkbox to remove index.php from your URLs. You will be given code to place in a file named .htaccess in your web root. Concrete5 will try and place this code in the file for you.')?></p>',
+            content: <?php echo json_encode('<p><span class="h5">' . t('Pretty URLs') . '</span><br/>' . t('Check this checkbox to remove index.php from your URLs. You will be given code to place in a file named .htaccess in your web root. concrete5 will try and place this code in the file for you.') . '</p>') ?>,
             highlightTarget: false,
             nextButton: true,
             target: $('input[name=URL_REWRITING]'),
             my: 'bottom left',
             at: 'top left'
         },{
-            content: '<p><span class="h5"><?php echo t('Canonical URL')?></span><br/><?php echo t('If you are running a site at multiple domains, enter the canonical domain here. This will be used for sitemap generation, any other purposes that require a specific domain. You can usually leave this blank.')?></p>',
+            content: <?php echo json_encode('<p><span class="h5">' . t('Canonical URL') . '</span><br/>' . t('If you are running a site at multiple domains, enter the canonical domain here. This will be used for sitemap generation, any other purposes that require a specific domain. You can usually leave this blank.') . '</p>') ?>,
             highlightTarget: false,
             nextButton: true,
             target: $('input[name=canonical_url]'),
@@ -85,14 +84,14 @@ defined('C5_EXECUTE') or die("Access Denied.");
                 $(document).scrollTop($url.offset().top);
             }
         },{
-            content: '<p><span class="h5"><?php echo t('SSL URL')?></span><br/><?php echo t('Certain add-ons require a secure SSL URL. Enter that URL here.')?></p>',
+            content: <?php echo json_encode('<p><span class="h5">' . t('SSL URL') . '</span><br/>' . t('Certain add-ons require a secure SSL URL. Enter that URL here.') . '</p>') ?>,
             highlightTarget: false,
             nextButton: true,
             target: $('input[name=canonical_ssl_url]'),
             my: 'bottom center',
             at: 'top center'
         },{
-            content: '<p><span class="h5"><?php echo t('SSL URL')?></span><br/><?php echo t('Ensure that your site ONLY renders at the canonical URL or the canonical SSL URL.')?></p>',
+            content: <?php echo json_encode('<p><span class="h5">' . t('SSL URL') . '</span><br/>' . t('Ensure that your site ONLY renders at the canonical URL or the canonical SSL URL.') . '</p>') ?>,
             highlightTarget: false,
             nextButton: true,
             target: $('input[name=redirect_to_canonical_url]'),

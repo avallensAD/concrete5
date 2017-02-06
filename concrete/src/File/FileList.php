@@ -9,7 +9,7 @@ use Database;
 use Core;
 use Doctrine\DBAL\Query;
 use Pagerfanta\Adapter\DoctrineDbalAdapter;
-use \Concrete\Core\Search\Pagination\Pagination;
+use Concrete\Core\Search\Pagination\Pagination;
 use FileAttributeKey;
 
 class FileList extends DatabaseItemList implements PermissionableListItemInterface
@@ -26,11 +26,12 @@ class FileList extends DatabaseItemList implements PermissionableListItemInterfa
 
     /** @var  \Closure | integer | null */
     protected $permissionsChecker;
-    
+
     protected $paginationPageParameter = 'ccm_paging_fl';
 
     /**
      * Columns in this array can be sorted via the request.
+     *
      * @var array
      */
     protected $autoSortColumns = array(
@@ -38,7 +39,7 @@ class FileList extends DatabaseItemList implements PermissionableListItemInterfa
         'fv.fvTitle',
         'f.fDateAdded',
         'fv.fvDateAdded',
-        'fv.fvSize'
+        'fv.fvSize',
     );
 
     protected function getAttributeKeyClassName()
@@ -69,7 +70,8 @@ class FileList extends DatabaseItemList implements PermissionableListItemInterfa
     {
         if ($this->permissionsChecker === -1) {
             $query = $this->deliverQueryObject();
-            return $query->select('count(distinct f.fID)')->setMaxResults(1)->execute()->fetchColumn();
+
+            return $query->resetQueryParts(['groupBy', 'orderBy'])->select('count(distinct f.fID)')->setMaxResults(1)->execute()->fetchColumn();
         } else {
             return -1; // unknown
         }
@@ -79,18 +81,20 @@ class FileList extends DatabaseItemList implements PermissionableListItemInterfa
     {
         if ($this->permissionsChecker === -1) {
             $adapter = new DoctrineDbalAdapter($this->deliverQueryObject(), function ($query) {
-                $query->select('count(distinct f.fID)')->setMaxResults(1);
+                $query->resetQueryParts(['groupBy', 'orderBy'])->select('count(distinct f.fID)')->setMaxResults(1);
             });
             $pagination = new Pagination($this, $adapter);
         } else {
             $pagination = new PermissionablePagination($this);
         }
+
         return $pagination;
     }
 
     /**
      * @param $queryRow
-     * @return \Concrete\Core\File\File
+     *
+     * @return \Concrete\Core\Entity\File\File
      */
     public function getResult($queryRow)
     {
@@ -102,7 +106,6 @@ class FileList extends DatabaseItemList implements PermissionableListItemInterfa
 
     public function checkPermissions($mixed)
     {
-
         if (isset($this->permissionsChecker)) {
             if ($this->permissionsChecker === -1) {
                 return true;
@@ -112,6 +115,7 @@ class FileList extends DatabaseItemList implements PermissionableListItemInterfa
         }
 
         $fp = new \Permissions($mixed);
+
         return $fp->canViewFile();
     }
 
@@ -128,7 +132,7 @@ class FileList extends DatabaseItemList implements PermissionableListItemInterfa
 
     /**
      * Filters by "keywords" (which searches everything including filenames,
-     * title, users who uploaded the file, tags)
+     * title, users who uploaded the file, tags).
      */
     public function filterByKeywords($keywords)
     {
@@ -137,7 +141,7 @@ class FileList extends DatabaseItemList implements PermissionableListItemInterfa
             $this->query->expr()->like('fv.fvDescription', ':keywords'),
             $this->query->expr()->like('fv.fvTitle', ':keywords'),
             $this->query->expr()->like('fv.fvTags', ':keywords'),
-            $this->query->expr()->eq('uName', ':keywords')
+            $this->query->expr()->eq('uName', ':keywords'),
         );
 
         $keys = FileAttributeKey::getSearchableIndexedList();
@@ -165,7 +169,7 @@ class FileList extends DatabaseItemList implements PermissionableListItemInterfa
     }
 
     /**
-     * Filters the file list by file size (in kilobytes)
+     * Filters the file list by file size (in kilobytes).
      */
     public function filterBySize($from, $to)
     {
@@ -176,7 +180,8 @@ class FileList extends DatabaseItemList implements PermissionableListItemInterfa
     }
 
     /**
-     * Filters by public date
+     * Filters by public date.
+     *
      * @param string $date
      */
     public function filterByDateAdded($date, $comparison = '=')
@@ -191,9 +196,9 @@ class FileList extends DatabaseItemList implements PermissionableListItemInterfa
     }
 
     /**
-     * filters a FileList by the uID of the approving User
+     * filters a FileList by the uID of the approving User.
+     *
      * @param int $uID
-     * @return void
      */
     public function filterByApproverUserID($uID)
     {
@@ -202,9 +207,10 @@ class FileList extends DatabaseItemList implements PermissionableListItemInterfa
     }
 
     /**
-     * filters a FileList by the uID of the owning User
+     * filters a FileList by the uID of the owning User.
+     *
      * @param int $uID
-     * @return void
+     *
      * @since 5.4.1.1+
      */
     public function filterByAuthorUserID($uID)
@@ -241,5 +247,4 @@ class FileList extends DatabaseItemList implements PermissionableListItemInterfa
     {
         $this->query->orderBy('fsDisplayOrder', 'asc');
     }
-
 }

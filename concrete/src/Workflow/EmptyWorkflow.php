@@ -1,16 +1,14 @@
 <?php
 namespace Concrete\Core\Workflow;
 
-use \Concrete\Core\Foundation\Object;
-use \Concrete\Core\Workflow\Progress\Progress as WorkflowProgress;
+use Concrete\Core\Workflow\Progress\Progress as WorkflowProgress;
 use Concrete\Core\Workflow\Workflow as ConcreteWorkflow;
 
 class EmptyWorkflow extends ConcreteWorkflow
 {
-
     public function canApproveWorkflow()
-	{
-		return true;
+    {
+        return true;
     }
 
     public function start(WorkflowProgress $wp)
@@ -18,7 +16,13 @@ class EmptyWorkflow extends ConcreteWorkflow
         $req = $wp->getWorkflowRequestObject();
         $wpr = $req->approve($wp);
         $wp->delete();
+
         return $wpr;
+    }
+
+    public function getWorkflowProgressApprovalUsers(WorkflowProgress $wp)
+    {
+        return array();
     }
 
     public function updateDetails($vars)
@@ -48,5 +52,4 @@ class EmptyWorkflow extends ConcreteWorkflow
     {
         return '';
     }
-
 }

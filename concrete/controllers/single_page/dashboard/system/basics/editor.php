@@ -1,12 +1,11 @@
 <?php
-
 namespace Concrete\Controller\SinglePage\Dashboard\System\Basics;
-use Concrete\Core\Editor\RedactorEditor;
-use \Concrete\Core\Page\Controller\DashboardPageController;
 
-class Editor extends DashboardPageController
+use Concrete\Core\Page\Controller\DashboardPageController;
+use Concrete\Core\Page\Controller\DashboardSitePageController;
+
+class Editor extends DashboardSitePageController
 {
-
     public function view()
     {
         $manager = \Core::make("editor")->getPluginManager();
@@ -14,8 +13,10 @@ class Editor extends DashboardPageController
         $this->set('plugins', $plugins);
         $this->set('manager', $manager);
 
-        $this->set('filemanager', \Config::get('concrete.editor.concrete.enable_filemanager'));
-        $this->set('sitemap', \Config::get('concrete.editor.concrete.enable_sitemap'));
+        $this->set('filemanager', \Config::get('site.sites.default.editor.concrete.enable_filemanager'));
+        $this->set('sitemap', \Config::get('site.sites.default.editor.concrete.enable_sitemap'));
+
+        $this->set('selected_hidden', \Config::get('site.sites.default.editor.ckeditor4.plugins.selected_hidden'));
     }
 
     public function saved()
@@ -35,5 +36,4 @@ class Editor extends DashboardPageController
         }
         $this->view();
     }
-
 }

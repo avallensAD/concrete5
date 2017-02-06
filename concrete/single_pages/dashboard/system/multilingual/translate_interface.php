@@ -2,15 +2,15 @@
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
-/* @var $this PageView */
+$app = Concrete\Core\Support\Facade\Application::getFacadeApplication();
 
-$valt = Loader::helper('validation/token');
+$valt = $app->make('helper/validation/token');
 
 if ($this->controller->getTask() == 'translate_po') {
     $url = Url::createFromUrl($this->controller->action('save_translation'));
-    $url = $url->setQuery(array(
-        'ccm_token' => $app->make('token')->generate('translate/save')
-    ));
+    $url = $url->setQuery([
+        'ccm_token' => $app->make('token')->generate('translate/save'),
+    ]);
 
     /* @var $section \Concrete\Core\Multilingual\Page\Section\Section */
     ?>
@@ -24,7 +24,7 @@ if ($this->controller->getTask() == 'translate_po') {
         translations: <?php echo json_encode($translations); ?>,
         approvalSupport: false
       });
-      var saveToFileToken = <?php echo json_encode(Core::make('token')->generate('export_translations')); ?>;
+      var saveToFileToken = <?php echo json_encode($app->make('token')->generate('export_translations')); ?>;
       $('.ccm-save-to-file').on('click', function() {
         var $btn = $(this);
         $btn.addClass('disabled').css('width', $btn.outerWidth() + 'px').html('<span class="fa fa-spinner fa-spin"></span>');
@@ -40,7 +40,7 @@ if ($this->controller->getTask() == 'translate_po') {
             alert(data.message);
           }
           if (data && data.newToken) {
-          	saveToFileToken = data.newToken;
+            saveToFileToken = data.newToken;
           }
         })
         .fail(function(xhr, status, error) {
@@ -61,17 +61,16 @@ if ($this->controller->getTask() == 'translate_po') {
     <?php
 
 } else {
-
     if (!is_dir(DIR_LANGUAGES_SITE_INTERFACE) || !is_writable(DIR_LANGUAGES_SITE_INTERFACE)) {
-        ?><div class="alert alert-warning"><?php echo t('You must create the directory %s and make it writable before you may run this tool. Additionally, all files within this directory must be writable.', DIR_LANGUAGES_SITE_INTERFACE); ?></div><?php
-    }
-    $nav = Loader::helper('navigation');
-    Loader::model('section', 'multilingual');
-    $pages = \Concrete\Core\Multilingual\Page\Section\Section::getList();
-    $defaultSourceLocale = Config::get('concrete.multilingual.default_source_locale');
+        ?><div class="alert alert-warning"><?php echo t('You must create the directory %s and make it writable before you may run this tool. Additionally, all files within this directory must be writable.', DIRNAME_APPLICATION.'/'.DIRNAME_LANGUAGES.'/'.DIRNAME_LANGUAGES_SITE_INTERFACE); ?></div><?php
 
-    $ch = Core::make('multilingual/interface/flag');
-    $dh = Core::make('helper/date');
+    }
+    $nav = $app->make('helper/navigation');
+    $pages = \Concrete\Core\Multilingual\Page\Section\Section::getList($site);
+    $defaultSourceLocale = $site->getConfigRepository()->get('multilingual.default_source_locale');
+
+    $ch = $app->make('multilingual/interface/flag');
+    $dh = $app->make('helper/date');
     if (count($pages) > 0) {
         ?>
         <div class="ccm-dashboard-content-full">
@@ -89,25 +88,31 @@ if ($this->controller->getTask() == 'translate_po') {
                     </thead>
                     <tbody><?php
                         foreach ($pages as $pc) {
-                            $pcl = \Concrete\Core\Multilingual\Page\Section\Section::getByID($pc->getCollectionID());
-                            ?><tr>
+                            $pcl = \Concrete\Core\Multilingual\Page\Section\Section::getByID($pc->getCollectionID()); ?><tr>
                                 <td><?php echo $ch->getSectionFlagIcon($pc); ?></td>
                                 <td><a href="<?php echo $nav->getLinkToCollection($pc); ?>"><?php echo $pc->getCollectionName(); ?></a></td>
-                                <td style="white-space: nowrap"><?php
+                                <td style="white-space: nowrap">
+                                    <?php
                                     echo $pc->getLocale();
                                     if ($pc->getLocale() != $defaultSourceLocale) {
                                         ?><a href="#" class="icon-link launch-tooltip" title="<?php echo REL_DIR_LANGUAGES_SITE_INTERFACE; ?>/<?php echo $pc->getLocale(); ?>.mo"><i class="fa fa-question-circle"></i></a><?php
                                     }
-                                ?></td>
-                                <td style="width: 40%"><?php
+                                    ?>
+                                </td>
+                                <td style="width: 40%">
+                                    <?php
                                     if ($pc->getLocale() != $defaultSourceLocale) {
                                         $data = $extractor->getSectionSiteInterfaceCompletionData($pc);
-                                        ?><div class="progress">
+                                        ?>
+                                        <div class="progress">
                                             <div class="progress-bar" style="width: <?php echo $data['completionPercentage']; ?>%">&nbsp;</div>
-                                        </div><?php
+                                        </div>
+                                        <?php
                                     }
-                                ?></td>
-                                <td style="white-space: nowrap"><?php
+                                    ?>
+                                </td>
+                                <td style="white-space: nowrap">
+                                    <?php
                                     if ($pc->getLocale() != $defaultSourceLocale) {
                                         ?>
                                         <span class="percent"><?php echo $data['completionPercentage']; ?>%</span>
@@ -115,8 +120,10 @@ if ($this->controller->getTask() == 'translate_po') {
                                         <?php echo t(/*i18n: %1$s is the partial number, %2$s is the total number. Example: 2 of 3 */'%1$s of %2$s', '<span class="translated">'.$data['translatedCount'].'</span>', '<span class="total">'.$data['messageCount'].'</span>'); ?>
                                         <?php
                                     }
-                                ?></td>
-                                <td><?php
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php
                                     if ($pc->getLocale() != $defaultSourceLocale) {
                                         if (file_exists(DIR_LANGUAGES_SITE_INTERFACE.'/'.$pc->getLocale().'.mo')) {
                                             echo $dh->formatDateTime(filemtime(DIR_LANGUAGES_SITE_INTERFACE.'/'.$pc->getLocale().'.mo'), true);
@@ -126,17 +133,21 @@ if ($this->controller->getTask() == 'translate_po') {
                                     } else {
                                         echo t('N/A');
                                     }
-                                ?></td>
+                                    ?>
+                                </td>
                                 <?php
                                 if ($pc->getLocale() == $defaultSourceLocale) {
-                                    ?><td></td><?php
+                                    ?>
+                                    <td></td>
+                                    <?php
                                 } else {
                                     ?><td><a href="<?php echo $this->action('translate_po', $pc->getCollectionID()); ?>" class="icon-link"><i class="fa fa-pencil"></i></a></td><?php
-                                }
-                                ?>
-                            </tr><?php
+                                } ?>
+                            </tr>
+                            <?php
                         }
-                    ?></tbody>
+                        ?>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -154,12 +165,13 @@ if ($this->controller->getTask() == 'translate_po') {
             </form>
 
             <div style="display: none">
-                <div id="ccm-dialog-reset-languages" class="ccm-ui"><?php
+                <div id="ccm-dialog-reset-languages" class="ccm-ui">
+                    <?php
                     $u = new User();
                     if ($u->isSuperUser()) {
                         ?>
                         <form method="post" class="form-stacked" style="padding-left: 0px" action="<?php echo $view->action('reset_languages'); ?>">
-                            <?php echo Loader::helper("validation/token")->output('reset_languages'); ?>
+                            <?php echo $app->make('helper/validation/token')->output('reset_languages'); ?>
                             <p><?php echo t('Are you sure? This will remove all translations from all languages, in the database and in your site PO files. This cannot be undone.'); ?></p>
                         </form>
                         <div class="dialog-buttons">
@@ -168,9 +180,12 @@ if ($this->controller->getTask() == 'translate_po') {
                         </div>
                         <?php
                     } else {
-                        ?><p><?php echo t('Only the admin user may reset all languages.'); ?></p><?php
+                        ?>
+                        <p><?php echo t('Only the admin user may reset all languages.'); ?></p>
+                        <?php
                     }
-                ?></div>
+                    ?>
+                </div>
             </div>
 
             <script type="text/javascript">
@@ -198,8 +213,10 @@ if ($this->controller->getTask() == 'translate_po') {
         </style>
 
         <?php
-    } else {
-        ?><p><?php echo t('You have not created any multilingual content sections yet.'); ?></p><?php
-    }
 
+    } else {
+        ?>
+        <p><?php echo t('You have not created any multilingual content sections yet.'); ?></p>
+        <?php
+    }
 }

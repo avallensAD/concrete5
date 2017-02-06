@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -24,19 +24,19 @@ use Zend\Loader\PluginClassLocator;
 class Headers implements Countable, Iterator
 {
     /**
-     * @var PluginClassLoader
+     * @var PluginClassLocator
      */
     protected $pluginClassLoader = null;
 
     /**
      * @var array key names for $headers array
      */
-    protected $headersKeys = array();
+    protected $headersKeys = [];
 
     /**
      * @var array Array of header array information or Header instances
      */
-    protected $headers = array();
+    protected $headers = [];
 
     /**
      * Populates headers from string representation
@@ -51,36 +51,53 @@ class Headers implements Countable, Iterator
      */
     public static function fromString($string)
     {
-        $headers = new static();
-        $current = array();
+        $headers   = new static();
+        $current   = [];
+        $emptyLine = 0;
 
         // iterate the header lines, some might be continuations
         foreach (explode("\r\n", $string) as $line) {
+            // CRLF*2 is end of headers; an empty line by itself or between header lines
+            // is an attempt at CRLF injection.
+            if (preg_match('/^\s*$/', $line)) {
+                // empty line indicates end of headers
+                $emptyLine += 1;
+                if ($emptyLine > 2) {
+                    throw new Exception\RuntimeException('Malformed header detected');
+                }
+                continue;
+            }
+
+            if ($emptyLine) {
+                throw new Exception\RuntimeException('Malformed header detected');
+            }
 
             // check if a header name is present
-            if (preg_match('/^(?P<name>[^()><@,;:\"\\/\[\]?=}{ \t]+):.*$/', $line, $matches)) {
+            if (preg_match('/^(?P<name>[^()><@,;:\"\\/\[\]?={} \t]+):.*$/', $line, $matches)) {
                 if ($current) {
                     // a header name was present, then store the current complete line
                     $headers->headersKeys[] = static::createKey($current['name']);
                     $headers->headers[]     = $current;
                 }
-                $current = array(
+                $current = [
                     'name' => $matches['name'],
                     'line' => trim($line)
-                );
-            } elseif (preg_match('/^(?P<ws>\s+).*$/', $line, $matches)) {
-                // continuation: append to current line
-                $current['line'] .= "\r\n" . $matches['ws'] . trim($line);
-            } elseif (preg_match('/^\s*$/', $line)) {
-                // empty line indicates end of headers
-                break;
-            } else {
-                // Line does not match header format!
-                throw new Exception\RuntimeException(sprintf(
-                    'Line "%s" does not match header format!',
-                    $line
-                ));
+                ];
+
+                continue;
             }
+
+            if (preg_match("/^[ \t][^\r\n]*$/", $line, $matches)) {
+                // continuation: append to current line
+                $current['line'] .= trim($line);
+                continue;
+            }
+
+            // Line does not match header format!
+            throw new Exception\RuntimeException(sprintf(
+                'Line "%s" does not match header format!',
+                $line
+            ));
         }
         if ($current) {
             $headers->headersKeys[] = static::createKey($current['name']);
@@ -146,7 +163,6 @@ class Headers implements Countable, Iterator
             } elseif (is_string($name)) {
                 $this->addHeaderLine($name, $value);
             }
-
         }
 
         return $this;
@@ -184,7 +200,7 @@ class Headers implements Countable, Iterator
         }
 
         $this->headersKeys[] = $headerKey;
-        $this->headers[]     = array('name' => $headerName, 'line' => $line);
+        $this->headers[]     = ['name' => $headerName, 'line' => $line];
 
         return $this;
     }
@@ -230,7 +246,7 @@ class Headers implements Countable, Iterator
      */
     public function clearHeaders()
     {
-        $this->headers = $this->headersKeys = array();
+        $this->headers = $this->headersKeys = [];
         return $this;
     }
 
@@ -250,7 +266,7 @@ class Headers implements Countable, Iterator
         $class = ($this->getPluginClassLoader()->load($key)) ?: 'Zend\Http\Header\GenericHeader';
 
         if (in_array('Zend\Http\Header\MultipleHeaderInterface', class_implements($class, true))) {
-            $headers = array();
+            $headers = [];
             foreach (array_keys($this->headersKeys, $key) as $index) {
                 if (is_array($this->headers[$index])) {
                     $this->lazyLoadHeader($index);
@@ -382,13 +398,13 @@ class Headers implements Countable, Iterator
      */
     public function toArray()
     {
-        $headers = array();
+        $headers = [];
         /* @var $header Header\HeaderInterface */
         foreach ($this->headers as $header) {
             if ($header instanceof Header\MultipleHeaderInterface) {
                 $name = $header->getFieldName();
                 if (!isset($headers[$name])) {
-                    $headers[$name] = array();
+                    $headers[$name] = [];
                 }
                 $headers[$name][] = $header->getFieldValue();
             } elseif ($header instanceof Header\HeaderInterface) {
@@ -451,6 +467,6 @@ class Headers implements Countable, Iterator
      */
     protected static function createKey($name)
     {
-        return str_replace(array('-', '_', ' ', '.'), '', strtolower($name));
+        return str_replace(['-', '_', ' ', '.'], '', strtolower($name));
     }
 }

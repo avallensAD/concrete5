@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -85,7 +85,7 @@ class Response extends AbstractMessage implements ResponseInterface
     /**
      * @var array Recommended Reason Phrases
      */
-    protected $recommendedReasonPhrases = array(
+    protected $recommendedReasonPhrases = [
         // INFORMATIONAL CODES
         100 => 'Continue',
         101 => 'Switching Protocols',
@@ -124,7 +124,7 @@ class Response extends AbstractMessage implements ResponseInterface
         411 => 'Length Required',
         412 => 'Precondition Failed',
         413 => 'Request Entity Too Large',
-        414 => 'Request-URI Too Large',
+        414 => 'Request-URI Too Long',
         415 => 'Unsupported Media Type',
         416 => 'Requested range not satisfiable',
         417 => 'Expectation Failed',
@@ -148,7 +148,7 @@ class Response extends AbstractMessage implements ResponseInterface
         507 => 'Insufficient Storage',
         508 => 'Loop Detected',
         511 => 'Network Authentication Required',
-    );
+    ];
 
     /**
      * @var int Status code
@@ -164,13 +164,13 @@ class Response extends AbstractMessage implements ResponseInterface
      * Populate object from string
      *
      * @param  string $string
-     * @return Response
+     * @return self
      * @throws Exception\InvalidArgumentException
      */
     public static function fromString($string)
     {
         $lines = explode("\r\n", $string);
-        if (!is_array($lines) || count($lines) == 1) {
+        if (!is_array($lines) || count($lines) === 1) {
             $lines = explode("\n", $string);
         }
 
@@ -179,7 +179,7 @@ class Response extends AbstractMessage implements ResponseInterface
         $response = new static();
 
         $regex   = '/^HTTP\/(?P<version>1\.[01]) (?P<status>\d{3})(?:[ ]+(?P<reason>.*))?$/';
-        $matches = array();
+        $matches = [];
         if (!preg_match($regex, $firstLine, $matches)) {
             throw new Exception\InvalidArgumentException(
                 'A valid response status line was not found in the provided string'
@@ -190,25 +190,34 @@ class Response extends AbstractMessage implements ResponseInterface
         $response->setStatusCode($matches['status']);
         $response->setReasonPhrase((isset($matches['reason']) ? $matches['reason'] : ''));
 
-        if (count($lines) == 0) {
+        if (count($lines) === 0) {
             return $response;
         }
 
         $isHeader = true;
-        $headers = $content = array();
+        $headers = $content = [];
 
-        while ($lines) {
-            $nextLine = array_shift($lines);
-
-            if ($isHeader && $nextLine == '') {
+        foreach ($lines as $line) {
+            if ($isHeader && $line === '') {
                 $isHeader = false;
                 continue;
             }
+
             if ($isHeader) {
-                $headers[] = $nextLine;
-            } else {
-                $content[] = $nextLine;
+                if (preg_match("/[\r\n]/", $line)) {
+                    throw new Exception\RuntimeException('CRLF injection detected');
+                }
+                $headers[] = $line;
+                continue;
             }
+
+            if (empty($content)
+                && preg_match('/^[a-z0-9!#$%&\'*+.^_`|~-]+:$/i', $line)
+            ) {
+                throw new Exception\RuntimeException('CRLF injection detected');
+            }
+
+            $content[] = $line;
         }
 
         if ($headers) {
@@ -235,19 +244,20 @@ class Response extends AbstractMessage implements ResponseInterface
      *
      * @param  int $code
      * @throws Exception\InvalidArgumentException
-     * @return Response
+     * @return self
      */
     public function setStatusCode($code)
     {
-        if (!is_numeric($code)) {
+        $const = get_class($this) . '::STATUS_CODE_' . $code;
+        if (!is_numeric($code) || !defined($const)) {
             $code = is_scalar($code) ? $code : gettype($code);
             throw new Exception\InvalidArgumentException(sprintf(
                 'Invalid status code provided: "%s"',
                 $code
             ));
         }
-        $this->statusCode = (int) $code;
-        return $this;
+
+        return $this->saveStatusCode($code);
     }
 
     /**
@@ -261,8 +271,41 @@ class Response extends AbstractMessage implements ResponseInterface
     }
 
     /**
+     * Set custom HTTP status code
+     *
+     * @param  int $code
+     * @throws Exception\InvalidArgumentException
+     * @return self
+     */
+    public function setCustomStatusCode($code)
+    {
+        if (!is_numeric($code)) {
+            $code = is_scalar($code) ? $code : gettype($code);
+            throw new Exception\InvalidArgumentException(sprintf(
+                'Invalid status code provided: "%s"',
+                $code
+            ));
+        }
+
+        return $this->saveStatusCode($code);
+    }
+
+    /**
+     * Assign status code
+     *
+     * @param int $code
+     * @return self
+     */
+    protected function saveStatusCode($code)
+    {
+        $this->reasonPhrase = null;
+        $this->statusCode = (int) $code;
+        return $this;
+    }
+
+    /**
      * @param string $reasonPhrase
-     * @return Response
+     * @return self
      */
     public function setReasonPhrase($reasonPhrase)
     {
@@ -277,8 +320,8 @@ class Response extends AbstractMessage implements ResponseInterface
      */
     public function getReasonPhrase()
     {
-        if ($this->reasonPhrase == null) {
-            return $this->recommendedReasonPhrases[$this->statusCode];
+        if (null == $this->reasonPhrase and isset($this->recommendedReasonPhrases[$this->statusCode])) {
+            $this->reasonPhrase = $this->recommendedReasonPhrases[$this->statusCode];
         }
         return $this->reasonPhrase;
     }
@@ -295,7 +338,7 @@ class Response extends AbstractMessage implements ResponseInterface
         $transferEncoding = $this->getHeaders()->get('Transfer-Encoding');
 
         if (!empty($transferEncoding)) {
-            if (strtolower($transferEncoding->getFieldValue()) == 'chunked') {
+            if (strtolower($transferEncoding->getFieldValue()) === 'chunked') {
                 $body = $this->decodeChunkedBody($body);
             }
         }
@@ -304,10 +347,10 @@ class Response extends AbstractMessage implements ResponseInterface
 
         if (!empty($contentEncoding)) {
             $contentEncoding = $contentEncoding->getFieldValue();
-            if ($contentEncoding =='gzip') {
+            if ($contentEncoding === 'gzip') {
                 $body = $this->decodeGzip($body);
-            } elseif ($contentEncoding == 'deflate') {
-                 $body = $this->decodeDeflate($body);
+            } elseif ($contentEncoding === 'deflate') {
+                $body = $this->decodeDeflate($body);
             }
         }
 
@@ -332,7 +375,7 @@ class Response extends AbstractMessage implements ResponseInterface
      */
     public function isForbidden()
     {
-        return (403 == $this->getStatusCode());
+        return (403 === $this->getStatusCode());
     }
 
     /**
@@ -516,7 +559,7 @@ class Response extends AbstractMessage implements ResponseInterface
          */
         $zlibHeader = unpack('n', substr($body, 0, 2));
 
-        if ($zlibHeader[1] % 31 == 0) {
+        if ($zlibHeader[1] % 31 === 0) {
             return gzuncompress($body);
         }
         return gzinflate($body);
