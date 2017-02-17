@@ -6,6 +6,7 @@ if ($install_config) {
     $_POST = $install_config;
 }
 
+/* added for Azure App Services in-app MySQL */
 $connectstr_dbhost = '';
 $connectstr_dbname = '';
 $connectstr_dbusername = '';
@@ -224,7 +225,7 @@ $(function() {
 	<div class="form-group">
 	<label class="control-label col-md-4" for="DB_DATABASE"><?php echo t('Database Name')?>:</label>
 	<div class="col-md-8">
-		<?php echo $form->text('DB_DATABASE',  $connectstr_dbname,array('class' => ''))?>
+		<?php echo $form->text('DB_DATABASE', $connectstr_dbname, array('class' => ''))?>
 	</div>
 	</div>
 	</fieldset>
